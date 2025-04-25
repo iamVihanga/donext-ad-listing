@@ -1,29 +1,29 @@
 import { createRoute } from "@hono/zod-openapi";
-import { z } from "zod";
+import { jsonContent } from "stoker/openapi/helpers";
+import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import { createRouter } from "@/server/helpers/create-app";
+import { createMessageObjectSchema } from "stoker/openapi/schemas";
 
 const router = createRouter().openapi(
   createRoute({
+    tags: ["Root"],
     method: "get",
     path: "/root",
     responses: {
-      200: {
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string()
-            })
-          }
-        },
-        description: "DONEXT Boilerplate API - Index"
-      }
+      [HttpStatusCodes.OK]: jsonContent(
+        createMessageObjectSchema("Donext Boilerplate"),
+        "DONEXT Boilerplate API - Index"
+      )
     }
   }),
   (c) => {
-    return c.json({
-      message: "DONEXT Boilerplate API - Index"
-    });
+    return c.json(
+      {
+        message: "DONEXT Boilerplate API - Index"
+      },
+      HttpStatusCodes.OK
+    );
   }
 );
 
