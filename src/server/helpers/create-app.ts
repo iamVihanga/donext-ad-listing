@@ -5,10 +5,14 @@ import type { AppBindings } from "@/types/server";
 
 import { logger } from "@/server/middlewares/logger";
 
-export function createApp() {
-  const app = new OpenAPIHono<AppBindings>({
+export function createRouter() {
+  return new OpenAPIHono<AppBindings>({
     strict: false
-  }).basePath("/api");
+  });
+}
+
+export function createApp() {
+  const app = createRouter().basePath("/api");
 
   // logger Middleware
   app.use(logger());
