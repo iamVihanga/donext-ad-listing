@@ -1,9 +1,11 @@
-import { Hono } from "hono";
+import { createApp } from "@/server/helpers/create-app";
 
-import { authController } from "./routes/auth/auth.routes";
+// Routes
+import { authController } from "@/server/routes/auth/auth.routes";
 
-const app = new Hono().basePath("/api");
+const app = createApp();
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app.route("/auth", authController);
 //   .route("/private", privateRoutes);
 
