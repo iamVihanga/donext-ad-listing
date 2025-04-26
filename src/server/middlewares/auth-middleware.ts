@@ -16,5 +16,6 @@ export const serverAuthMiddleware = createMiddleware(async (c, next) => {
 
   c.set("user", session.user);
   c.set("session", session.session);
+
   return next();
 });

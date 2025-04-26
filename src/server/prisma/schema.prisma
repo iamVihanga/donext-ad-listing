@@ -16,7 +16,7 @@ datasource db {
 generator zod {
   provider         = "zod-prisma-types"
   output           = "../../types/schema-types"
-  useMultipleFiles = true
+  useMultipleFiles = false
 }
 
 model User {
