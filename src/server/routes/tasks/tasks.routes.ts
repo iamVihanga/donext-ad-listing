@@ -16,6 +16,7 @@ import {
   createMessageObjectSchema
 } from "stoker/openapi/schemas";
 import { notFoundSchema } from "@/server/helpers/constants";
+import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
 
 const tags = ["Tasks"];
 
@@ -45,6 +46,7 @@ export const create = createRoute({
   tags,
   path: "/",
   method: "post",
+  middleware: [serverAuthMiddleware],
   request: {
     body: jsonContentRequired(createTaskSchema, "The task to create")
   },
@@ -95,6 +97,7 @@ export const update = createRoute({
   tags,
   path: "/{id}",
   method: "put",
+  middleware: [serverAuthMiddleware],
   request: {
     params: IdParamsSchema,
     body: jsonContentRequired(updateTaskSchema, "Update task data")
@@ -119,6 +122,7 @@ export const remove = createRoute({
   tags,
   path: "/{id}",
   method: "delete",
+  middleware: [serverAuthMiddleware],
   request: {
     params: IdParamsSchema
   },
