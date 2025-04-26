@@ -2,16 +2,18 @@ import { z, ZodError } from "zod";
 
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
-  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]),
-  DATABASE_URL: z.string(),
-  BETTER_AUTH_SECRET: z.string(),
-  BETTER_AUTH_URL: z.string(),
-  NEXT_PUBLIC_API_URL: z.string()
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace"])
+    .default("info"),
+  DATABASE_URL: z.string().optional(),
+  BETTER_AUTH_SECRET: z.string().optional(),
+  BETTER_AUTH_URL: z.string().optional(),
+  NEXT_PUBLIC_API_URL: z.string().optional()
 });
 
 export type Env = z.infer<typeof EnvSchema>;
 
-let env: Env;
+let env: Env = EnvSchema.parse(process.env);
 
 try {
   env = EnvSchema.parse(process.env);

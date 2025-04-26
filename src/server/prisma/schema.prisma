@@ -138,3 +138,9 @@ model TwoFactor {
 
   @@map("twoFactor")
 }
+
+model Tasks {
+  id   String  @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  done Boolean @default(false)
+}

@@ -4,6 +4,7 @@
     "": {
       "name": "donext-boilerplate",
       "dependencies": {
+        "@asteasolutions/zod-to-openapi": "^7.3.0",
         "@hono/zod-openapi": "^0.19.5",
         "@hookform/resolvers": "^5.0.1",
         "@plaiceholder/next": "^3.0.0",
@@ -45,7 +46,7 @@
         "hono-pino": "^0.8.0",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.503.0",
-        "next": "15.3.1",
+        "next": "^15.3.1",
         "next-themes": "^0.4.6",
         "pino": "^9.6.0",
         "pino-pretty": "^13.0.0",

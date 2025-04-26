@@ -38,6 +38,11 @@ export { TwoFactorOrderByWithRelationInputSchema } from './TwoFactorOrderByWithR
 export { TwoFactorWhereUniqueInputSchema } from './TwoFactorWhereUniqueInputSchema';
 export { TwoFactorOrderByWithAggregationInputSchema } from './TwoFactorOrderByWithAggregationInputSchema';
 export { TwoFactorScalarWhereWithAggregatesInputSchema } from './TwoFactorScalarWhereWithAggregatesInputSchema';
+export { TasksWhereInputSchema } from './TasksWhereInputSchema';
+export { TasksOrderByWithRelationInputSchema } from './TasksOrderByWithRelationInputSchema';
+export { TasksWhereUniqueInputSchema } from './TasksWhereUniqueInputSchema';
+export { TasksOrderByWithAggregationInputSchema } from './TasksOrderByWithAggregationInputSchema';
+export { TasksScalarWhereWithAggregatesInputSchema } from './TasksScalarWhereWithAggregatesInputSchema';
 export { UserCreateInputSchema } from './UserCreateInputSchema';
 export { UserUncheckedCreateInputSchema } from './UserUncheckedCreateInputSchema';
 export { UserUpdateInputSchema } from './UserUpdateInputSchema';
@@ -94,6 +99,13 @@ export { TwoFactorUncheckedUpdateInputSchema } from './TwoFactorUncheckedUpdateI
 export { TwoFactorCreateManyInputSchema } from './TwoFactorCreateManyInputSchema';
 export { TwoFactorUpdateManyMutationInputSchema } from './TwoFactorUpdateManyMutationInputSchema';
 export { TwoFactorUncheckedUpdateManyInputSchema } from './TwoFactorUncheckedUpdateManyInputSchema';
+export { TasksCreateInputSchema } from './TasksCreateInputSchema';
+export { TasksUncheckedCreateInputSchema } from './TasksUncheckedCreateInputSchema';
+export { TasksUpdateInputSchema } from './TasksUpdateInputSchema';
+export { TasksUncheckedUpdateInputSchema } from './TasksUncheckedUpdateInputSchema';
+export { TasksCreateManyInputSchema } from './TasksCreateManyInputSchema';
+export { TasksUpdateManyMutationInputSchema } from './TasksUpdateManyMutationInputSchema';
+export { TasksUncheckedUpdateManyInputSchema } from './TasksUncheckedUpdateManyInputSchema';
 export { StringFilterSchema } from './StringFilterSchema';
 export { BoolFilterSchema } from './BoolFilterSchema';
 export { StringNullableFilterSchema } from './StringNullableFilterSchema';
@@ -142,6 +154,9 @@ export { InvitationMinOrderByAggregateInputSchema } from './InvitationMinOrderBy
 export { TwoFactorCountOrderByAggregateInputSchema } from './TwoFactorCountOrderByAggregateInputSchema';
 export { TwoFactorMaxOrderByAggregateInputSchema } from './TwoFactorMaxOrderByAggregateInputSchema';
 export { TwoFactorMinOrderByAggregateInputSchema } from './TwoFactorMinOrderByAggregateInputSchema';
+export { TasksCountOrderByAggregateInputSchema } from './TasksCountOrderByAggregateInputSchema';
+export { TasksMaxOrderByAggregateInputSchema } from './TasksMaxOrderByAggregateInputSchema';
+export { TasksMinOrderByAggregateInputSchema } from './TasksMinOrderByAggregateInputSchema';
 export { SessionCreateNestedManyWithoutUserInputSchema } from './SessionCreateNestedManyWithoutUserInputSchema';
 export { AccountCreateNestedManyWithoutUserInputSchema } from './AccountCreateNestedManyWithoutUserInputSchema';
 export { MemberCreateNestedManyWithoutUserInputSchema } from './MemberCreateNestedManyWithoutUserInputSchema';
@@ -343,5 +358,6 @@ export { OrganizationScalarFieldEnumSchema } from './OrganizationScalarFieldEnum
 export { MemberScalarFieldEnumSchema } from './MemberScalarFieldEnumSchema';
 export { InvitationScalarFieldEnumSchema } from './InvitationScalarFieldEnumSchema';
 export { TwoFactorScalarFieldEnumSchema } from './TwoFactorScalarFieldEnumSchema';
+export { TasksScalarFieldEnumSchema } from './TasksScalarFieldEnumSchema';
 export { SortOrderSchema } from './SortOrderSchema';
 export { QueryModeSchema } from './QueryModeSchema';

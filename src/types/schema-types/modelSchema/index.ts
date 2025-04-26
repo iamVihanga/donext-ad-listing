@@ -6,3 +6,4 @@ export * from './OrganizationSchema';
 export * from './MemberSchema';
 export * from './InvitationSchema';
 export * from './TwoFactorSchema';
+export * from './TasksSchema';
