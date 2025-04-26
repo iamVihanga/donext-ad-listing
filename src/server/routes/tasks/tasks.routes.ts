@@ -11,7 +11,10 @@ import {
   TasksSchema,
   TasksCreateInputSchema
 } from "@/types/schema-types/index";
-import { createErrorSchema } from "stoker/openapi/schemas";
+import {
+  createErrorSchema,
+  createMessageObjectSchema
+} from "stoker/openapi/schemas";
 import { notFoundSchema } from "@/server/helpers/constants";
 
 const tags = ["Tasks"];
@@ -49,6 +52,10 @@ export const create = createRoute({
     [HttpStatusCodes.CREATED]: jsonContent(
       createTaskSchema,
       "The created task"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(createTaskSchema),
@@ -94,6 +101,10 @@ export const update = createRoute({
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(TasksSchema, "The updated task"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContentOneOf(
       [createErrorSchema(updateTaskSchema), createErrorSchema(IdParamsSchema)],
       "The validation error(s)"
@@ -116,6 +127,10 @@ export const remove = createRoute({
       description: "Task deleted successfully"
     },
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Task not found"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(IdParamsSchema),
       "Invalid Id param"

@@ -17,8 +17,6 @@ const routes = app
   .route("/", rootRoute)
   .route("/tasks", tasksRoute);
 
-//   .route("/private", privateRoutes);
-
 export type AppType = typeof routes;
 
 export default app;

@@ -7,10 +7,12 @@ import type { AppBindings } from "@/types/server";
 import { logger } from "@/server/middlewares/logger";
 
 export function createRouter() {
-  return new OpenAPIHono<AppBindings>({
+  const newRouterInstance = new OpenAPIHono<AppBindings>({
     strict: false,
     defaultHook
   });
+
+  return newRouterInstance;
 }
 
 export function createApp() {
