@@ -3,9 +3,7 @@ import Image from "next/image";
 
 import LogoIpsum from "$/public/assets/logoipsum.svg";
 
-type Props = {};
-
-export function Logo({}: Props) {
+export function Logo() {
   return (
     <Image
       alt="logoipsum"
