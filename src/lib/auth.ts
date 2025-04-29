@@ -10,7 +10,6 @@ export const auth = betterAuth({
     provider: "mongodb"
   }),
   plugins: [organization(), twoFactor(), admin(), openAPI()],
-
   emailAndPassword: {
     enabled: true
   }
