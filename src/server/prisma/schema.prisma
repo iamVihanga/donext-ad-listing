@@ -19,6 +19,58 @@ generator zod {
   useMultipleFiles = false
 }
 
+// Enums for Ad Listing
+enum AdType {
+  PRODUCT
+  SERVICE
+  JOB
+  EVENT
+  REAL_ESTATE
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  PDF
+  OTHER
+}
+
+enum PaymentType {
+  BOOST
+  FEATURE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum AdStatus {
+  ACTIVE
+  EXPIRED
+  DRAFT
+  PENDING_REVIEW
+  REJECTED
+}
+
+enum NotificationType {
+  AD_EXPIRED
+  AD_FEATURED
+  MESSAGE
+  REFERRAL
+  REVIEW
+}
+
+enum SharePlatform {
+  FACEBOOK
+  TWITTER
+  WHATSAPP
+  LINKEDIN
+  COPY_LINK
+}
+
 model User {
   id               String       @id @map("_id")
   name             String
@@ -37,6 +89,18 @@ model User {
   members          Member[]
   invitations      Invitation[]
   twofactors       TwoFactor[]
+
+  // Ad listing relations
+  adsCreated       Ad[]               @relation("AdCreatedBy")
+  mediaUploaded    Media[]            @relation("MediaUploader") // New relation
+  payments         Payment[]
+  favorites        Favorite[]
+  savedSearches    SavedSearch[]
+  messagesSent     Message[]          @relation("MessagesSent")
+  messagesReceived Message[]          @relation("MessagesReceived")
+  notifications    UserNotification[]
+  reports          Report[]
+  auditLogs        AuditLog[]
 
   @@unique([email])
   @@map("user")
@@ -99,6 +163,10 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
+  // Ad listing relations
+  ads       Ad[]
+  auditLogs AuditLog[]
+
   @@unique([slug])
   @@map("organization")
 }
@@ -143,4 +211,235 @@ model Tasks {
   id   String  @id @default(auto()) @map("_id") @db.ObjectId
   name String
   done Boolean @default(false)
+}
+
+// Ad Listing Models
+
+model Ad {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id])
+  createdBy      String
+  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
+  title          String
+  description    String
+  type           AdType
+  published      Boolean      @default(false)
+  isDraft        Boolean      @default(false)
+  boosted        Boolean      @default(false)
+  featured       Boolean      @default(false)
+  boostExpiry    DateTime?
+  featureExpiry  DateTime?
+  status         AdStatus     @default(ACTIVE)
+  expiryDate     DateTime?
+  seoTitle       String?
+  seoDescription String?
+  seoSlug        String?
+  categoryId     String?
+  category       Category?    @relation(fields: [categoryId], references: [id])
+  tags           String[] // Store tag names directly for MongoDB
+  media          Media[]
+  detail         AdDetail?
+  analytics      AdAnalytics?
+  payments       Payment[]
+  favorites      Favorite[]
+  reports        Report[]
+  revisions      AdRevision[]
+  geoViews       GeoHeatmap[]
+  shareEvents    ShareEvent[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([seoSlug])
+  @@map("ad")
+}
+
+model AdDetail {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  adId     String  @unique
+  ad       Ad      @relation(fields: [adId], references: [id])
+  price    Float?
+  location String?
+  fields   Json // Custom fields specific to ad type
+
+  @@map("adDetail")
+}
+
+model AdRevision {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id])
+  version   Int
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@map("adRevision")
+}
+
+model AdAnalytics {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId        String   @unique
+  ad          Ad       @relation(fields: [adId], references: [id])
+  views       Int      @default(0)
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("adAnalytics")
+}
+
+model Category {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  slug String @unique
+  ads  Ad[]
+
+  @@map("category")
+}
+
+model Tag {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  slug String @unique
+
+  @@map("tag")
+}
+
+model Media {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  uploaderId String // New field - references user who uploaded the media
+  uploader   User      @relation("MediaUploader", fields: [uploaderId], references: [id])
+  adId       String? // Made optional - media can exist without being attached to an ad
+  ad         Ad?       @relation(fields: [adId], references: [id])
+  url        String
+  type       MediaType
+  filename   String?
+  size       Int?
+  order      Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@map("media")
+}
+
+model Payment {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad            @relation(fields: [adId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  type      PaymentType
+  status    PaymentStatus
+  amount    Float
+  sessionId String?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  @@map("payment")
+}
+
+model Favorite {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
+  adId   String
+  user   User   @relation(fields: [userId], references: [id])
+  ad     Ad     @relation(fields: [adId], references: [id])
+
+  @@map("favorite")
+}
+
+model SavedSearch {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  filters   Json
+  createdAt DateTime @default(now())
+
+  @@map("savedSearch")
+}
+
+model GeoHeatmap {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id])
+  lat       Float
+  lng       Float
+  country   String?
+  region    String?
+  city      String?
+  timestamp DateTime @default(now())
+
+  @@map("geoHeatmap")
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String
+  receiverId String
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  content    String
+  read       Boolean  @default(false)
+  adId       String? // Optional reference to ad being discussed
+  createdAt  DateTime @default(now())
+
+  @@map("message")
+}
+
+model UserNotification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  @@map("notification")
+}
+
+model ShareEvent {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad            @relation(fields: [adId], references: [id])
+  platform  SharePlatform
+  ipAddress String?
+  userAgent String?
+  sharedAt  DateTime      @default(now())
+
+  @@map("shareEvent")
+}
+
+model Report {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  adId      String
+  reporter  User     @relation(fields: [userId], references: [id])
+  ad        Ad       @relation(fields: [adId], references: [id])
+  reason    String
+  details   String?
+  status    String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  createdAt DateTime @default(now())
+
+  @@map("report")
+}
+
+model AuditLog {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?
+  orgId      String?
+  user       User?         @relation(fields: [userId], references: [id])
+  org        Organization? @relation(fields: [orgId], references: [id])
+  action     String
+  resource   String? // What was affected (ad, user, etc.)
+  resourceId String? // ID of the affected resource
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime      @default(now())
+
+  @@map("auditLog")
 }
