@@ -53,6 +53,7 @@ enum AdStatus {
   DRAFT
   PENDING_REVIEW
   REJECTED
+  DELETED
 }
 
 enum NotificationType {
@@ -61,6 +62,8 @@ enum NotificationType {
   MESSAGE
   REFERRAL
   REVIEW
+  AD_APPROVED
+  AD_REJECTED
 }
 
 enum SharePlatform {
@@ -71,28 +74,38 @@ enum SharePlatform {
   COPY_LINK
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+
 model User {
-  id               String       @id @map("_id")
-  name             String
-  email            String
-  emailVerified    Boolean
-  image            String?
-  createdAt        DateTime
-  updatedAt        DateTime
-  twoFactorEnabled Boolean?
-  role             String?
-  banned           Boolean?
-  banReason        String?
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  name             String    @db.String
+  email            String    @unique @db.String
+  emailVerified    Boolean   @default(false)
+  image            String?   @db.String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  twoFactorEnabled Boolean   @default(false)
+  role             UserRole  @default(USER)
+  banned           Boolean   @default(false)
+  banReason        String?   @db.String
   banExpires       DateTime?
+  deletedAt        DateTime? // Soft delete
+  
+  // Relations
   sessions         Session[]
   accounts         Account[]
   members          Member[]
   invitations      Invitation[]
   twofactors       TwoFactor[]
-
+  profile          UserProfile?
+  
   // Ad listing relations
   adsCreated       Ad[]               @relation("AdCreatedBy")
-  mediaUploaded    Media[]            @relation("MediaUploader") // New relation
+  mediaUploaded    Media[]            @relation("MediaUploader")
   payments         Payment[]
   favorites        Favorite[]
   savedSearches    SavedSearch[]
@@ -101,143 +114,192 @@ model User {
   notifications    UserNotification[]
   reports          Report[]
   auditLogs        AuditLog[]
+  adViews          AdView[]
+  activities       UserActivity[]
 
-  @@unique([email])
+  @@index([role])
+  @@index([banned])
+  @@index([createdAt])
   @@map("user")
 }
 
-model Session {
-  id                   String   @id @map("_id")
-  expiresAt            DateTime
-  token                String
-  createdAt            DateTime
-  updatedAt            DateTime
-  ipAddress            String?
-  userAgent            String?
-  userId               String
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activeOrganizationId String?
-  impersonatedBy       String?
+model UserProfile {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?  @db.String
+  location    String?  @db.String
+  website     String?  @db.String
+  phone       String?  @db.String
+  verified    Boolean  @default(false)
+  preferences Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@unique([token])
+  @@map("userProfile")
+}
+
+model Session {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  expiresAt            DateTime
+  token                String    @unique @db.String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  ipAddress            String?   @db.String
+  userAgent            String?   @db.String
+  userId               String    @db.ObjectId
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?   @db.ObjectId
+  impersonatedBy       String?   @db.ObjectId
+
+  @@index([userId])
+  @@index([expiresAt])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id @map("_id")
-  accountId             String
-  providerId            String
-  userId                String
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  accountId             String    @db.String
+  providerId            String    @db.String
+  userId                String    @db.ObjectId
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
+  accessToken           String?   @db.String
+  refreshToken          String?   @db.String
+  idToken               String?   @db.String
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
+  scope                 String?   @db.String
+  password              String?   @db.String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
+  @@index([userId])
+  @@index([providerId, accountId])
   @@map("account")
 }
 
 model Verification {
-  id         String    @id @map("_id")
-  identifier String
-  value      String
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String    @db.String
+  value      String    @db.String
   expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
+  @@index([identifier])
+  @@index([expiresAt])
   @@map("verification")
 }
 
 model Organization {
-  id          String       @id @map("_id")
-  name        String
-  slug        String?
-  logo        String?
-  createdAt   DateTime
-  metadata    String?
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String       @db.String
+  slug        String?      @unique @db.String
+  logo        String?      @db.String
+  description String?      @db.String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  metadata    Json?
+  active      Boolean      @default(true)
+  
+  // Relations
   members     Member[]
   invitations Invitation[]
+  ads         Ad[]
+  auditLogs   AuditLog[]
 
-  // Ad listing relations
-  ads       Ad[]
-  auditLogs AuditLog[]
-
-  @@unique([slug])
+  @@index([active])
   @@map("organization")
 }
 
 model Member {
-  id             String       @id @map("_id")
-  organizationId String
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String       @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String
+  userId         String       @db.ObjectId
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String
-  createdAt      DateTime
+  role           String       @db.String
+  createdAt      DateTime     @default(now())
 
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
   @@map("member")
 }
 
 model Invitation {
-  id             String       @id @map("_id")
-  organizationId String
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String       @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
-  role           String?
-  status         String
+  email          String       @db.String
+  role           String?      @db.String
+  status         String       @db.String
   expiresAt      DateTime
-  inviterId      String
+  inviterId      String       @db.ObjectId
   user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
 
+  @@index([organizationId])
+  @@index([email])
+  @@index([expiresAt])
   @@map("invitation")
 }
 
 model TwoFactor {
-  id          String @id @map("_id")
-  secret      String
-  backupCodes String
-  userId      String
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  secret      String @db.String
+  backupCodes String @db.String
+  userId      String @db.ObjectId
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("twoFactor")
 }
 
 model Tasks {
   id   String  @id @default(auto()) @map("_id") @db.ObjectId
-  name String
+  name String  @db.String
   done Boolean @default(false)
+
+  @@map("tasks")
 }
 
 // Ad Listing Models
 
 model Ad {
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  orgId          String
-  org            Organization @relation(fields: [orgId], references: [id])
-  createdBy      String
-  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
-  title          String
-  description    String
+  orgId          String       @db.ObjectId
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy      String       @db.ObjectId
+  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+  title          String       @db.String
+  description    String       @db.String
   type           AdType
   published      Boolean      @default(false)
-  isDraft        Boolean      @default(false)
+  isDraft        Boolean      @default(true)
   boosted        Boolean      @default(false)
   featured       Boolean      @default(false)
   boostExpiry    DateTime?
   featureExpiry  DateTime?
-  status         AdStatus     @default(ACTIVE)
+  status         AdStatus     @default(DRAFT)
   expiryDate     DateTime?
-  seoTitle       String?
-  seoDescription String?
-  seoSlug        String?
-  categoryId     String?
+  seoTitle       String?      @db.String
+  seoDescription String?      @db.String
+  seoSlug        String?      @unique @db.String
+  categoryId     String?      @db.ObjectId
   category       Category?    @relation(fields: [categoryId], references: [id])
-  tags           String[] // Store tag names directly for MongoDB
+  
+  // Soft delete
+  deletedAt      DateTime?
+  deletedBy      String?      @db.ObjectId
+  
+  // Moderation
+  moderatedAt    DateTime?
+  moderatedBy    String?      @db.ObjectId
+  moderationNotes String?     @db.String
+  
+  // Relations
+  tags           AdTag[]
   media          Media[]
   detail         AdDetail?
   analytics      AdAnalytics?
@@ -247,42 +309,54 @@ model Ad {
   revisions      AdRevision[]
   geoViews       GeoHeatmap[]
   shareEvents    ShareEvent[]
+  views          AdView[]
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  @@unique([seoSlug])
+  @@index([orgId, status, createdAt])
+  @@index([type, categoryId, status])
+  @@index([featured, boosted, createdAt])
+  @@index([createdBy])
+  @@index([status])
+  @@index([published])
+  @@index([expiryDate])
   @@map("ad")
 }
 
 model AdDetail {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  adId     String  @unique
-  ad       Ad      @relation(fields: [adId], references: [id])
+  adId     String  @unique @db.ObjectId
+  ad       Ad      @relation(fields: [adId], references: [id], onDelete: Cascade)
   price    Float?
-  location String?
-  fields   Json // Custom fields specific to ad type
+  currency String? @default("USD") @db.String
+  location String? @db.String
+  fields   Json    // Custom fields specific to ad type
 
   @@map("adDetail")
 }
 
 model AdRevision {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  adId      String
-  ad        Ad       @relation(fields: [adId], references: [id])
+  adId      String   @db.ObjectId
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
   version   Int
   data      Json
   createdAt DateTime @default(now())
 
+  @@index([adId, version])
   @@map("adRevision")
 }
 
 model AdAnalytics {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  adId        String   @unique
-  ad          Ad       @relation(fields: [adId], references: [id])
+  adId        String   @unique @db.ObjectId
+  ad          Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
   views       Int      @default(0)
   clicks      Int      @default(0)
   impressions Int      @default(0)
+  shares      Int      @default(0)
+  favorites   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -290,156 +364,258 @@ model AdAnalytics {
 }
 
 model Category {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String @unique
-  slug String @unique
-  ads  Ad[]
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String     @unique @db.String
+  slug        String     @unique @db.String
+  description String?    @db.String
+  parentId    String?    @db.ObjectId
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children    Category[] @relation("CategoryHierarchy")
+  ads         Ad[]
+  order       Int        @default(0)
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
+  @@index([parentId])
+  @@index([active, order])
   @@map("category")
 }
 
 model Tag {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String @unique
-  slug String @unique
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique @db.String
+  slug      String   @unique @db.String
+  color     String?  @db.String
+  ads       AdTag[]
+  count     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([active])
   @@map("tag")
+}
+
+model AdTag {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  adId  String @db.ObjectId
+  tagId String @db.ObjectId
+  ad    Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([adId, tagId])
+  @@index([adId])
+  @@index([tagId])
+  @@map("adTag")
 }
 
 model Media {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  uploaderId String // New field - references user who uploaded the media
-  uploader   User      @relation("MediaUploader", fields: [uploaderId], references: [id])
-  adId       String? // Made optional - media can exist without being attached to an ad
-  ad         Ad?       @relation(fields: [adId], references: [id])
-  url        String
+  uploaderId String    @db.ObjectId
+  uploader   User      @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  adId       String?   @db.ObjectId
+  ad         Ad?       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  url        String    @db.String
   type       MediaType
-  filename   String?
+  filename   String?   @db.String
   size       Int?
+  width      Int?
+  height     Int?
+  alt        String?   @db.String
   order      Int       @default(0)
+  active     Boolean   @default(true)
   createdAt  DateTime  @default(now())
 
+  @@index([uploaderId])
+  @@index([adId])
+  @@index([type])
   @@map("media")
 }
 
 model Payment {
   id        String        @id @default(auto()) @map("_id") @db.ObjectId
-  adId      String
-  ad        Ad            @relation(fields: [adId], references: [id])
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  adId      String        @db.ObjectId
+  ad        Ad            @relation(fields: [adId], references: [id], onDelete: Cascade)
+  userId    String        @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      PaymentType
   status    PaymentStatus
   amount    Float
-  sessionId String?
+  currency  String        @default("USD") @db.String
+  sessionId String?       @db.String
   metadata  Json?
   createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
+  @@index([adId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
   @@map("payment")
 }
 
 model Favorite {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String
-  adId   String
-  user   User   @relation(fields: [userId], references: [id])
-  ad     Ad     @relation(fields: [adId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  adId      String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
+  @@unique([userId, adId])
+  @@index([userId])
+  @@index([adId])
   @@map("favorite")
 }
 
 model SavedSearch {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  name      String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.String
   filters   Json
+  alerts    Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([userId])
   @@map("savedSearch")
+}
+
+model AdView {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String   @db.ObjectId
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?  @db.String
+  userAgent String?  @db.String
+  referrer  String?  @db.String
+  viewedAt  DateTime @default(now())
+
+  @@index([adId, viewedAt])
+  @@index([userId, viewedAt])
+  @@index([ipAddress])
+  @@map("adView")
 }
 
 model GeoHeatmap {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  adId      String
-  ad        Ad       @relation(fields: [adId], references: [id])
+  adId      String   @db.ObjectId
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
   lat       Float
   lng       Float
-  country   String?
-  region    String?
-  city      String?
+  country   String?  @db.String
+  region    String?  @db.String
+  city      String?  @db.String
   timestamp DateTime @default(now())
 
+  @@index([adId])
+  @@index([country, region, city])
   @@map("geoHeatmap")
 }
 
 model Message {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId   String
-  receiverId String
-  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
-  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
-  content    String
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String   @db.String
   read       Boolean  @default(false)
-  adId       String? // Optional reference to ad being discussed
+  adId       String?  @db.ObjectId
   createdAt  DateTime @default(now())
 
+  @@index([senderId, createdAt])
+  @@index([receiverId, createdAt])
+  @@index([adId])
   @@map("message")
 }
 
 model UserNotification {
   id        String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  user      User             @relation(fields: [userId], references: [id])
+  userId    String           @db.ObjectId
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
-  title     String
-  message   String
+  title     String           @db.String
+  message   String           @db.String
   read      Boolean          @default(false)
   data      Json?
   createdAt DateTime         @default(now())
 
+  @@index([userId, read])
+  @@index([type])
+  @@index([createdAt])
   @@map("notification")
 }
 
 model ShareEvent {
   id        String        @id @default(auto()) @map("_id") @db.ObjectId
-  adId      String
-  ad        Ad            @relation(fields: [adId], references: [id])
+  adId      String        @db.ObjectId
+  ad        Ad            @relation(fields: [adId], references: [id], onDelete: Cascade)
   platform  SharePlatform
-  ipAddress String?
-  userAgent String?
+  ipAddress String?       @db.String
+  userAgent String?       @db.String
   sharedAt  DateTime      @default(now())
 
+  @@index([adId])
+  @@index([platform])
+  @@index([sharedAt])
   @@map("shareEvent")
 }
 
 model Report {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  adId      String
-  reporter  User     @relation(fields: [userId], references: [id])
-  ad        Ad       @relation(fields: [adId], references: [id])
-  reason    String
-  details   String?
-  status    String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  userId    String   @db.ObjectId
+  adId      String   @db.ObjectId
+  reporter  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  reason    String   @db.String
+  details   String?  @db.String
+  status    String   @default("PENDING") @db.String // PENDING, REVIEWED, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([adId])
+  @@index([status])
+  @@map("report")
+}
+
+model UserActivity {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   @db.String // viewed_ad, searched, created_ad, etc.
+  resource  String?  @db.String // ad_id, search_term, etc.
+  metadata  Json?
+  ipAddress String?  @db.String
+  userAgent String?  @db.String
   createdAt DateTime @default(now())
 
-  @@map("report")
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("userActivity")
 }
 
 model AuditLog {
   id         String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String?
-  orgId      String?
-  user       User?         @relation(fields: [userId], references: [id])
-  org        Organization? @relation(fields: [orgId], references: [id])
-  action     String
-  resource   String? // What was affected (ad, user, etc.)
-  resourceId String? // ID of the affected resource
+  userId     String?       @db.ObjectId
+  orgId      String?       @db.ObjectId
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  org        Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  action     String        @db.String
+  resource   String?       @db.String // What was affected (ad, user, etc.)
+  resourceId String?       @db.String // ID of the affected resource
   metadata   Json?
-  ipAddress  String?
-  userAgent  String?
+  ipAddress  String?       @db.String
+  userAgent  String?       @db.String
   createdAt  DateTime      @default(now())
 
+  @@index([userId, createdAt])
+  @@index([orgId, createdAt])
+  @@index([action])
+  @@index([resource, resourceId])
   @@map("auditLog")
 }
