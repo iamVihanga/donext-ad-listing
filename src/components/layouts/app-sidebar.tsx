@@ -13,6 +13,7 @@ import { auth, type Session } from "@/lib/auth";
 
 import { ScrollArea } from "../ui/scroll-area";
 import AppSidebarContent from "./app-sidebar-content";
+import { NurserySwitcher } from "@/features/agents/components/nursery-switcher";
 
 export async function AppSidebar({
   ...props
@@ -24,8 +25,8 @@ export async function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {/* <NurserySwitcher /> */}
-        <p>OrgSwitcher</p>
+        <NurserySwitcher />
+        {/* <p>OrgSwitcher</p> */}
       </SidebarHeader>
 
       <ScrollArea className="flex-1">
