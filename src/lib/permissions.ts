@@ -1,24 +1,28 @@
 import { createAccessControl } from "better-auth/plugins/access";
+import {
+  defaultStatements,
+  adminAc,
+  memberAc,
+  ownerAc
+} from "better-auth/plugins/organization/access";
 
+/**
+ * make sure to use `as const` so typescript can infer the type correctly
+ */
 const statement = {
-  project: ["create", "share", "update", "delete"]
+  ...defaultStatements
 } as const;
 
-const ac = createAccessControl(statement);
+export const ac = createAccessControl(statement);
 
-const member = ac.newRole({
-  project: ["create"]
+export const member = ac.newRole({
+  ...memberAc.statements
 });
 
-const admin = ac.newRole({
-  project: ["create", "update"]
+export const admin = ac.newRole({
+  ...adminAc.statements
 });
 
-const owner = ac.newRole({
-  project: ["create", "update", "delete"]
-});
-
-const myCustomRole = ac.newRole({
-  project: ["create", "update", "delete"],
-  organization: ["update"]
+export const owner = ac.newRole({
+  ...ownerAc.statements
 });

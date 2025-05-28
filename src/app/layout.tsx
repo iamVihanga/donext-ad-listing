@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${fontHeading.variable} ${fontSans.variable} antialiased`}
+        className={`${fontHeading.variable} ${fontSans.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

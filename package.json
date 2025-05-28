@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate --schema src/server/prisma/schema.prisma",
-    "prisma:studio": "prisma studio --schema src/server/prisma/schema.prisma"
+    "prisma:studio": "prisma studio --schema src/server/prisma/schema.prisma",
+    "db:push": "prisma db push --schema src/server/prisma/schema.prisma"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

@@ -46,7 +46,7 @@ export const create = createRoute({
   tags,
   path: "/",
   method: "post",
-  middleware: [serverAuthMiddleware],
+  // middleware: [serverAuthMiddleware],
   request: {
     body: jsonContentRequired(createTaskSchema, "The task to create")
   },
