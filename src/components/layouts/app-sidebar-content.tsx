@@ -19,7 +19,8 @@ import {
   BadgeAlert,
   UsersRoundIcon,
   StoreIcon,
-  ImageIcon
+  ImageIcon,
+  NewspaperIcon,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -98,7 +99,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
       {
         title: "Ads",
         url: "/dashboard/ads",
-        icon: StoreIcon,
+        icon: NewspaperIcon,
         roles: ["owner", "admin", "member"]
       },
       {
