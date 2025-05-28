@@ -3,8 +3,9 @@ import { configureOpenAPI } from "@/server/helpers/configure-open-api";
 
 // Routes
 import { authController } from "@/server/routes/auth/auth.routes";
-import rootRoute from "@/server/routes/root/index.route"; // Test Purpose
-import tasksRoute from "@/server/routes/tasks/tasks.index"; // Test Purpose
+import rootRoute from "@/server/routes/root/index.route";
+import tasksRoute from "@/server/routes/tasks/tasks.index";
+import adRoute from "@/server/routes/ad/ad.index";
 
 const app = createApp();
 
@@ -15,7 +16,8 @@ configureOpenAPI(app);
 const routes = app
   .route("/auth", authController)
   .route("/", rootRoute)
-  .route("/tasks", tasksRoute);
+  .route("/tasks", tasksRoute)
+  .route("/ad", adRoute);
 
 export type AppType = typeof routes;
 
