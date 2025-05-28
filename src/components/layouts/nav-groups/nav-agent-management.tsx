@@ -13,7 +13,7 @@ import {
   SidebarMenuItem
 } from "@/components/ui/sidebar";
 
-export function NavNurseryManagement({
+export function NavAgentManagement({
   cmLinks,
   activeMemberRole
 }: {
@@ -37,7 +37,7 @@ export function NavNurseryManagement({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Nursery Management</SidebarGroupLabel>
+      <SidebarGroupLabel>Agent Management</SidebarGroupLabel>
       <SidebarMenu>
         {cmLinks.map((item) => {
           const isPublic = !item?.roles;

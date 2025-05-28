@@ -23,14 +23,14 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function NurserySwitcher() {
+export function AgentSwitcher() {
   const toastId = useId();
   const { isMobile } = useSidebar();
   const [mounted, setMounted] = useState(false);
 
-  const { data: activeNursery, isPending: isPendingActiveNursery } =
+  const { data: activeAgent, isPending: isPendingActiveAgent } =
     authClient.useActiveOrganization();
-  const { data: allNurseries, isPending: isPendingAllNurseries } =
+  const { data: allAgents, isPending: isPendingAllAgents } =
     authClient.useListOrganizations();
 
   // Prevent hydration mismatch
@@ -56,20 +56,20 @@ export function NurserySwitcher() {
     );
   }
 
-  const handleSetActiveNursery = async (id: string) => {
+  const handleSetActiveAgent = async (id: string) => {
     await authClient.organization.setActive(
       {
         organizationId: id
       },
       {
         onRequest() {
-          toast.loading("Switching nursery...", { id: toastId });
+          toast.loading("Switching agent...", { id: toastId });
         },
         onSuccess() {
-          toast.success("Switched to nursery successfully!", { id: toastId });
+          toast.success("Switched to Agent successfully!", { id: toastId });
         },
         onError({ error }) {
-          toast.error(error.message || "Failed to switch nursery", {
+          toast.error(error.message || "Failed to switch Agent", {
             id: toastId
           });
         }
@@ -78,7 +78,7 @@ export function NurserySwitcher() {
   };
 
   const renderActiveClassContent = () => {
-    if (isPendingActiveNursery) {
+    if (isPendingActiveAgent) {
       return (
         <div className="flex w-full items-center gap-2 p-2">
           <Skeleton className="aspect-square size-8 rounded-lg" />
@@ -91,7 +91,7 @@ export function NurserySwitcher() {
       );
     }
 
-    if (!activeNursery) {
+    if (!activeAgent) {
       return (
         <SidebarMenuButton
           size="lg"
@@ -101,7 +101,7 @@ export function NurserySwitcher() {
             <GraduationCap className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Select a nursery</span>
+            <span className="truncate font-semibold">Select an Agent</span>
           </div>
           <ChevronsUpDown className="ml-auto" />
         </SidebarMenuButton>
@@ -113,25 +113,25 @@ export function NurserySwitcher() {
         size="lg"
         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
       >
-        {activeNursery?.logo ? (
+        {activeAgent?.logo ? (
           <Image
-            alt={activeNursery.name}
-            src={activeNursery.logo}
+            alt={activeAgent.name}
+            src={activeAgent.logo}
             width={50}
             height={50}
             className="flex aspect-square size-8 rounded-lg object-cover"
           />
         ) : (
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            {activeNursery?.name.slice(0, 2)}
+            {activeAgent?.name.slice(0, 2)}
           </div>
         )}
 
         <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate font-semibold">{activeNursery?.name}</span>
+          <span className="truncate font-semibold">{activeAgent?.name}</span>
           <span className="truncate text-xs text-foreground/60">
-            {activeNursery?.metadata &&
-              JSON.parse(activeNursery?.metadata)?.description}
+            {activeAgent?.metadata &&
+              JSON.parse(activeAgent?.metadata)?.description}
           </span>
         </div>
         <ChevronsUpDown className="ml-auto" />
@@ -154,29 +154,29 @@ export function NurserySwitcher() {
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Nurseries
+              Agents
             </DropdownMenuLabel>
-            {!isPendingAllNurseries && allNurseries ? (
-              allNurseries.map((nursery) => (
+            {!isPendingAllAgents && allAgents ? (
+              allAgents.map((agent) => (
                 <DropdownMenuItem
-                  key={nursery.id}
-                  onClick={() => handleSetActiveNursery(nursery.id)}
+                  key={agent.id}
+                  onClick={() => handleSetActiveAgent(agent.id)}
                   className="gap-2 p-2"
                 >
-                  {nursery?.logo ? (
+                  {agent?.logo ? (
                     <Image
-                      alt={nursery.name}
-                      src={nursery.logo}
+                      alt={agent.name}
+                      src={agent.logo}
                       width={50}
                       height={50}
                       className="flex aspect-square size-6 rounded-lg object-cover"
                     />
                   ) : (
                     <div className="flex size-6 items-center justify-center rounded-sm border">
-                      {nursery?.name.slice(0, 2)}
+                      {agent?.name.slice(0, 2)}
                     </div>
                   )}
-                  {nursery.name}
+                  {agent.name}
                 </DropdownMenuItem>
               ))
             ) : (
@@ -204,7 +204,7 @@ export function NurserySwitcher() {
                   <CogIcon className="size-4" />
                 </div>
                 <div className="font-medium text-muted-foreground">
-                  Manage Nurseries
+                  Manage Agents
                 </div>
               </Link>
             </DropdownMenuItem>
