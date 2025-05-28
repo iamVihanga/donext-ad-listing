@@ -16,12 +16,16 @@ import {
   SmileIcon,
   School,
   FileBadge2Icon,
-  BadgeAlert
+  BadgeAlert,
+  UsersRoundIcon,
+  StoreIcon,
+  ImageIcon,
+  NewspaperIcon,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
 import { NavMain } from "@/components/layouts/nav-groups/nav-main";
-import { NavNurseryManagement } from "./nav-groups/nav-nursery-management";
+import { NavAgentManagement } from "./nav-groups/nav-agent-management";
 import { NavContent } from "./nav-groups/nav-content";
 import { NavSettings } from "./nav-groups/nav-settings";
 import { authClient } from "@/lib/auth-client";
@@ -65,12 +69,12 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: LayoutDashboard
       },
       {
-        title: "Nurseries",
-        url: "/dashboard/nurseries",
-        icon: School2Icon
+        title: "Agents",
+        url: "/dashboard/agents",
+        icon: UsersRoundIcon
       }
     ],
-    nurseryManagement: [
+    agentManagement: [
       {
         name: "Admins", // Nursery Admins
         url: "/dashboard/admins",
@@ -93,29 +97,29 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getContents: (isAdmin: boolean) => [
       {
-        title: "Children",
-        url: "/dashboard/children",
-        icon: SmileIcon,
+        title: "Ads",
+        url: "/dashboard/ads",
+        icon: NewspaperIcon,
         roles: ["owner", "admin", "member"]
       },
       {
-        title: "Classes",
-        url: "/dashboard/classes",
-        icon: School,
+        title: "Users",
+        url: "/dashboard/users",
+        icon: UsersIcon,
         roles: ["owner", "admin"]
       },
       {
-        title: "Badges",
-        url: "/dashboard/badges",
-        icon: FileBadge2Icon,
+        title: "Media",
+        url: "/dashboard/media",
+        icon: ImageIcon,
         roles: ["owner", "admin"]
       },
-      {
-        title: "Feedbacks",
-        url: "/dashboard/feedbacks",
-        icon: BadgeAlert,
-        roles: ["owner", "admin"]
-      }
+      // {
+      //   title: "Feedbacks",
+      //   url: "/dashboard/feedbacks",
+      //   icon: BadgeAlert,
+      //   roles: ["owner", "admin"]
+      // }
       // {
       //   title: "Materials",
       //   url: "/dashboard/materials",
@@ -170,8 +174,8 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
       <NavMain items={data.navMain} />
 
       {activeOrganization.data && activeMember?.role !== "member" && (
-        <NavNurseryManagement
-          cmLinks={data.nurseryManagement}
+        <NavAgentManagement
+          cmLinks={data.agentManagement}
           activeMemberRole={activeMember?.role || null}
         />
       )}
