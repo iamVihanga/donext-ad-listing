@@ -21,9 +21,43 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 // ---- Create Ads Handler ----
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const adDetails = c.req.valid("json");
+  const user = c.get("user");
+  const session = c.get("session");
+
+  if (!user) {
+    return c.json(
+      { message: HttpStatusPhrases.UNAUTHORIZED },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  if (!session?.activeOrganizationId) {
+    return c.json(
+      { message: "Active organization is required to create an ad." },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  // Prepare Seo slug based on title
+  let seoSlug = adDetails
+    .title!.toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  // Bind random suffix to seoSlug for ensure uniqueness
+  seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
 
   const createdAd = await prisma.ad.create({
-    data: adDetails
+    data: {
+      ...adDetails,
+      createdBy: user.id,
+      orgId: session.activeOrganizationId,
+      title: adDetails.title || "",
+      description: adDetails.description || "",
+      type: adDetails.type || "PRODUCT",
+      status: "DRAFT",
+      seoSlug: seoSlug
+    }
   });
 
   return c.json(createdAd, HttpStatusCodes.CREATED);

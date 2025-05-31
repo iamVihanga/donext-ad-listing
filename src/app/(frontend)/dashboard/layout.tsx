@@ -11,7 +11,7 @@ import {
 import { AppSidebar } from "@/components/layouts/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { LayoutBreadcrumb } from "@/components/layouts/layout-breadcrumb";
-import { FloatingGallery } from "@/modules/media/components/floating-gallery";
+// import { FloatingGallery } from "@/modules/media/components/floating-gallery";
 
 type Props = {
   children: React.ReactNode;
@@ -42,7 +42,7 @@ export default async function AuthLayout({ children }: Props) {
 
           {children}
 
-          <FloatingGallery />
+          {/* <FloatingGallery /> */}
         </SidebarInset>
       </SidebarProvider>
     </>
