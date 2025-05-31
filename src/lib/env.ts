@@ -8,7 +8,12 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().optional(),
   BETTER_AUTH_SECRET: z.string().optional(),
   BETTER_AUTH_URL: z.string().optional(),
-  NEXT_PUBLIC_API_URL: z.string().optional()
+  NEXT_PUBLIC_API_URL: z.string().optional(),
+
+  NEXT_PUBLIC_AWS_REGION: z.string().optional(),
+  NEXT_PUBLIC_AWS_ACCESS_KEY_ID: z.string().optional(),
+  NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  NEXT_PUBLIC_AWS_S3_BUCKET: z.string().optional()
 });
 
 export type Env = z.infer<typeof EnvSchema>;

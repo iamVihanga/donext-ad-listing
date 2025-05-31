@@ -238,7 +238,6 @@ model Ad {
   categoryId     String?
   category       Category?    @relation(fields: [categoryId], references: [id])
   tags           String[] // Store tag names directly for MongoDB
-  media          Media[]
   detail         AdDetail?
   analytics      AdAnalytics?
   payments       Payment[]
@@ -249,6 +248,8 @@ model Ad {
   shareEvents    ShareEvent[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  media AdMedia[]
 
   @@unique([seoSlug])
   @@map("ad")
@@ -308,16 +309,14 @@ model Tag {
 
 model Media {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  uploaderId String // New field - references user who uploaded the media
+  uploaderId String
   uploader   User      @relation("MediaUploader", fields: [uploaderId], references: [id])
-  adId       String? // Made optional - media can exist without being attached to an ad
-  ad         Ad?       @relation(fields: [adId], references: [id])
   url        String
   type       MediaType
   filename   String?
   size       Int?
-  order      Int       @default(0)
   createdAt  DateTime  @default(now())
+  ads        AdMedia[]
 
   @@map("media")
 }
@@ -442,4 +441,16 @@ model AuditLog {
   createdAt  DateTime      @default(now())
 
   @@map("auditLog")
+}
+
+model AdMedia {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  adId    String @db.ObjectId
+  mediaId String @db.ObjectId
+  ad      Ad     @relation(fields: [adId], references: [id])
+  media   Media  @relation(fields: [mediaId], references: [id])
+  order   Int    @default(0)
+
+  @@unique([adId, mediaId])
+  @@map("adMedia")
 }

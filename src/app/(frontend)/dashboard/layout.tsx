@@ -11,6 +11,7 @@ import {
 import { AppSidebar } from "@/components/layouts/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { LayoutBreadcrumb } from "@/components/layouts/layout-breadcrumb";
+import { FloatingGallery } from "@/modules/media/components/floating-gallery";
 
 type Props = {
   children: React.ReactNode;
@@ -33,11 +34,15 @@ export default async function AuthLayout({ children }: Props) {
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
 
-              <LayoutBreadcrumb />
+              <div className="flex-1 w-full">
+                <LayoutBreadcrumb />
+              </div>
             </div>
           </header>
 
           {children}
+
+          <FloatingGallery />
         </SidebarInset>
       </SidebarProvider>
     </>

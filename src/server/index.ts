@@ -6,6 +6,7 @@ import { authController } from "@/server/routes/auth/auth.routes";
 import rootRoute from "@/server/routes/root/index.route";
 import tasksRoute from "@/server/routes/tasks/tasks.index";
 import adRoute from "@/server/routes/ad/ad.index";
+import mediaRoute from "@/server/routes/media/media.index";
 
 const app = createApp();
 
@@ -14,10 +15,13 @@ configureOpenAPI(app);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
-  .route("/auth", authController)
   .route("/", rootRoute)
   .route("/tasks", tasksRoute)
-  .route("/ad", adRoute);
+
+  // Project Routes
+  .route("/auth", authController)
+  .route("/ad", adRoute)
+  .route("/media", mediaRoute);
 
 export type AppType = typeof routes;
 

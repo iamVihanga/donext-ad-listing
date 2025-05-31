@@ -84,7 +84,7 @@ export const CategoryScalarFieldEnumSchema = z.enum(['id','name','slug']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','name','slug']);
 
-export const MediaScalarFieldEnumSchema = z.enum(['id','uploaderId','adId','url','type','filename','size','order','createdAt']);
+export const MediaScalarFieldEnumSchema = z.enum(['id','uploaderId','url','type','filename','size','createdAt']);
 
 export const PaymentScalarFieldEnumSchema = z.enum(['id','adId','userId','type','status','amount','sessionId','metadata','createdAt']);
 
@@ -103,6 +103,8 @@ export const ShareEventScalarFieldEnumSchema = z.enum(['id','adId','platform','i
 export const ReportScalarFieldEnumSchema = z.enum(['id','userId','adId','reason','details','status','createdAt']);
 
 export const AuditLogScalarFieldEnumSchema = z.enum(['id','userId','orgId','action','resource','resourceId','metadata','ipAddress','userAgent','createdAt']);
+
+export const AdMediaScalarFieldEnumSchema = z.enum(['id','adId','mediaId','order']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -393,11 +395,9 @@ export const MediaSchema = z.object({
   type: MediaTypeSchema,
   id: z.string(),
   uploaderId: z.string(),
-  adId: z.string().nullable(),
   url: z.string(),
   filename: z.string().nullable(),
   size: z.number().int().nullable(),
-  order: z.number().int(),
   createdAt: z.coerce.date(),
 })
 
@@ -546,6 +546,19 @@ export const AuditLogSchema = z.object({
 })
 
 export type AuditLog = z.infer<typeof AuditLogSchema>
+
+/////////////////////////////////////////
+// AD MEDIA SCHEMA
+/////////////////////////////////////////
+
+export const AdMediaSchema = z.object({
+  id: z.string(),
+  adId: z.string(),
+  mediaId: z.string(),
+  order: z.number().int(),
+})
+
+export type AdMedia = z.infer<typeof AdMediaSchema>
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -812,13 +825,13 @@ export const AdCountOutputTypeArgsSchema: z.ZodType<Prisma.AdCountOutputTypeDefa
 }).strict();
 
 export const AdCountOutputTypeSelectSchema: z.ZodType<Prisma.AdCountOutputTypeSelect> = z.object({
-  media: z.boolean().optional(),
   payments: z.boolean().optional(),
   favorites: z.boolean().optional(),
   reports: z.boolean().optional(),
   revisions: z.boolean().optional(),
   geoViews: z.boolean().optional(),
   shareEvents: z.boolean().optional(),
+  media: z.boolean().optional(),
 }).strict();
 
 export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
@@ -846,7 +859,6 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   org: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
   creator: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   category: z.union([z.boolean(),z.lazy(() => CategoryArgsSchema)]).optional(),
-  media: z.union([z.boolean(),z.lazy(() => MediaArgsSchema)]).optional(),
   detail: z.union([z.boolean(),z.lazy(() => AdDetailArgsSchema)]).optional(),
   analytics: z.union([z.boolean(),z.lazy(() => AdAnalyticsArgsSchema)]).optional(),
   payments: z.union([z.boolean(),z.lazy(() => PaymentArgsSchema)]).optional(),
@@ -855,6 +867,7 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   revisions: z.union([z.boolean(),z.lazy(() => AdRevisionArgsSchema)]).optional(),
   geoViews: z.union([z.boolean(),z.lazy(() => GeoHeatmapArgsSchema)]).optional(),
   shareEvents: z.union([z.boolean(),z.lazy(() => ShareEventArgsSchema)]).optional(),
+  media: z.union([z.boolean(),z.lazy(() => AdMediaArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => AdCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
@@ -971,18 +984,25 @@ export const MediaArgsSchema: z.ZodType<Prisma.MediaDefaultArgs> = z.object({
   include: z.lazy(() => MediaIncludeSchema).optional(),
 }).strict();
 
+export const MediaCountOutputTypeArgsSchema: z.ZodType<Prisma.MediaCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => MediaCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const MediaCountOutputTypeSelectSchema: z.ZodType<Prisma.MediaCountOutputTypeSelect> = z.object({
+  ads: z.boolean().optional(),
+}).strict();
+
 export const MediaSelectSchema: z.ZodType<Prisma.MediaSelect> = z.object({
   id: z.boolean().optional(),
   uploaderId: z.boolean().optional(),
-  adId: z.boolean().optional(),
   url: z.boolean().optional(),
   type: z.boolean().optional(),
   filename: z.boolean().optional(),
   size: z.boolean().optional(),
-  order: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   uploader: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
-  ad: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
+  ads: z.union([z.boolean(),z.lazy(() => AdMediaArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => MediaCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
 // PAYMENT
@@ -1186,6 +1206,26 @@ export const AuditLogSelectSchema: z.ZodType<Prisma.AuditLogSelect> = z.object({
   createdAt: z.boolean().optional(),
   user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   org: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
+}).strict()
+
+// AD MEDIA
+//------------------------------------------------------
+
+export const AdMediaIncludeSchema: z.ZodType<Prisma.AdMediaInclude> = z.object({
+}).strict()
+
+export const AdMediaArgsSchema: z.ZodType<Prisma.AdMediaDefaultArgs> = z.object({
+  select: z.lazy(() => AdMediaSelectSchema).optional(),
+  include: z.lazy(() => AdMediaIncludeSchema).optional(),
+}).strict();
+
+export const AdMediaSelectSchema: z.ZodType<Prisma.AdMediaSelect> = z.object({
+  id: z.boolean().optional(),
+  adId: z.boolean().optional(),
+  mediaId: z.boolean().optional(),
+  order: z.boolean().optional(),
+  ad: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
+  media: z.union([z.boolean(),z.lazy(() => MediaArgsSchema)]).optional(),
 }).strict()
 
 
@@ -1926,7 +1966,6 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema),z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema),z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
-  media: z.lazy(() => MediaListRelationFilterSchema).optional(),
   detail: z.union([ z.lazy(() => AdDetailNullableScalarRelationFilterSchema),z.lazy(() => AdDetailWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema),z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
@@ -1934,7 +1973,8 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   reports: z.lazy(() => ReportListRelationFilterSchema).optional(),
   revisions: z.lazy(() => AdRevisionListRelationFilterSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapListRelationFilterSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventListRelationFilterSchema).optional()
+  shareEvents: z.lazy(() => ShareEventListRelationFilterSchema).optional(),
+  media: z.lazy(() => AdMediaListRelationFilterSchema).optional()
 }).strict();
 
 export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRelationInput> = z.object({
@@ -1962,7 +2002,6 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   org: z.lazy(() => OrganizationOrderByWithRelationInputSchema).optional(),
   creator: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
   category: z.lazy(() => CategoryOrderByWithRelationInputSchema).optional(),
-  media: z.lazy(() => MediaOrderByRelationAggregateInputSchema).optional(),
   detail: z.lazy(() => AdDetailOrderByWithRelationInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsOrderByWithRelationInputSchema).optional(),
   payments: z.lazy(() => PaymentOrderByRelationAggregateInputSchema).optional(),
@@ -1970,7 +2009,8 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   reports: z.lazy(() => ReportOrderByRelationAggregateInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionOrderByRelationAggregateInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapOrderByRelationAggregateInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventOrderByRelationAggregateInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventOrderByRelationAggregateInputSchema).optional(),
+  media: z.lazy(() => AdMediaOrderByRelationAggregateInputSchema).optional()
 }).strict();
 
 export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.union([
@@ -2013,7 +2053,6 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema),z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema),z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
-  media: z.lazy(() => MediaListRelationFilterSchema).optional(),
   detail: z.union([ z.lazy(() => AdDetailNullableScalarRelationFilterSchema),z.lazy(() => AdDetailWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema),z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
@@ -2021,7 +2060,8 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   reports: z.lazy(() => ReportListRelationFilterSchema).optional(),
   revisions: z.lazy(() => AdRevisionListRelationFilterSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapListRelationFilterSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventListRelationFilterSchema).optional()
+  shareEvents: z.lazy(() => ShareEventListRelationFilterSchema).optional(),
+  media: z.lazy(() => AdMediaListRelationFilterSchema).optional()
 }).strict());
 
 export const AdOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdOrderByWithAggregationInput> = z.object({
@@ -2435,29 +2475,25 @@ export const MediaWhereInputSchema: z.ZodType<Prisma.MediaWhereInput> = z.object
   NOT: z.union([ z.lazy(() => MediaWhereInputSchema),z.lazy(() => MediaWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   uploaderId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   url: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumMediaTypeFilterSchema),z.lazy(() => MediaTypeSchema) ]).optional(),
   filename: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   size: z.union([ z.lazy(() => IntNullableFilterSchema),z.number() ]).optional().nullable(),
-  order: z.union([ z.lazy(() => IntFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   uploader: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
-  ad: z.union([ z.lazy(() => AdNullableScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional().nullable(),
+  ads: z.lazy(() => AdMediaListRelationFilterSchema).optional()
 }).strict();
 
 export const MediaOrderByWithRelationInputSchema: z.ZodType<Prisma.MediaOrderByWithRelationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   uploaderId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
   url: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
   filename: z.lazy(() => SortOrderSchema).optional(),
   size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   uploader: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
-  ad: z.lazy(() => AdOrderByWithRelationInputSchema).optional()
+  ads: z.lazy(() => AdMediaOrderByRelationAggregateInputSchema).optional()
 }).strict();
 
 export const MediaWhereUniqueInputSchema: z.ZodType<Prisma.MediaWhereUniqueInput> = z.object({
@@ -2469,26 +2505,22 @@ export const MediaWhereUniqueInputSchema: z.ZodType<Prisma.MediaWhereUniqueInput
   OR: z.lazy(() => MediaWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => MediaWhereInputSchema),z.lazy(() => MediaWhereInputSchema).array() ]).optional(),
   uploaderId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   url: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumMediaTypeFilterSchema),z.lazy(() => MediaTypeSchema) ]).optional(),
   filename: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   size: z.union([ z.lazy(() => IntNullableFilterSchema),z.number().int() ]).optional().nullable(),
-  order: z.union([ z.lazy(() => IntFilterSchema),z.number().int() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   uploader: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
-  ad: z.union([ z.lazy(() => AdNullableScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional().nullable(),
+  ads: z.lazy(() => AdMediaListRelationFilterSchema).optional()
 }).strict());
 
 export const MediaOrderByWithAggregationInputSchema: z.ZodType<Prisma.MediaOrderByWithAggregationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   uploaderId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
   url: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
   filename: z.lazy(() => SortOrderSchema).optional(),
   size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => MediaCountOrderByAggregateInputSchema).optional(),
   _avg: z.lazy(() => MediaAvgOrderByAggregateInputSchema).optional(),
@@ -2503,12 +2535,10 @@ export const MediaScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.MediaSc
   NOT: z.union([ z.lazy(() => MediaScalarWhereWithAggregatesInputSchema),z.lazy(() => MediaScalarWhereWithAggregatesInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   uploaderId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   url: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumMediaTypeWithAggregatesFilterSchema),z.lazy(() => MediaTypeSchema) ]).optional(),
   filename: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   size: z.union([ z.lazy(() => IntNullableWithAggregatesFilterSchema),z.number() ]).optional().nullable(),
-  order: z.union([ z.lazy(() => IntWithAggregatesFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
@@ -3141,6 +3171,74 @@ export const AuditLogScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Audi
   ipAddress: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   userAgent: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+}).strict();
+
+export const AdMediaWhereInputSchema: z.ZodType<Prisma.AdMediaWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => AdMediaWhereInputSchema),z.lazy(() => AdMediaWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AdMediaWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AdMediaWhereInputSchema),z.lazy(() => AdMediaWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  mediaId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntFilterSchema),z.number() ]).optional(),
+  ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
+  media: z.union([ z.lazy(() => MediaScalarRelationFilterSchema),z.lazy(() => MediaWhereInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaOrderByWithRelationInputSchema: z.ZodType<Prisma.AdMediaOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  mediaId: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  ad: z.lazy(() => AdOrderByWithRelationInputSchema).optional(),
+  media: z.lazy(() => MediaOrderByWithRelationInputSchema).optional()
+}).strict();
+
+export const AdMediaWhereUniqueInputSchema: z.ZodType<Prisma.AdMediaWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    adId_mediaId: z.lazy(() => AdMediaAdIdMediaIdCompoundUniqueInputSchema)
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    adId_mediaId: z.lazy(() => AdMediaAdIdMediaIdCompoundUniqueInputSchema),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  adId_mediaId: z.lazy(() => AdMediaAdIdMediaIdCompoundUniqueInputSchema).optional(),
+  AND: z.union([ z.lazy(() => AdMediaWhereInputSchema),z.lazy(() => AdMediaWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AdMediaWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AdMediaWhereInputSchema),z.lazy(() => AdMediaWhereInputSchema).array() ]).optional(),
+  adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  mediaId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntFilterSchema),z.number().int() ]).optional(),
+  ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
+  media: z.union([ z.lazy(() => MediaScalarRelationFilterSchema),z.lazy(() => MediaWhereInputSchema) ]).optional(),
+}).strict());
+
+export const AdMediaOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdMediaOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  mediaId: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => AdMediaCountOrderByAggregateInputSchema).optional(),
+  _avg: z.lazy(() => AdMediaAvgOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => AdMediaMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => AdMediaMinOrderByAggregateInputSchema).optional(),
+  _sum: z.lazy(() => AdMediaSumOrderByAggregateInputSchema).optional()
+}).strict();
+
+export const AdMediaScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdMediaScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => AdMediaScalarWhereWithAggregatesInputSchema),z.lazy(() => AdMediaScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AdMediaScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AdMediaScalarWhereWithAggregatesInputSchema),z.lazy(() => AdMediaScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  adId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  mediaId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntWithAggregatesFilterSchema),z.number() ]).optional(),
 }).strict();
 
 export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object({
@@ -3849,7 +3947,6 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
@@ -3857,7 +3954,8 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInput> = z.object({
@@ -3882,7 +3980,6 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -3890,7 +3987,8 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
@@ -3914,7 +4012,6 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -3922,7 +4019,8 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInput> = z.object({
@@ -3946,7 +4044,6 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -3954,7 +4051,8 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdCreateManyInputSchema: z.ZodType<Prisma.AdCreateManyInput> = z.object({
@@ -4277,22 +4375,20 @@ export const MediaCreateInputSchema: z.ZodType<Prisma.MediaCreateInput> = z.obje
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
   createdAt: z.coerce.date().optional(),
   uploader: z.lazy(() => UserCreateNestedOneWithoutMediaUploadedInputSchema),
-  ad: z.lazy(() => AdCreateNestedOneWithoutMediaInputSchema).optional()
+  ads: z.lazy(() => AdMediaCreateNestedManyWithoutMediaInputSchema).optional()
 }).strict();
 
 export const MediaUncheckedCreateInputSchema: z.ZodType<Prisma.MediaUncheckedCreateInput> = z.object({
   id: z.string().optional(),
   uploaderId: z.string(),
-  adId: z.string().optional().nullable(),
   url: z.string(),
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
-  createdAt: z.coerce.date().optional()
+  createdAt: z.coerce.date().optional(),
+  ads: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutMediaInputSchema).optional()
 }).strict();
 
 export const MediaUpdateInputSchema: z.ZodType<Prisma.MediaUpdateInput> = z.object({
@@ -4300,32 +4396,28 @@ export const MediaUpdateInputSchema: z.ZodType<Prisma.MediaUpdateInput> = z.obje
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   uploader: z.lazy(() => UserUpdateOneRequiredWithoutMediaUploadedNestedInputSchema).optional(),
-  ad: z.lazy(() => AdUpdateOneWithoutMediaNestedInputSchema).optional()
+  ads: z.lazy(() => AdMediaUpdateManyWithoutMediaNestedInputSchema).optional()
 }).strict();
 
 export const MediaUncheckedUpdateInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateInput> = z.object({
   uploaderId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  adId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  ads: z.lazy(() => AdMediaUncheckedUpdateManyWithoutMediaNestedInputSchema).optional()
 }).strict();
 
 export const MediaCreateManyInputSchema: z.ZodType<Prisma.MediaCreateManyInput> = z.object({
   id: z.string().optional(),
   uploaderId: z.string(),
-  adId: z.string().optional().nullable(),
   url: z.string(),
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
   createdAt: z.coerce.date().optional()
 }).strict();
 
@@ -4334,18 +4426,15 @@ export const MediaUpdateManyMutationInputSchema: z.ZodType<Prisma.MediaUpdateMan
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const MediaUncheckedUpdateManyInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateManyInput> = z.object({
   uploaderId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  adId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
@@ -4927,6 +5016,49 @@ export const AuditLogUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AuditLogUn
   ipAddress: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   userAgent: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaCreateInputSchema: z.ZodType<Prisma.AdMediaCreateInput> = z.object({
+  id: z.string().optional(),
+  order: z.number().int().optional(),
+  ad: z.lazy(() => AdCreateNestedOneWithoutMediaInputSchema),
+  media: z.lazy(() => MediaCreateNestedOneWithoutAdsInputSchema)
+}).strict();
+
+export const AdMediaUncheckedCreateInputSchema: z.ZodType<Prisma.AdMediaUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  adId: z.string(),
+  mediaId: z.string(),
+  order: z.number().int().optional()
+}).strict();
+
+export const AdMediaUpdateInputSchema: z.ZodType<Prisma.AdMediaUpdateInput> = z.object({
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  ad: z.lazy(() => AdUpdateOneRequiredWithoutMediaNestedInputSchema).optional(),
+  media: z.lazy(() => MediaUpdateOneRequiredWithoutAdsNestedInputSchema).optional()
+}).strict();
+
+export const AdMediaUncheckedUpdateInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateInput> = z.object({
+  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  mediaId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaCreateManyInputSchema: z.ZodType<Prisma.AdMediaCreateManyInput> = z.object({
+  id: z.string().optional(),
+  adId: z.string(),
+  mediaId: z.string(),
+  order: z.number().int().optional()
+}).strict();
+
+export const AdMediaUpdateManyMutationInputSchema: z.ZodType<Prisma.AdMediaUpdateManyMutationInput> = z.object({
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyInput> = z.object({
+  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  mediaId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
@@ -5561,6 +5693,12 @@ export const ShareEventListRelationFilterSchema: z.ZodType<Prisma.ShareEventList
   none: z.lazy(() => ShareEventWhereInputSchema).optional()
 }).strict();
 
+export const AdMediaListRelationFilterSchema: z.ZodType<Prisma.AdMediaListRelationFilter> = z.object({
+  every: z.lazy(() => AdMediaWhereInputSchema).optional(),
+  some: z.lazy(() => AdMediaWhereInputSchema).optional(),
+  none: z.lazy(() => AdMediaWhereInputSchema).optional()
+}).strict();
+
 export const AdRevisionOrderByRelationAggregateInputSchema: z.ZodType<Prisma.AdRevisionOrderByRelationAggregateInput> = z.object({
   _count: z.lazy(() => SortOrderSchema).optional()
 }).strict();
@@ -5570,6 +5708,10 @@ export const GeoHeatmapOrderByRelationAggregateInputSchema: z.ZodType<Prisma.Geo
 }).strict();
 
 export const ShareEventOrderByRelationAggregateInputSchema: z.ZodType<Prisma.ShareEventOrderByRelationAggregateInput> = z.object({
+  _count: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdMediaOrderByRelationAggregateInputSchema: z.ZodType<Prisma.AdMediaOrderByRelationAggregateInput> = z.object({
   _count: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
@@ -5894,55 +6036,42 @@ export const IntNullableFilterSchema: z.ZodType<Prisma.IntNullableFilter> = z.ob
   isSet: z.boolean().optional()
 }).strict();
 
-export const AdNullableScalarRelationFilterSchema: z.ZodType<Prisma.AdNullableScalarRelationFilter> = z.object({
-  is: z.lazy(() => AdWhereInputSchema).optional().nullable(),
-  isNot: z.lazy(() => AdWhereInputSchema).optional().nullable()
-}).strict();
-
 export const MediaCountOrderByAggregateInputSchema: z.ZodType<Prisma.MediaCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   uploaderId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
   url: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
   filename: z.lazy(() => SortOrderSchema).optional(),
   size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const MediaAvgOrderByAggregateInputSchema: z.ZodType<Prisma.MediaAvgOrderByAggregateInput> = z.object({
-  size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional()
+  size: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const MediaMaxOrderByAggregateInputSchema: z.ZodType<Prisma.MediaMaxOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   uploaderId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
   url: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
   filename: z.lazy(() => SortOrderSchema).optional(),
   size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const MediaMinOrderByAggregateInputSchema: z.ZodType<Prisma.MediaMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   uploaderId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
   url: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
   filename: z.lazy(() => SortOrderSchema).optional(),
   size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const MediaSumOrderByAggregateInputSchema: z.ZodType<Prisma.MediaSumOrderByAggregateInput> = z.object({
-  size: z.lazy(() => SortOrderSchema).optional(),
-  order: z.lazy(() => SortOrderSchema).optional()
+  size: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const EnumMediaTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumMediaTypeWithAggregatesFilter> = z.object({
@@ -6370,6 +6499,45 @@ export const AuditLogMinOrderByAggregateInputSchema: z.ZodType<Prisma.AuditLogMi
   ipAddress: z.lazy(() => SortOrderSchema).optional(),
   userAgent: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const MediaScalarRelationFilterSchema: z.ZodType<Prisma.MediaScalarRelationFilter> = z.object({
+  is: z.lazy(() => MediaWhereInputSchema).optional(),
+  isNot: z.lazy(() => MediaWhereInputSchema).optional()
+}).strict();
+
+export const AdMediaAdIdMediaIdCompoundUniqueInputSchema: z.ZodType<Prisma.AdMediaAdIdMediaIdCompoundUniqueInput> = z.object({
+  adId: z.string(),
+  mediaId: z.string()
+}).strict();
+
+export const AdMediaCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  mediaId: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdMediaAvgOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaAvgOrderByAggregateInput> = z.object({
+  order: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdMediaMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  mediaId: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdMediaMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  mediaId: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdMediaSumOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaSumOrderByAggregateInput> = z.object({
+  order: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const SessionCreateNestedManyWithoutUserInputSchema: z.ZodType<Prisma.SessionCreateNestedManyWithoutUserInput> = z.object({
@@ -7317,13 +7485,6 @@ export const CategoryCreateNestedOneWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional()
 }).strict();
 
-export const MediaCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.MediaCreateNestedManyWithoutAdInput> = z.object({
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaCreateWithoutAdInputSchema).array(),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => MediaCreateManyAdInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
 export const AdDetailCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdDetailCreateNestedOneWithoutAdInput> = z.object({
   create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => AdDetailCreateOrConnectWithoutAdInputSchema).optional(),
@@ -7378,11 +7539,11 @@ export const ShareEventCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.Sh
   connect: z.union([ z.lazy(() => ShareEventWhereUniqueInputSchema),z.lazy(() => ShareEventWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
-export const MediaUncheckedCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.MediaUncheckedCreateNestedManyWithoutAdInput> = z.object({
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaCreateWithoutAdInputSchema).array(),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => MediaCreateManyAdInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
+export const AdMediaCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.AdMediaCreateNestedManyWithoutAdInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaCreateWithoutAdInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyAdInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
 export const AdDetailUncheckedCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUncheckedCreateNestedOneWithoutAdInput> = z.object({
@@ -7439,6 +7600,13 @@ export const ShareEventUncheckedCreateNestedManyWithoutAdInputSchema: z.ZodType<
   connect: z.union([ z.lazy(() => ShareEventWhereUniqueInputSchema),z.lazy(() => ShareEventWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
+export const AdMediaUncheckedCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUncheckedCreateNestedManyWithoutAdInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaCreateWithoutAdInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyAdInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
 export const EnumAdTypeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumAdTypeFieldUpdateOperationsInput> = z.object({
   set: z.lazy(() => AdTypeSchema).optional()
 }).strict();
@@ -7476,20 +7644,6 @@ export const CategoryUpdateOneWithoutAdsNestedInputSchema: z.ZodType<Prisma.Cate
   delete: z.union([ z.boolean(),z.lazy(() => CategoryWhereInputSchema) ]).optional(),
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional(),
   update: z.union([ z.lazy(() => CategoryUpdateToOneWithWhereWithoutAdsInputSchema),z.lazy(() => CategoryUpdateWithoutAdsInputSchema),z.lazy(() => CategoryUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
-}).strict();
-
-export const MediaUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.MediaUpdateManyWithoutAdNestedInput> = z.object({
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaCreateWithoutAdInputSchema).array(),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => MediaUpsertWithWhereUniqueWithoutAdInputSchema),z.lazy(() => MediaUpsertWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => MediaCreateManyAdInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => MediaUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => MediaUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => MediaUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => MediaUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => MediaScalarWhereInputSchema),z.lazy(() => MediaScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const AdDetailUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdDetailUpdateOneWithoutAdNestedInput> = z.object({
@@ -7596,18 +7750,18 @@ export const ShareEventUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.Sh
   deleteMany: z.union([ z.lazy(() => ShareEventScalarWhereInputSchema),z.lazy(() => ShareEventScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const MediaUncheckedUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateManyWithoutAdNestedInput> = z.object({
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaCreateWithoutAdInputSchema).array(),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => MediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => MediaUpsertWithWhereUniqueWithoutAdInputSchema),z.lazy(() => MediaUpsertWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => MediaCreateManyAdInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => MediaWhereUniqueInputSchema),z.lazy(() => MediaWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => MediaUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => MediaUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => MediaUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => MediaUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => MediaScalarWhereInputSchema),z.lazy(() => MediaScalarWhereInputSchema).array() ]).optional(),
+export const AdMediaUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.AdMediaUpdateManyWithoutAdNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaCreateWithoutAdInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutAdInputSchema),z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyAdInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdDetailUncheckedUpdateOneWithoutAdNestedInput> = z.object({
@@ -7712,6 +7866,20 @@ export const ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema: z.ZodType<
   update: z.union([ z.lazy(() => ShareEventUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => ShareEventUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => ShareEventUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => ShareEventUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => ShareEventScalarWhereInputSchema),z.lazy(() => ShareEventScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyWithoutAdNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaCreateWithoutAdInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutAdInputSchema),z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyAdInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const AdCreateNestedOneWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutDetailInput> = z.object({
@@ -7821,10 +7989,18 @@ export const UserCreateNestedOneWithoutMediaUploadedInputSchema: z.ZodType<Prism
   connect: z.lazy(() => UserWhereUniqueInputSchema).optional()
 }).strict();
 
-export const AdCreateNestedOneWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutMediaInput> = z.object({
-  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutMediaInputSchema).optional(),
-  connect: z.lazy(() => AdWhereUniqueInputSchema).optional()
+export const AdMediaCreateNestedManyWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaCreateNestedManyWithoutMediaInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaCreateWithoutMediaInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyMediaInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedCreateNestedManyWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUncheckedCreateNestedManyWithoutMediaInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaCreateWithoutMediaInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyMediaInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
 export const EnumMediaTypeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumMediaTypeFieldUpdateOperationsInput> = z.object({
@@ -7848,14 +8024,32 @@ export const UserUpdateOneRequiredWithoutMediaUploadedNestedInputSchema: z.ZodTy
   update: z.union([ z.lazy(() => UserUpdateToOneWithWhereWithoutMediaUploadedInputSchema),z.lazy(() => UserUpdateWithoutMediaUploadedInputSchema),z.lazy(() => UserUncheckedUpdateWithoutMediaUploadedInputSchema) ]).optional(),
 }).strict();
 
-export const AdUpdateOneWithoutMediaNestedInputSchema: z.ZodType<Prisma.AdUpdateOneWithoutMediaNestedInput> = z.object({
-  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutMediaInputSchema).optional(),
-  upsert: z.lazy(() => AdUpsertWithoutMediaInputSchema).optional(),
-  disconnect: z.boolean().optional(),
-  delete: z.union([ z.boolean(),z.lazy(() => AdWhereInputSchema) ]).optional(),
-  connect: z.lazy(() => AdWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => AdUpdateToOneWithWhereWithoutMediaInputSchema),z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]).optional(),
+export const AdMediaUpdateManyWithoutMediaNestedInputSchema: z.ZodType<Prisma.AdMediaUpdateManyWithoutMediaNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaCreateWithoutMediaInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutMediaInputSchema),z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutMediaInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyMediaInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutMediaInputSchema),z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutMediaInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdMediaUpdateManyWithWhereWithoutMediaInputSchema),z.lazy(() => AdMediaUpdateManyWithWhereWithoutMediaInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedUpdateManyWithoutMediaNestedInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyWithoutMediaNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaCreateWithoutMediaInputSchema).array(),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutMediaInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutMediaInputSchema),z.lazy(() => AdMediaUpsertWithWhereUniqueWithoutMediaInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdMediaCreateManyMediaInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutMediaInputSchema),z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutMediaInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdMediaUpdateManyWithWhereWithoutMediaInputSchema),z.lazy(() => AdMediaUpdateManyWithWhereWithoutMediaInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const AdCreateNestedOneWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutPaymentsInput> = z.object({
@@ -8080,6 +8274,34 @@ export const OrganizationUpdateOneWithoutAuditLogsNestedInputSchema: z.ZodType<P
   delete: z.union([ z.boolean(),z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   connect: z.lazy(() => OrganizationWhereUniqueInputSchema).optional(),
   update: z.union([ z.lazy(() => OrganizationUpdateToOneWithWhereWithoutAuditLogsInputSchema),z.lazy(() => OrganizationUpdateWithoutAuditLogsInputSchema),z.lazy(() => OrganizationUncheckedUpdateWithoutAuditLogsInputSchema) ]).optional(),
+}).strict();
+
+export const AdCreateNestedOneWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutMediaInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutMediaInputSchema).optional(),
+  connect: z.lazy(() => AdWhereUniqueInputSchema).optional()
+}).strict();
+
+export const MediaCreateNestedOneWithoutAdsInputSchema: z.ZodType<Prisma.MediaCreateNestedOneWithoutAdsInput> = z.object({
+  create: z.union([ z.lazy(() => MediaCreateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => MediaCreateOrConnectWithoutAdsInputSchema).optional(),
+  connect: z.lazy(() => MediaWhereUniqueInputSchema).optional()
+}).strict();
+
+export const AdUpdateOneRequiredWithoutMediaNestedInputSchema: z.ZodType<Prisma.AdUpdateOneRequiredWithoutMediaNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutMediaInputSchema).optional(),
+  upsert: z.lazy(() => AdUpsertWithoutMediaInputSchema).optional(),
+  connect: z.lazy(() => AdWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => AdUpdateToOneWithWhereWithoutMediaInputSchema),z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]).optional(),
+}).strict();
+
+export const MediaUpdateOneRequiredWithoutAdsNestedInputSchema: z.ZodType<Prisma.MediaUpdateOneRequiredWithoutAdsNestedInput> = z.object({
+  create: z.union([ z.lazy(() => MediaCreateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => MediaCreateOrConnectWithoutAdsInputSchema).optional(),
+  upsert: z.lazy(() => MediaUpsertWithoutAdsInputSchema).optional(),
+  connect: z.lazy(() => MediaWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => MediaUpdateToOneWithWhereWithoutAdsInputSchema),z.lazy(() => MediaUpdateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
 }).strict();
 
 export const NestedStringFilterSchema: z.ZodType<Prisma.NestedStringFilter> = z.object({
@@ -8632,7 +8854,6 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
@@ -8640,7 +8861,8 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutCreatorInput> = z.object({
@@ -8664,7 +8886,6 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -8672,7 +8893,8 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutCreatorInput> = z.object({
@@ -8690,20 +8912,18 @@ export const MediaCreateWithoutUploaderInputSchema: z.ZodType<Prisma.MediaCreate
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
   createdAt: z.coerce.date().optional(),
-  ad: z.lazy(() => AdCreateNestedOneWithoutMediaInputSchema).optional()
+  ads: z.lazy(() => AdMediaCreateNestedManyWithoutMediaInputSchema).optional()
 }).strict();
 
 export const MediaUncheckedCreateWithoutUploaderInputSchema: z.ZodType<Prisma.MediaUncheckedCreateWithoutUploaderInput> = z.object({
   id: z.string().optional(),
-  adId: z.string().optional().nullable(),
   url: z.string(),
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
-  createdAt: z.coerce.date().optional()
+  createdAt: z.coerce.date().optional(),
+  ads: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutMediaInputSchema).optional()
 }).strict();
 
 export const MediaCreateOrConnectWithoutUploaderInputSchema: z.ZodType<Prisma.MediaCreateOrConnectWithoutUploaderInput> = z.object({
@@ -9145,12 +9365,10 @@ export const MediaScalarWhereInputSchema: z.ZodType<Prisma.MediaScalarWhereInput
   NOT: z.union([ z.lazy(() => MediaScalarWhereInputSchema),z.lazy(() => MediaScalarWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   uploaderId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   url: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumMediaTypeFilterSchema),z.lazy(() => MediaTypeSchema) ]).optional(),
   filename: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   size: z.union([ z.lazy(() => IntNullableFilterSchema),z.number() ]).optional().nullable(),
-  order: z.union([ z.lazy(() => IntFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
@@ -9704,7 +9922,6 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   updatedAt: z.coerce.date().optional(),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
@@ -9712,7 +9929,8 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutOrgInput> = z.object({
@@ -9736,7 +9954,6 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -9744,7 +9961,8 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutOrgInput> = z.object({
@@ -10476,37 +10694,6 @@ export const CategoryCreateOrConnectWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   create: z.union([ z.lazy(() => CategoryCreateWithoutAdsInputSchema),z.lazy(() => CategoryUncheckedCreateWithoutAdsInputSchema) ]),
 }).strict();
 
-export const MediaCreateWithoutAdInputSchema: z.ZodType<Prisma.MediaCreateWithoutAdInput> = z.object({
-  id: z.string().optional(),
-  url: z.string(),
-  type: z.lazy(() => MediaTypeSchema),
-  filename: z.string().optional().nullable(),
-  size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
-  createdAt: z.coerce.date().optional(),
-  uploader: z.lazy(() => UserCreateNestedOneWithoutMediaUploadedInputSchema)
-}).strict();
-
-export const MediaUncheckedCreateWithoutAdInputSchema: z.ZodType<Prisma.MediaUncheckedCreateWithoutAdInput> = z.object({
-  id: z.string().optional(),
-  uploaderId: z.string(),
-  url: z.string(),
-  type: z.lazy(() => MediaTypeSchema),
-  filename: z.string().optional().nullable(),
-  size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
-  createdAt: z.coerce.date().optional()
-}).strict();
-
-export const MediaCreateOrConnectWithoutAdInputSchema: z.ZodType<Prisma.MediaCreateOrConnectWithoutAdInput> = z.object({
-  where: z.lazy(() => MediaWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema) ]),
-}).strict();
-
-export const MediaCreateManyAdInputEnvelopeSchema: z.ZodType<Prisma.MediaCreateManyAdInputEnvelope> = z.object({
-  data: z.union([ z.lazy(() => MediaCreateManyAdInputSchema),z.lazy(() => MediaCreateManyAdInputSchema).array() ]),
-}).strict();
-
 export const AdDetailCreateWithoutAdInputSchema: z.ZodType<Prisma.AdDetailCreateWithoutAdInput> = z.object({
   id: z.string().optional(),
   price: z.number().optional().nullable(),
@@ -10703,6 +10890,27 @@ export const ShareEventCreateManyAdInputEnvelopeSchema: z.ZodType<Prisma.ShareEv
   data: z.union([ z.lazy(() => ShareEventCreateManyAdInputSchema),z.lazy(() => ShareEventCreateManyAdInputSchema).array() ]),
 }).strict();
 
+export const AdMediaCreateWithoutAdInputSchema: z.ZodType<Prisma.AdMediaCreateWithoutAdInput> = z.object({
+  id: z.string().optional(),
+  order: z.number().int().optional(),
+  media: z.lazy(() => MediaCreateNestedOneWithoutAdsInputSchema)
+}).strict();
+
+export const AdMediaUncheckedCreateWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUncheckedCreateWithoutAdInput> = z.object({
+  id: z.string().optional(),
+  mediaId: z.string(),
+  order: z.number().int().optional()
+}).strict();
+
+export const AdMediaCreateOrConnectWithoutAdInputSchema: z.ZodType<Prisma.AdMediaCreateOrConnectWithoutAdInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema) ]),
+}).strict();
+
+export const AdMediaCreateManyAdInputEnvelopeSchema: z.ZodType<Prisma.AdMediaCreateManyAdInputEnvelope> = z.object({
+  data: z.union([ z.lazy(() => AdMediaCreateManyAdInputSchema),z.lazy(() => AdMediaCreateManyAdInputSchema).array() ]),
+}).strict();
+
 export const OrganizationUpsertWithoutAdsInputSchema: z.ZodType<Prisma.OrganizationUpsertWithoutAdsInput> = z.object({
   update: z.union([ z.lazy(() => OrganizationUpdateWithoutAdsInputSchema),z.lazy(() => OrganizationUncheckedUpdateWithoutAdsInputSchema) ]),
   create: z.union([ z.lazy(() => OrganizationCreateWithoutAdsInputSchema),z.lazy(() => OrganizationUncheckedCreateWithoutAdsInputSchema) ]),
@@ -10822,22 +11030,6 @@ export const CategoryUpdateWithoutAdsInputSchema: z.ZodType<Prisma.CategoryUpdat
 export const CategoryUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.CategoryUncheckedUpdateWithoutAdsInput> = z.object({
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const MediaUpsertWithWhereUniqueWithoutAdInputSchema: z.ZodType<Prisma.MediaUpsertWithWhereUniqueWithoutAdInput> = z.object({
-  where: z.lazy(() => MediaWhereUniqueInputSchema),
-  update: z.union([ z.lazy(() => MediaUpdateWithoutAdInputSchema),z.lazy(() => MediaUncheckedUpdateWithoutAdInputSchema) ]),
-  create: z.union([ z.lazy(() => MediaCreateWithoutAdInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdInputSchema) ]),
-}).strict();
-
-export const MediaUpdateWithWhereUniqueWithoutAdInputSchema: z.ZodType<Prisma.MediaUpdateWithWhereUniqueWithoutAdInput> = z.object({
-  where: z.lazy(() => MediaWhereUniqueInputSchema),
-  data: z.union([ z.lazy(() => MediaUpdateWithoutAdInputSchema),z.lazy(() => MediaUncheckedUpdateWithoutAdInputSchema) ]),
-}).strict();
-
-export const MediaUpdateManyWithWhereWithoutAdInputSchema: z.ZodType<Prisma.MediaUpdateManyWithWhereWithoutAdInput> = z.object({
-  where: z.lazy(() => MediaScalarWhereInputSchema),
-  data: z.union([ z.lazy(() => MediaUpdateManyMutationInputSchema),z.lazy(() => MediaUncheckedUpdateManyWithoutAdInputSchema) ]),
 }).strict();
 
 export const AdDetailUpsertWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUpsertWithoutAdInput> = z.object({
@@ -11023,6 +11215,32 @@ export const ShareEventScalarWhereInputSchema: z.ZodType<Prisma.ShareEventScalar
   sharedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
+export const AdMediaUpsertWithWhereUniqueWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUpsertWithWhereUniqueWithoutAdInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedUpdateWithoutAdInputSchema) ]),
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutAdInputSchema) ]),
+}).strict();
+
+export const AdMediaUpdateWithWhereUniqueWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUpdateWithWhereUniqueWithoutAdInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => AdMediaUpdateWithoutAdInputSchema),z.lazy(() => AdMediaUncheckedUpdateWithoutAdInputSchema) ]),
+}).strict();
+
+export const AdMediaUpdateManyWithWhereWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUpdateManyWithWhereWithoutAdInput> = z.object({
+  where: z.lazy(() => AdMediaScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => AdMediaUpdateManyMutationInputSchema),z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdInputSchema) ]),
+}).strict();
+
+export const AdMediaScalarWhereInputSchema: z.ZodType<Prisma.AdMediaScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AdMediaScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  mediaId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntFilterSchema),z.number() ]).optional(),
+}).strict();
+
 export const AdCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateWithoutDetailInput> = z.object({
   id: z.string().optional(),
   title: z.string(),
@@ -11045,14 +11263,14 @@ export const AdCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateWithoutD
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutDetailInput> = z.object({
@@ -11077,14 +11295,14 @@ export const AdUncheckedCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdUnche
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutDetailInput> = z.object({
@@ -11124,14 +11342,14 @@ export const AdUpdateWithoutDetailInputSchema: z.ZodType<Prisma.AdUpdateWithoutD
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutDetailInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutDetailInput> = z.object({
@@ -11155,14 +11373,14 @@ export const AdUncheckedUpdateWithoutDetailInputSchema: z.ZodType<Prisma.AdUnche
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWithoutRevisionsInput> = z.object({
@@ -11187,14 +11405,14 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutRevisionsInput> = z.object({
@@ -11219,14 +11437,14 @@ export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutRevisionsInput> = z.object({
@@ -11266,14 +11484,14 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutRevisionsInput> = z.object({
@@ -11297,14 +11515,14 @@ export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWithoutAnalyticsInput> = z.object({
@@ -11329,14 +11547,14 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutAnalyticsInput> = z.object({
@@ -11361,14 +11579,14 @@ export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutAnalyticsInput> = z.object({
@@ -11408,14 +11626,14 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutAnalyticsInput> = z.object({
@@ -11439,14 +11657,14 @@ export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithoutCategoryInput> = z.object({
@@ -11470,7 +11688,6 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11478,7 +11695,8 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutCategoryInput> = z.object({
@@ -11502,7 +11720,6 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11510,7 +11727,8 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutCategoryInput> = z.object({
@@ -11601,73 +11819,25 @@ export const UserCreateOrConnectWithoutMediaUploadedInputSchema: z.ZodType<Prism
   create: z.union([ z.lazy(() => UserCreateWithoutMediaUploadedInputSchema),z.lazy(() => UserUncheckedCreateWithoutMediaUploadedInputSchema) ]),
 }).strict();
 
-export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMediaInput> = z.object({
+export const AdMediaCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaCreateWithoutMediaInput> = z.object({
   id: z.string().optional(),
-  title: z.string(),
-  description: z.string(),
-  type: z.lazy(() => AdTypeSchema),
-  published: z.boolean().optional(),
-  isDraft: z.boolean().optional(),
-  boosted: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  boostExpiry: z.coerce.date().optional().nullable(),
-  featureExpiry: z.coerce.date().optional().nullable(),
-  status: z.lazy(() => AdStatusSchema).optional(),
-  expiryDate: z.coerce.date().optional().nullable(),
-  seoTitle: z.string().optional().nullable(),
-  seoDescription: z.string().optional().nullable(),
-  seoSlug: z.string().optional().nullable(),
-  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
-  creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
-  category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
-  payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
-  reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  order: z.number().int().optional(),
+  ad: z.lazy(() => AdCreateNestedOneWithoutMediaInputSchema)
 }).strict();
 
-export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutMediaInput> = z.object({
+export const AdMediaUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUncheckedCreateWithoutMediaInput> = z.object({
   id: z.string().optional(),
-  orgId: z.string(),
-  createdBy: z.string(),
-  title: z.string(),
-  description: z.string(),
-  type: z.lazy(() => AdTypeSchema),
-  published: z.boolean().optional(),
-  isDraft: z.boolean().optional(),
-  boosted: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  boostExpiry: z.coerce.date().optional().nullable(),
-  featureExpiry: z.coerce.date().optional().nullable(),
-  status: z.lazy(() => AdStatusSchema).optional(),
-  expiryDate: z.coerce.date().optional().nullable(),
-  seoTitle: z.string().optional().nullable(),
-  seoDescription: z.string().optional().nullable(),
-  seoSlug: z.string().optional().nullable(),
-  categoryId: z.string().optional().nullable(),
-  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
-  payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  adId: z.string(),
+  order: z.number().int().optional()
 }).strict();
 
-export const AdCreateOrConnectWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutMediaInput> = z.object({
-  where: z.lazy(() => AdWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]),
+export const AdMediaCreateOrConnectWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaCreateOrConnectWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema) ]),
+}).strict();
+
+export const AdMediaCreateManyMediaInputEnvelopeSchema: z.ZodType<Prisma.AdMediaCreateManyMediaInputEnvelope> = z.object({
+  data: z.union([ z.lazy(() => AdMediaCreateManyMediaInputSchema),z.lazy(() => AdMediaCreateManyMediaInputSchema).array() ]),
 }).strict();
 
 export const UserUpsertWithoutMediaUploadedInputSchema: z.ZodType<Prisma.UserUpsertWithoutMediaUploadedInput> = z.object({
@@ -11737,77 +11907,20 @@ export const UserUncheckedUpdateWithoutMediaUploadedInputSchema: z.ZodType<Prism
   auditLogs: z.lazy(() => AuditLogUncheckedUpdateManyWithoutUserNestedInputSchema).optional()
 }).strict();
 
-export const AdUpsertWithoutMediaInputSchema: z.ZodType<Prisma.AdUpsertWithoutMediaInput> = z.object({
-  update: z.union([ z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]),
-  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]),
-  where: z.lazy(() => AdWhereInputSchema).optional()
+export const AdMediaUpsertWithWhereUniqueWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUpsertWithWhereUniqueWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => AdMediaUpdateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedUpdateWithoutMediaInputSchema) ]),
+  create: z.union([ z.lazy(() => AdMediaCreateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedCreateWithoutMediaInputSchema) ]),
 }).strict();
 
-export const AdUpdateToOneWithWhereWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateToOneWithWhereWithoutMediaInput> = z.object({
-  where: z.lazy(() => AdWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]),
+export const AdMediaUpdateWithWhereUniqueWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUpdateWithWhereUniqueWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdMediaWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => AdMediaUpdateWithoutMediaInputSchema),z.lazy(() => AdMediaUncheckedUpdateWithoutMediaInputSchema) ]),
 }).strict();
 
-export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMediaInput> = z.object({
-  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
-  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
-  creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
-  category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
-  payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
-  reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
-}).strict();
-
-export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutMediaInput> = z.object({
-  orgId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  createdBy: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
-  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
-  payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+export const AdMediaUpdateManyWithWhereWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUpdateManyWithWhereWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdMediaScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => AdMediaUpdateManyMutationInputSchema),z.lazy(() => AdMediaUncheckedUpdateManyWithoutMediaInputSchema) ]),
 }).strict();
 
 export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithoutPaymentsInput> = z.object({
@@ -11832,14 +11945,14 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutPaymentsInput> = z.object({
@@ -11864,14 +11977,14 @@ export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutPaymentsInput> = z.object({
@@ -11974,14 +12087,14 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutPaymentsInput> = z.object({
@@ -12005,14 +12118,14 @@ export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const UserUpsertWithoutPaymentsInputSchema: z.ZodType<Prisma.UserUpsertWithoutPaymentsInput> = z.object({
@@ -12167,14 +12280,14 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutFavoritesInput> = z.object({
@@ -12199,14 +12312,14 @@ export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutFavoritesInput> = z.object({
@@ -12313,14 +12426,14 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutFavoritesInput> = z.object({
@@ -12344,14 +12457,14 @@ export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const UserCreateWithoutSavedSearchesInputSchema: z.ZodType<Prisma.UserCreateWithoutSavedSearchesInput> = z.object({
@@ -12506,14 +12619,14 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutGeoViewsInput> = z.object({
@@ -12538,14 +12651,14 @@ export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutGeoViewsInput> = z.object({
@@ -12585,14 +12698,14 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutGeoViewsInput> = z.object({
@@ -12616,14 +12729,14 @@ export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const UserCreateWithoutMessagesSentInputSchema: z.ZodType<Prisma.UserCreateWithoutMessagesSentInput> = z.object({
@@ -13038,14 +13151,14 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional()
+  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutShareEventsInput> = z.object({
@@ -13070,14 +13183,14 @@ export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutShareEventsInput> = z.object({
@@ -13117,14 +13230,14 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional()
+  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutShareEventsInput> = z.object({
@@ -13148,14 +13261,14 @@ export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const UserCreateWithoutReportsInputSchema: z.ZodType<Prisma.UserCreateWithoutReportsInput> = z.object({
@@ -13243,14 +13356,14 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  media: z.lazy(() => MediaCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutReportsInput> = z.object({
@@ -13275,14 +13388,14 @@ export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  media: z.lazy(() => MediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
 }).strict();
 
 export const AdCreateOrConnectWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutReportsInput> = z.object({
@@ -13389,14 +13502,14 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutReportsInput> = z.object({
@@ -13420,14 +13533,14 @@ export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const UserCreateWithoutAuditLogsInputSchema: z.ZodType<Prisma.UserCreateWithoutAuditLogsInput> = z.object({
@@ -13622,6 +13735,202 @@ export const OrganizationUncheckedUpdateWithoutAuditLogsInputSchema: z.ZodType<P
   ads: z.lazy(() => AdUncheckedUpdateManyWithoutOrgNestedInputSchema).optional()
 }).strict();
 
+export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMediaInput> = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  description: z.string(),
+  type: z.lazy(() => AdTypeSchema),
+  published: z.boolean().optional(),
+  isDraft: z.boolean().optional(),
+  boosted: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  boostExpiry: z.coerce.date().optional().nullable(),
+  featureExpiry: z.coerce.date().optional().nullable(),
+  status: z.lazy(() => AdStatusSchema).optional(),
+  expiryDate: z.coerce.date().optional().nullable(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoSlug: z.string().optional().nullable(),
+  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
+  creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
+  category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
+  payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
+  reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional()
+}).strict();
+
+export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutMediaInput> = z.object({
+  id: z.string().optional(),
+  orgId: z.string(),
+  createdBy: z.string(),
+  title: z.string(),
+  description: z.string(),
+  type: z.lazy(() => AdTypeSchema),
+  published: z.boolean().optional(),
+  isDraft: z.boolean().optional(),
+  boosted: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  boostExpiry: z.coerce.date().optional().nullable(),
+  featureExpiry: z.coerce.date().optional().nullable(),
+  status: z.lazy(() => AdStatusSchema).optional(),
+  expiryDate: z.coerce.date().optional().nullable(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoSlug: z.string().optional().nullable(),
+  categoryId: z.string().optional().nullable(),
+  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
+  payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional()
+}).strict();
+
+export const AdCreateOrConnectWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]),
+}).strict();
+
+export const MediaCreateWithoutAdsInputSchema: z.ZodType<Prisma.MediaCreateWithoutAdsInput> = z.object({
+  id: z.string().optional(),
+  url: z.string(),
+  type: z.lazy(() => MediaTypeSchema),
+  filename: z.string().optional().nullable(),
+  size: z.number().int().optional().nullable(),
+  createdAt: z.coerce.date().optional(),
+  uploader: z.lazy(() => UserCreateNestedOneWithoutMediaUploadedInputSchema)
+}).strict();
+
+export const MediaUncheckedCreateWithoutAdsInputSchema: z.ZodType<Prisma.MediaUncheckedCreateWithoutAdsInput> = z.object({
+  id: z.string().optional(),
+  uploaderId: z.string(),
+  url: z.string(),
+  type: z.lazy(() => MediaTypeSchema),
+  filename: z.string().optional().nullable(),
+  size: z.number().int().optional().nullable(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const MediaCreateOrConnectWithoutAdsInputSchema: z.ZodType<Prisma.MediaCreateOrConnectWithoutAdsInput> = z.object({
+  where: z.lazy(() => MediaWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => MediaCreateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdsInputSchema) ]),
+}).strict();
+
+export const AdUpsertWithoutMediaInputSchema: z.ZodType<Prisma.AdUpsertWithoutMediaInput> = z.object({
+  update: z.union([ z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]),
+  create: z.union([ z.lazy(() => AdCreateWithoutMediaInputSchema),z.lazy(() => AdUncheckedCreateWithoutMediaInputSchema) ]),
+  where: z.lazy(() => AdWhereInputSchema).optional()
+}).strict();
+
+export const AdUpdateToOneWithWhereWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateToOneWithWhereWithoutMediaInput> = z.object({
+  where: z.lazy(() => AdWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => AdUpdateWithoutMediaInputSchema),z.lazy(() => AdUncheckedUpdateWithoutMediaInputSchema) ]),
+}).strict();
+
+export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMediaInput> = z.object({
+  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
+  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
+  creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
+  category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
+  payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
+  reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+}).strict();
+
+export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutMediaInput> = z.object({
+  orgId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdBy: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
+  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
+  payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+}).strict();
+
+export const MediaUpsertWithoutAdsInputSchema: z.ZodType<Prisma.MediaUpsertWithoutAdsInput> = z.object({
+  update: z.union([ z.lazy(() => MediaUpdateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedUpdateWithoutAdsInputSchema) ]),
+  create: z.union([ z.lazy(() => MediaCreateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedCreateWithoutAdsInputSchema) ]),
+  where: z.lazy(() => MediaWhereInputSchema).optional()
+}).strict();
+
+export const MediaUpdateToOneWithWhereWithoutAdsInputSchema: z.ZodType<Prisma.MediaUpdateToOneWithWhereWithoutAdsInput> = z.object({
+  where: z.lazy(() => MediaWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => MediaUpdateWithoutAdsInputSchema),z.lazy(() => MediaUncheckedUpdateWithoutAdsInputSchema) ]),
+}).strict();
+
+export const MediaUpdateWithoutAdsInputSchema: z.ZodType<Prisma.MediaUpdateWithoutAdsInput> = z.object({
+  url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  uploader: z.lazy(() => UserUpdateOneRequiredWithoutMediaUploadedNestedInputSchema).optional()
+}).strict();
+
+export const MediaUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateWithoutAdsInput> = z.object({
+  uploaderId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const SessionCreateManyUserInputSchema: z.ZodType<Prisma.SessionCreateManyUserInput> = z.object({
   id: z.string(),
   expiresAt: z.coerce.date(),
@@ -13696,12 +14005,10 @@ export const AdCreateManyCreatorInputSchema: z.ZodType<Prisma.AdCreateManyCreato
 
 export const MediaCreateManyUploaderInputSchema: z.ZodType<Prisma.MediaCreateManyUploaderInput> = z.object({
   id: z.string().optional(),
-  adId: z.string().optional().nullable(),
   url: z.string(),
   type: z.lazy(() => MediaTypeSchema),
   filename: z.string().optional().nullable(),
   size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
   createdAt: z.coerce.date().optional()
 }).strict();
 
@@ -13929,7 +14236,6 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13937,7 +14243,8 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutCreatorInput> = z.object({
@@ -13960,7 +14267,6 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13968,7 +14274,8 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateManyWithoutCreatorInputSchema: z.ZodType<Prisma.AdUncheckedUpdateManyWithoutCreatorInput> = z.object({
@@ -13998,28 +14305,24 @@ export const MediaUpdateWithoutUploaderInputSchema: z.ZodType<Prisma.MediaUpdate
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  ad: z.lazy(() => AdUpdateOneWithoutMediaNestedInputSchema).optional()
+  ads: z.lazy(() => AdMediaUpdateManyWithoutMediaNestedInputSchema).optional()
 }).strict();
 
 export const MediaUncheckedUpdateWithoutUploaderInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateWithoutUploaderInput> = z.object({
-  adId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  ads: z.lazy(() => AdMediaUncheckedUpdateManyWithoutMediaNestedInputSchema).optional()
 }).strict();
 
 export const MediaUncheckedUpdateManyWithoutUploaderInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateManyWithoutUploaderInput> = z.object({
-  adId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
@@ -14328,7 +14631,6 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14336,7 +14638,8 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutOrgInput> = z.object({
@@ -14359,7 +14662,6 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14367,7 +14669,8 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.AdUncheckedUpdateManyWithoutOrgInput> = z.object({
@@ -14425,17 +14728,6 @@ export const AuditLogUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
-export const MediaCreateManyAdInputSchema: z.ZodType<Prisma.MediaCreateManyAdInput> = z.object({
-  id: z.string().optional(),
-  uploaderId: z.string(),
-  url: z.string(),
-  type: z.lazy(() => MediaTypeSchema),
-  filename: z.string().optional().nullable(),
-  size: z.number().int().optional().nullable(),
-  order: z.number().int().optional(),
-  createdAt: z.coerce.date().optional()
-}).strict();
-
 export const PaymentCreateManyAdInputSchema: z.ZodType<Prisma.PaymentCreateManyAdInput> = z.object({
   id: z.string().optional(),
   userId: z.string(),
@@ -14486,34 +14778,10 @@ export const ShareEventCreateManyAdInputSchema: z.ZodType<Prisma.ShareEventCreat
   sharedAt: z.coerce.date().optional()
 }).strict();
 
-export const MediaUpdateWithoutAdInputSchema: z.ZodType<Prisma.MediaUpdateWithoutAdInput> = z.object({
-  url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  uploader: z.lazy(() => UserUpdateOneRequiredWithoutMediaUploadedNestedInputSchema).optional()
-}).strict();
-
-export const MediaUncheckedUpdateWithoutAdInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateWithoutAdInput> = z.object({
-  uploaderId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const MediaUncheckedUpdateManyWithoutAdInputSchema: z.ZodType<Prisma.MediaUncheckedUpdateManyWithoutAdInput> = z.object({
-  uploaderId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  url: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => MediaTypeSchema),z.lazy(() => EnumMediaTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+export const AdMediaCreateManyAdInputSchema: z.ZodType<Prisma.AdMediaCreateManyAdInput> = z.object({
+  id: z.string().optional(),
+  mediaId: z.string(),
+  order: z.number().int().optional()
 }).strict();
 
 export const PaymentUpdateWithoutAdInputSchema: z.ZodType<Prisma.PaymentUpdateWithoutAdInput> = z.object({
@@ -14648,6 +14916,21 @@ export const ShareEventUncheckedUpdateManyWithoutAdInputSchema: z.ZodType<Prisma
   sharedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const AdMediaUpdateWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUpdateWithoutAdInput> = z.object({
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  media: z.lazy(() => MediaUpdateOneRequiredWithoutAdsNestedInputSchema).optional()
+}).strict();
+
+export const AdMediaUncheckedUpdateWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateWithoutAdInput> = z.object({
+  mediaId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedUpdateManyWithoutAdInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyWithoutAdInput> = z.object({
+  mediaId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const AdCreateManyCategoryInputSchema: z.ZodType<Prisma.AdCreateManyCategoryInput> = z.object({
   id: z.string().optional(),
   orgId: z.string(),
@@ -14691,7 +14974,6 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
-  media: z.lazy(() => MediaUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14699,7 +14981,8 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutCategoryInput> = z.object({
@@ -14722,7 +15005,6 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  media: z.lazy(() => MediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14730,7 +15012,8 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
 }).strict();
 
 export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.AdUncheckedUpdateManyWithoutCategoryInput> = z.object({
@@ -14753,6 +15036,27 @@ export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.A
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaCreateManyMediaInputSchema: z.ZodType<Prisma.AdMediaCreateManyMediaInput> = z.object({
+  id: z.string().optional(),
+  adId: z.string(),
+  order: z.number().int().optional()
+}).strict();
+
+export const AdMediaUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUpdateWithoutMediaInput> = z.object({
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  ad: z.lazy(() => AdUpdateOneRequiredWithoutMediaNestedInputSchema).optional()
+}).strict();
+
+export const AdMediaUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateWithoutMediaInput> = z.object({
+  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdMediaUncheckedUpdateManyWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyWithoutMediaInput> = z.object({
+  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 /////////////////////////////////////////
@@ -16294,6 +16598,68 @@ export const AuditLogFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AuditLogFindU
   where: AuditLogWhereUniqueInputSchema,
 }).strict() ;
 
+export const AdMediaFindFirstArgsSchema: z.ZodType<Prisma.AdMediaFindFirstArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereInputSchema.optional(),
+  orderBy: z.union([ AdMediaOrderByWithRelationInputSchema.array(),AdMediaOrderByWithRelationInputSchema ]).optional(),
+  cursor: AdMediaWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AdMediaScalarFieldEnumSchema,AdMediaScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const AdMediaFindFirstOrThrowArgsSchema: z.ZodType<Prisma.AdMediaFindFirstOrThrowArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereInputSchema.optional(),
+  orderBy: z.union([ AdMediaOrderByWithRelationInputSchema.array(),AdMediaOrderByWithRelationInputSchema ]).optional(),
+  cursor: AdMediaWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AdMediaScalarFieldEnumSchema,AdMediaScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const AdMediaFindManyArgsSchema: z.ZodType<Prisma.AdMediaFindManyArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereInputSchema.optional(),
+  orderBy: z.union([ AdMediaOrderByWithRelationInputSchema.array(),AdMediaOrderByWithRelationInputSchema ]).optional(),
+  cursor: AdMediaWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AdMediaScalarFieldEnumSchema,AdMediaScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const AdMediaAggregateArgsSchema: z.ZodType<Prisma.AdMediaAggregateArgs> = z.object({
+  where: AdMediaWhereInputSchema.optional(),
+  orderBy: z.union([ AdMediaOrderByWithRelationInputSchema.array(),AdMediaOrderByWithRelationInputSchema ]).optional(),
+  cursor: AdMediaWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const AdMediaGroupByArgsSchema: z.ZodType<Prisma.AdMediaGroupByArgs> = z.object({
+  where: AdMediaWhereInputSchema.optional(),
+  orderBy: z.union([ AdMediaOrderByWithAggregationInputSchema.array(),AdMediaOrderByWithAggregationInputSchema ]).optional(),
+  by: AdMediaScalarFieldEnumSchema.array(),
+  having: AdMediaScalarWhereWithAggregatesInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const AdMediaFindUniqueArgsSchema: z.ZodType<Prisma.AdMediaFindUniqueArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereUniqueInputSchema,
+}).strict() ;
+
+export const AdMediaFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AdMediaFindUniqueOrThrowArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereUniqueInputSchema,
+}).strict() ;
+
 export const UserCreateArgsSchema: z.ZodType<Prisma.UserCreateArgs> = z.object({
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
@@ -17329,5 +17695,47 @@ export const AuditLogUpdateManyArgsSchema: z.ZodType<Prisma.AuditLogUpdateManyAr
 
 export const AuditLogDeleteManyArgsSchema: z.ZodType<Prisma.AuditLogDeleteManyArgs> = z.object({
   where: AuditLogWhereInputSchema.optional(),
+  limit: z.number().optional(),
+}).strict() ;
+
+export const AdMediaCreateArgsSchema: z.ZodType<Prisma.AdMediaCreateArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  data: z.union([ AdMediaCreateInputSchema,AdMediaUncheckedCreateInputSchema ]),
+}).strict() ;
+
+export const AdMediaUpsertArgsSchema: z.ZodType<Prisma.AdMediaUpsertArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereUniqueInputSchema,
+  create: z.union([ AdMediaCreateInputSchema,AdMediaUncheckedCreateInputSchema ]),
+  update: z.union([ AdMediaUpdateInputSchema,AdMediaUncheckedUpdateInputSchema ]),
+}).strict() ;
+
+export const AdMediaCreateManyArgsSchema: z.ZodType<Prisma.AdMediaCreateManyArgs> = z.object({
+  data: z.union([ AdMediaCreateManyInputSchema,AdMediaCreateManyInputSchema.array() ]),
+}).strict() ;
+
+export const AdMediaDeleteArgsSchema: z.ZodType<Prisma.AdMediaDeleteArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  where: AdMediaWhereUniqueInputSchema,
+}).strict() ;
+
+export const AdMediaUpdateArgsSchema: z.ZodType<Prisma.AdMediaUpdateArgs> = z.object({
+  select: AdMediaSelectSchema.optional(),
+  include: AdMediaIncludeSchema.optional(),
+  data: z.union([ AdMediaUpdateInputSchema,AdMediaUncheckedUpdateInputSchema ]),
+  where: AdMediaWhereUniqueInputSchema,
+}).strict() ;
+
+export const AdMediaUpdateManyArgsSchema: z.ZodType<Prisma.AdMediaUpdateManyArgs> = z.object({
+  data: z.union([ AdMediaUpdateManyMutationInputSchema,AdMediaUncheckedUpdateManyInputSchema ]),
+  where: AdMediaWhereInputSchema.optional(),
+  limit: z.number().optional(),
+}).strict() ;
+
+export const AdMediaDeleteManyArgsSchema: z.ZodType<Prisma.AdMediaDeleteManyArgs> = z.object({
+  where: AdMediaWhereInputSchema.optional(),
   limit: z.number().optional(),
 }).strict() ;

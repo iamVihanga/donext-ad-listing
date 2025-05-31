@@ -67,7 +67,6 @@ export const create = createRoute({
 export type CreateRoute = typeof create;
 
 // --------- Get Single Ad by ID ----------
-
 export const getOne = createRoute({
   tags,
   summary: "Get a single ad by ID",
