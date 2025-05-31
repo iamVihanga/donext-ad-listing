@@ -1,12 +1,11 @@
-import React from "react";
+"use client";
 
-import { SignoutButton } from "@/features/auth/components/signout-button";
+import React from "react";
 
 export default function DashboardPage() {
   return (
     <div>
       <h2>Dashboard</h2>
-      <SignoutButton />
     </div>
   );
 }

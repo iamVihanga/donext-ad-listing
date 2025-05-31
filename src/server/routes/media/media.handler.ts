@@ -30,6 +30,8 @@ export const save: AppRouteHandler<SaveRoute> = async (c) => {
   const user = c.get("user");
   const mediaDetails = c.req.valid("json");
 
+  console.log({ mediaDetails });
+
   if (!user) {
     return c.json(
       { message: HttpStatusPhrases.UNAUTHORIZED },

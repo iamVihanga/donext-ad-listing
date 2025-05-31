@@ -27,7 +27,7 @@ export const useMediaUpload = () => {
 
       toast.error("Failed to upload file...", {
         id: uploadToastId,
-        description: error.message,
+        description: error.message
       });
 
       return null;
@@ -51,7 +51,7 @@ export const useMediaUpload = () => {
       setError(error);
       toast.error("Failed to delete file...", {
         id: deleteToastId,
-        description: error.message,
+        description: error.message
       });
     } finally {
       setLoading(false);
@@ -62,6 +62,6 @@ export const useMediaUpload = () => {
     upload,
     deleteFile,
     loading,
-    error,
+    error
   };
 };

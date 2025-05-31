@@ -336,7 +336,7 @@ export function MediaGallery({
                             key={media.id}
                             className={`overflow-hidden cursor-pointer group relative ${
                               isSelected ? "ring-2 ring-primary" : ""
-                            }`}
+                            } p-0 flex flex-col gap-0`}
                             onClick={() =>
                               toggleMediaSelection({
                                 ...media,
@@ -410,6 +410,7 @@ export function MediaGallery({
                                 </Button>
                               </div>
                             </div>
+
                             <CardContent className="p-2 text-xs truncate">
                               {media.filename}
                             </CardContent>
