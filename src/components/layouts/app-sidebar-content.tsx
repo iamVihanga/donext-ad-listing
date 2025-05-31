@@ -8,19 +8,11 @@ import {
   GalleryVerticalEnd,
   Settings2,
   GraduationCapIcon,
-  UsersIcon,
   LayoutDashboard,
   ShieldIcon,
   UserCog2Icon,
-  School2Icon,
-  SmileIcon,
-  School,
-  FileBadge2Icon,
-  BadgeAlert,
   UsersRoundIcon,
-  StoreIcon,
-  ImageIcon,
-  NewspaperIcon,
+  NewspaperIcon
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -76,23 +68,23 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
     ],
     agentManagement: [
       {
-        name: "Admins", // Nursery Admins
+        name: "Admins", // Agent Admins
         url: "/dashboard/admins",
         icon: ShieldIcon,
-        roles: ["owner"] // owner -> nursery admin
+        roles: ["owner"] // owner -> agent admin
       },
       {
-        name: "Teachers", // Nursery Teachers
-        url: "/dashboard/teachers",
+        name: "Managers", // Agent Managers
+        url: "/dashboard/managers",
         icon: GraduationCapIcon,
-        roles: ["owner"] // owner -> nursery admin
-      },
-      {
-        name: "Parents",
-        url: "/dashboard/parents",
-        icon: UsersIcon,
-        roles: ["admin", "owner"]
+        roles: ["owner"] // owner -> agent manager
       }
+      // {
+      //   name: "Parents",
+      //   url: "/dashboard/parents",
+      //   icon: UsersIcon,
+      //   roles: ["admin", "owner"]
+      // }
     ],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getContents: (isAdmin: boolean) => [
@@ -101,49 +93,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         url: "/dashboard/ads",
         icon: NewspaperIcon,
         roles: ["owner", "admin", "member"]
-      },
-      {
-        title: "Users",
-        url: "/dashboard/users",
-        icon: UsersIcon,
-        roles: ["owner", "admin"]
-      },
-      {
-        title: "Media",
-        url: "/dashboard/media",
-        icon: ImageIcon,
-        roles: ["owner", "admin"]
-      },
-      // {
-      //   title: "Feedbacks",
-      //   url: "/dashboard/feedbacks",
-      //   icon: BadgeAlert,
-      //   roles: ["owner", "admin"]
-      // }
-      // {
-      //   title: "Materials",
-      //   url: "/dashboard/materials",
-      //   icon: LibraryBigIcon
-      // },
-      // {
-      //   title: "Quizzes",
-      //   url: "/dashboard/quizzes",
-      //   icon: FileQuestionIcon,
-      //   items: [
-      //     {
-      //       title: "All Quizzes",
-      //       url: "/dashboard/quizzes"
-      //     },
-      //     ...(isAdmin
-      //       ? [
-      //           {
-      //             title: "Categories",
-      //             url: "/dashboard/quizzes/tags"
-      //           }
-      //         ]
-      //       : [])
-      //   ]
-      // }
+      }
     ],
     getSettings: (isAdmin: boolean) => [
       ...(isAdmin

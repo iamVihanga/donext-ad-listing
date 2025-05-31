@@ -54,11 +54,11 @@ export const create = createRoute({
       "The created ad"
     ),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
-      createMessageObjectSchema("Unauthorized"),
+      z.object({ message: z.string() }),
       "Unauthorized"
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(schemas.createAdSchema),
+      z.object({ message: z.string() }),
       "The validation error(s)"
     )
   }
@@ -81,9 +81,12 @@ export const getOne = createRoute({
       schemas.selectAdSchema,
       "Requested ad by id"
     ),
-    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "Ad not found"
+    ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
-      createErrorSchema(schemas.IdParamsSchema),
+      z.object({ message: z.string() }),
       "Invalid id error"
     )
   }
