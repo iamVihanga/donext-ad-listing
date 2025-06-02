@@ -23,14 +23,14 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function AgentSwitcher() {
+export function OrgSwitcher() {
   const toastId = useId();
   const { isMobile } = useSidebar();
   const [mounted, setMounted] = useState(false);
 
-  const { data: activeAgent, isPending: isPendingActiveAgent } =
+  const { data: activeOrg, isPending: isPendingActiveOrg } =
     authClient.useActiveOrganization();
-  const { data: allAgents, isPending: isPendingAllAgents } =
+  const { data: allOrgs, isPending: isPendingAllOrgs } =
     authClient.useListOrganizations();
 
   // Prevent hydration mismatch
@@ -56,20 +56,22 @@ export function AgentSwitcher() {
     );
   }
 
-  const handleSetActiveAgent = async (id: string) => {
+  const handleSetActiveOrganization = async (id: string) => {
     await authClient.organization.setActive(
       {
         organizationId: id
       },
       {
         onRequest() {
-          toast.loading("Switching agent...", { id: toastId });
+          toast.loading("Switching organization...", { id: toastId });
         },
         onSuccess() {
-          toast.success("Switched to Agent successfully!", { id: toastId });
+          toast.success("Switched to organization successfully!", {
+            id: toastId
+          });
         },
         onError({ error }) {
-          toast.error(error.message || "Failed to switch Agent", {
+          toast.error(error.message || "Failed to switch organization", {
             id: toastId
           });
         }
@@ -78,7 +80,7 @@ export function AgentSwitcher() {
   };
 
   const renderActiveClassContent = () => {
-    if (isPendingActiveAgent) {
+    if (isPendingActiveOrg) {
       return (
         <div className="flex w-full items-center gap-2 p-2">
           <Skeleton className="aspect-square size-8 rounded-lg" />
@@ -91,7 +93,7 @@ export function AgentSwitcher() {
       );
     }
 
-    if (!activeAgent) {
+    if (!activeOrg) {
       return (
         <SidebarMenuButton
           size="lg"
@@ -101,7 +103,9 @@ export function AgentSwitcher() {
             <GraduationCap className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Select an Agent</span>
+            <span className="truncate font-semibold">
+              Select an Organization
+            </span>
           </div>
           <ChevronsUpDown className="ml-auto" />
         </SidebarMenuButton>
@@ -113,25 +117,25 @@ export function AgentSwitcher() {
         size="lg"
         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
       >
-        {activeAgent?.logo ? (
+        {activeOrg?.logo ? (
           <Image
-            alt={activeAgent.name}
-            src={activeAgent.logo}
+            alt={activeOrg.name}
+            src={activeOrg.logo}
             width={50}
             height={50}
             className="flex aspect-square size-8 rounded-lg object-cover"
           />
         ) : (
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            {activeAgent?.name.slice(0, 2)}
+            {activeOrg?.name.slice(0, 2)}
           </div>
         )}
 
         <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate font-semibold">{activeAgent?.name}</span>
+          <span className="truncate font-semibold">{activeOrg?.name}</span>
           <span className="truncate text-xs text-foreground/60">
-            {activeAgent?.metadata &&
-              JSON.parse(activeAgent?.metadata)?.description}
+            {activeOrg?.metadata &&
+              JSON.parse(activeOrg?.metadata)?.description}
           </span>
         </div>
         <ChevronsUpDown className="ml-auto" />
@@ -154,29 +158,29 @@ export function AgentSwitcher() {
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Agents
+              Organizations
             </DropdownMenuLabel>
-            {!isPendingAllAgents && allAgents ? (
-              allAgents.map((agent) => (
+            {!isPendingAllOrgs && allOrgs ? (
+              allOrgs.map((org) => (
                 <DropdownMenuItem
-                  key={agent.id}
-                  onClick={() => handleSetActiveAgent(agent.id)}
+                  key={org.id}
+                  onClick={() => handleSetActiveOrganization(org.id)}
                   className="gap-2 p-2"
                 >
-                  {agent?.logo ? (
+                  {org?.logo ? (
                     <Image
-                      alt={agent.name}
-                      src={agent.logo}
+                      alt={org.name}
+                      src={org.logo}
                       width={50}
                       height={50}
                       className="flex aspect-square size-6 rounded-lg object-cover"
                     />
                   ) : (
                     <div className="flex size-6 items-center justify-center rounded-sm border">
-                      {agent?.name.slice(0, 2)}
+                      {org?.name.slice(0, 2)}
                     </div>
                   )}
-                  {agent.name}
+                  {org.name}
                 </DropdownMenuItem>
               ))
             ) : (
@@ -204,7 +208,7 @@ export function AgentSwitcher() {
                   <CogIcon className="size-4" />
                 </div>
                 <div className="font-medium text-muted-foreground">
-                  Manage Agents
+                  Manage Organizations
                 </div>
               </Link>
             </DropdownMenuItem>
