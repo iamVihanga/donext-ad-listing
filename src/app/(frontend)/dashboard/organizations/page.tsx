@@ -5,8 +5,8 @@ import PageContainer from "@/components/layouts/page-container";
 import { Separator } from "@/components/ui/separator";
 
 import { AddNewOrganization } from "@/features/organizations/components/add-new-org";
-// import { NurseriesTable as NurseriesListing } from "@/features/nurseries/components/nursery-listing";
-// import { NurseriesTableActions } from "@/features/nurseries/components/nurseries-table/nurseries-table-actions";
+import { OrganizationsTable as OrganizationsListing } from "@/features/organizations/components/organization-listing";
+import { OrgTableActions } from "@/features/organizations/components/organizations-table/org-table-actions";
 
 export default function OrganizationsPage() {
   return (
@@ -20,9 +20,9 @@ export default function OrganizationsPage() {
 
         <Separator />
 
-        {/* <NurseriesTableActions />
+        <OrgTableActions />
 
-        <NurseriesListing /> */}
+        <OrganizationsListing />
       </div>
     </PageContainer>
   );

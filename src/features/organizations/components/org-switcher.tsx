@@ -203,7 +203,7 @@ export function OrgSwitcher() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link className="gap-2 p-2" href="/dashboard/nurseries">
+              <Link className="gap-2 p-2" href="/dashboard/organizations">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                   <CogIcon className="size-4" />
                 </div>
