@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/server/prisma/client";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
@@ -10,12 +11,84 @@ import {
   UpdateRoute,
   RemoveRoute
 } from "./ad.routes";
+import { QueryParams } from "./ad.schemas";
 
 // ---- List Ads Handler ----
 export const list: AppRouteHandler<ListRoute> = async (c) => {
-  const ads = await prisma.ad.findMany({});
+  try {
+    const {
+      page = "1",
+      limit = "10",
+      search = ""
+    } = c.req.query() as QueryParams;
 
-  return c.json(ads, HttpStatusCodes.OK);
+    // Convert to numbers and validate
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build the where condition
+    const whereCondition = {};
+
+    // Add search condition if provided
+    let adWhereCondition = {};
+
+    if (search && search.trim() !== "") {
+      adWhereCondition = {
+        title: {
+          contains: search,
+          mode: "insensitive"
+        }
+      };
+    }
+
+    // Count query for total number of records
+    const totalAds = await prisma.ad.count({
+      where: {
+        ...whereCondition,
+        ...(Object.keys(adWhereCondition).length > 0
+          ? adWhereCondition
+          : undefined)
+      }
+    });
+
+    // Main query with pagination
+    const ads = await prisma.ad.findMany({
+      where: whereCondition,
+      skip: offset,
+      take: limitNum,
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    // Filter out records where user doesn't match search criteria
+    const filteredAds = search
+      ? ads.filter((ad) =>
+          ad?.title?.toLowerCase().includes(search.toLowerCase())
+        )
+      : ads;
+
+    return c.json(
+      {
+        ads: filteredAds,
+        pagination: {
+          total: totalAds,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(totalAds / limitNum)
+        }
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[GET ALL ADS] Error:", error);
+
+    return c.json(
+      { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
 };
 
 // ---- Create Ads Handler ----

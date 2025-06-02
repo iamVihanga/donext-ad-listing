@@ -5,6 +5,9 @@ import { AppPageShell } from "@/components/layouts/page-shell";
 import { Separator } from "@/components/ui/separator";
 import { SetupAdDialog } from "@/features/ads/components/setup-ad";
 
+import { AdsTable as AdsListing } from "@/features/ads/components/ad-listing";
+import { AdsTableActions } from "@/features/ads/components/ad-table/ads-table-actions";
+
 export default function AdsPage() {
   return (
     <PageContainer scrollable={false}>
@@ -16,6 +19,10 @@ export default function AdsPage() {
         />
 
         <Separator />
+
+        <AdsTableActions />
+
+        <AdsListing />
       </div>
     </PageContainer>
   );

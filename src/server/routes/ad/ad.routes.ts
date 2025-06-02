@@ -24,10 +24,17 @@ export const list = createRoute({
   description: "Retrieve a list of all ads",
   path: "/",
   method: "get",
+  request: {
+    query: schemas.querySchema
+  },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
-      z.array(schemas.selectAdSchema),
+      schemas.withPaginationSchema,
       "The list of ads"
+    ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong while fetching ads"
     )
   }
 });
