@@ -17,7 +17,7 @@ import {
 
 import { type Session } from "@/lib/auth";
 import { NavMain } from "@/components/layouts/nav-groups/nav-main";
-import { NavAgentManagement } from "./nav-groups/nav-agent-management";
+import { NavOrgManagement } from "./nav-groups/nav-org-management";
 import { NavContent } from "./nav-groups/nav-content";
 import { NavSettings } from "./nav-groups/nav-settings";
 import { authClient } from "@/lib/auth-client";
@@ -61,8 +61,8 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: LayoutDashboard
       },
       {
-        title: "Agents",
-        url: "/dashboard/agents",
+        title: "Organizations",
+        url: "/dashboard/organizations",
         icon: UsersRoundIcon
       }
     ],
@@ -124,7 +124,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
       <NavMain items={data.navMain} />
 
       {activeOrganization.data && activeMember?.role !== "member" && (
-        <NavAgentManagement
+        <NavOrgManagement
           cmLinks={data.agentManagement}
           activeMemberRole={activeMember?.role || null}
         />
