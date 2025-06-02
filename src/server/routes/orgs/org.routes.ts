@@ -8,7 +8,7 @@ import { querySchema, withPaginationSchema } from "./org.schemas";
 
 const tags = ["Organizations"];
 
-// ---------- List Nurseries ----------
+// ---------- List Organizations ----------
 export const list = createRoute({
   tags,
   path: "/",
@@ -20,7 +20,7 @@ export const list = createRoute({
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
       withPaginationSchema,
-      "The list of nurseries"
+      "The list of organizations"
     ),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
       z.object({ message: z.string() }),

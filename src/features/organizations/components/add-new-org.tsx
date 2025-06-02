@@ -77,7 +77,7 @@ export function AddNewOrganization() {
         {/* Dialog Content */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Nursery Logo */}
+            {/* Organization Logo */}
             <FormField
               control={form.control}
               name="logo"
@@ -123,7 +123,7 @@ export function AddNewOrganization() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nursery name</FormLabel>
+                  <FormLabel>Organization name</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Enter organization name" />
                   </FormControl>
@@ -154,8 +154,8 @@ export function AddNewOrganization() {
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Creating..." : "Create Nursery"}
+              <Button type="submit" disabled={isPending} loading={isPending}>
+                {isPending ? "Creating..." : "Create Organization"}
               </Button>
             </DialogFooter>
           </form>
