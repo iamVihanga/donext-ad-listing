@@ -1,91 +1,49 @@
 "use client"
 
-import { useState } from "react"
-import { Search, ChevronDown, Filter, Menu, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, ChevronDown, Filter, Menu, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { format } from "date-fns"
 
-const vehicles = [
-  {
-    id: 1,
-    title: "Toyota Prius 2019",
-    price: "Rs. 8,500,000",
-    location: "Colombo",
-    year: 2019,
-    mileage: "45,000 km",
-    fuel: "Hybrid",
-    transmission: "Auto",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: false,
-  },
-  {
-    id: 2,
-    title: "Honda Civic 2020",
-    price: "Rs. 9,200,000",
-    location: "Kandy",
-    year: 2020,
-    mileage: "32,000 km",
-    fuel: "Petrol",
-    transmission: "Auto",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: true,
-  },
-  {
-    id: 3,
-    title: "Suzuki Alto 2018",
-    price: "Rs. 3,800,000",
-    location: "Galle",
-    year: 2018,
-    mileage: "68,000 km",
-    fuel: "Petrol",
-    transmission: "Manual",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: false,
-  },
-  {
-    id: 4,
-    title: "BMW X5 2021",
-    price: "Rs. 18,500,000",
-    location: "Colombo",
-    year: 2021,
-    mileage: "15,000 km",
-    fuel: "Petrol",
-    transmission: "Auto",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: true,
-  },
-  {
-    id: 5,
-    title: "Nissan Leaf 2019",
-    price: "Rs. 7,200,000",
-    location: "Negombo",
-    year: 2019,
-    mileage: "28,000 km",
-    fuel: "Electric",
-    transmission: "Auto",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: false,
-  },
-  {
-    id: 6,
-    title: "Mitsubishi Montero 2017",
-    price: "Rs. 12,800,000",
-    location: "Matara",
-    year: 2017,
-    mileage: "85,000 km",
-    fuel: "Diesel",
-    transmission: "Auto",
-    image: "/placeholder.svg?height=120&width=160",
-    negotiable: true,
-  },
-]
+// Import the existing hook
+import { useGetAds } from "@/features/ads/api/use-get-ads"
+
+// Vehicle type labels
+const vehicleTypeLabels: Record<string, string> = {
+  "CAR": "CAR",
+  "VAN": "VAN",
+  "SUV_JEEP": "SUV / JEEP",
+  "MOTORCYCLE": "MOTORCYCLE",
+  "CREW_CAB": "CREW CAB",
+  "PICKUP_DOUBLE_CAB": "PICKUP / DOUBLE CAB",
+  "BUS": "BUS",
+  "LORRY": "LORRY",
+  "THREE_WHEEL": "THREE WHEEL",
+  "OTHER": "OTHER",
+  "TRACTOR": "TRACTOR",
+  "HEAVY_DUTY": "HEAVY-DUTY",
+  "BICYCLE": "BICYCLE"
+};
 
 export default function VehicleMarketplace() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  
+  // Use the existing hook to fetch real vehicle data
+  const { data, isLoading, error } = useGetAds({
+    page: 1,
+    limit: 6, // Show 6 items initially
+  });
+
+  // Format price for display
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "Price on request";
+    return `Rs. ${price.toLocaleString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -321,7 +279,9 @@ export default function VehicleMarketplace() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Latest Vehicles</h2>
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 text-sm">Showing 1-6 of 1,234 results</span>
+                  <span className="text-gray-600 text-sm">
+                    {data?.pagination ? `Showing 1-${data.ads.length} of ${data.pagination.total} results` : 'Loading results...'}
+                  </span>
                   <Select>
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Sort by" />
@@ -336,46 +296,77 @@ export default function VehicleMarketplace() {
                 </div>
               </div>
 
-              {/* Vehicle Grid - Matching Screenshot Design */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {vehicles.map((vehicle) => (
-                  <div
-                    key={vehicle.id}
-                    className="bg-white rounded-lg border border-gray-300 overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                  >
-                    <div className="p-3">
-                      {/* Vehicle Title - Centered */}
-                      <h3 className="font-semibold text-base text-gray-800 text-center mb-3">{vehicle.title}</h3>
+              {/* Loading state */}
+              {isLoading && (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#024950] mr-2" />
+                  <p className="text-gray-500">Loading vehicles...</p>
+                </div>
+              )}
 
-                      <div className="flex">
-                        {/* Vehicle Image */}
-                        <div className="w-36 h-24 flex-shrink-0">
-                          <img
-                            src={vehicle.image || "/placeholder.svg"}
-                            alt={vehicle.title}
-                            className="w-full h-full object-cover rounded"
-                          />
-                        </div>
+              {/* Error state */}
+              {error && (
+                <div className="p-8 text-center">
+                  <p className="text-red-500">Failed to load vehicle listings</p>
+                  <p className="mt-2 text-sm text-gray-500">Please try again later</p>
+                </div>
+              )}
 
-                        {/* Vehicle Details */}
-                        <div className="flex-1 pl-3 flex flex-col justify-between">
-                          <div>
-                            <div className="text-sm text-gray-600 mb-1">{vehicle.location}</div>
+              {/* No results */}
+              {data?.ads?.length === 0 && !isLoading && (
+                <div className="p-8 text-center border rounded-lg">
+                  <p className="text-gray-500">No vehicles found</p>
+                  <Button className="mt-4">Create Your First Listing</Button>
+                </div>
+              )}
 
-                            <div className="text-sm font-semibold text-[#024950] mb-1">
-                              {vehicle.negotiable ? "Negotiable" : vehicle.price}
-                            </div>
+              {/* Vehicle Grid - Using Real Data */}
+              {data?.ads && data.ads.length > 0 && !isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.ads.map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      className="bg-white rounded-lg border border-gray-300 overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                      onClick={() => window.location.href = `/${vehicle.id}`}
+                    >
+                      <div className="p-3">
+                        {/* Vehicle Title - Centered */}
+                        <h3 className="font-semibold text-base text-gray-800 text-center mb-3">{vehicle.title}</h3>
 
-                            <div className="text-sm text-gray-500 mb-1">{vehicle.mileage}</div>
+                        <div className="flex">
+                          {/* Vehicle Image - Using placeholder since image functionality is not implemented yet */}
+                          <div className="w-36 h-24 flex-shrink-0">
+                            <img
+                              src="/placeholder.svg"
+                              alt={vehicle.title}
+                              className="w-full h-full object-cover rounded"
+                            />
                           </div>
 
-                          <div className="text-xs text-gray-400">2025-06-03</div>
+                          {/* Vehicle Details */}
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">{vehicle.location || "Location not specified"}</div>
+
+                              <div className="text-sm font-semibold text-[#024950] mb-1">
+                                {formatPrice(vehicle.price)}
+                              </div>
+
+                              <div className="text-sm text-gray-500 mb-1">
+                                {vehicleTypeLabels[vehicle.type] || vehicle.type}
+                              </div>
+                            </div>
+
+                            <div className="text-xs text-gray-400">
+                              {format(new Date(vehicle.createdAt), "yyyy-MM-dd")}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Load More */}
               <div className="text-center mt-6">
@@ -383,6 +374,7 @@ export default function VehicleMarketplace() {
                   size="lg"
                   variant="outline"
                   className="px-8 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
+                  disabled={!data || data.pagination?.page === data.pagination?.totalPages}
                 >
                   Load More Vehicles
                 </Button>
