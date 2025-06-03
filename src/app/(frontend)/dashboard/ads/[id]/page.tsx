@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Save, ArrowLeft, ImagePlus } from "lucide-react";
+import { CalendarIcon, Loader2, Save, ArrowLeft, ImagePlus, MapPin, DollarSign } from "lucide-react";
 
 import PageContainer from "@/components/layouts/page-container";
 import { AppPageShell } from "@/components/layouts/page-shell";
@@ -51,7 +51,10 @@ const adUpdateSchema = z.object({
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PRODUCT", "SERVICE", "JOB", "EVENT", "REAL_ESTATE"]),
   status: z.enum(["ACTIVE", "DRAFT", "PENDING_REVIEW", "EXPIRED", "REJECTED"]),
-  // Change these from .default to explicitly required
+  // Add price and location fields
+  price: z.number().nullable().optional(),
+  location: z.string().nullable().optional(),
+  // Other fields
   published: z.boolean(),
   isDraft: z.boolean(),
   boosted: z.boolean(),
@@ -85,7 +88,11 @@ export default function AdDetailsPage({ params }: Props) {
       description: "",
       type: "PRODUCT",
       status: "ACTIVE",
-      published: false,  // Provide explicit values for all boolean fields
+      // Add default values for price and location
+      price: null,
+      location: null,
+      // Other fields
+      published: false,
       isDraft: true,
       boosted: false,
       featured: false,
@@ -106,6 +113,10 @@ export default function AdDetailsPage({ params }: Props) {
         description: ad.description || "",
         type: ad.type || "PRODUCT",
         status: ad.status || "ACTIVE",
+        // Set price and location from ad data
+        price: ad.price,
+        location: ad.location,
+        // Other fields
         published: ad.published || false,
         isDraft: ad.isDraft || true,
         boosted: ad.boosted || false,
@@ -129,7 +140,9 @@ export default function AdDetailsPage({ params }: Props) {
       const payload = {
         ...mainAdData,
         tags,
-        expiryDate: expiryDate || null, // Pass Date object directly instead of formatting to string
+        // Ensure price is a number or null, not an empty string
+        price: typeof mainAdData.price === 'number' ? mainAdData.price : null,
+        expiryDate: expiryDate || null,
       };
       
       console.log("Updating ad with payload:", payload);
@@ -286,6 +299,64 @@ export default function AdDetailsPage({ params }: Props) {
                           <FormControl>
                             <Input {...field} placeholder="Ad title" />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Price field */}
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0.00"
+                                className="pl-8"
+                                value={field.value === null ? '' : field.value}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                                  field.onChange(val);
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Enter the price for this item (leave empty if not applicable)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Location field */}
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <MapPin className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                className="pl-8"
+                                placeholder="e.g. New York, NY"
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Where is this item or service located?
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
