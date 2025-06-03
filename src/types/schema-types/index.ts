@@ -72,9 +72,7 @@ export const TwoFactorScalarFieldEnumSchema = z.enum(['id','secret','backupCodes
 
 export const TasksScalarFieldEnumSchema = z.enum(['id','name','done']);
 
-export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','seoTitle','seoDescription','seoSlug','categoryId','tags','createdAt','updatedAt']);
-
-export const AdDetailScalarFieldEnumSchema = z.enum(['id','adId','price','location','fields']);
+export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','seoTitle','seoDescription','seoSlug','categoryId','tags','price','location','metadata','createdAt','updatedAt']);
 
 export const AdRevisionScalarFieldEnumSchema = z.enum(['id','adId','version','data','createdAt']);
 
@@ -313,25 +311,14 @@ export const AdSchema = z.object({
   seoSlug: z.string().nullable(),
   categoryId: z.string().nullable(),
   tags: z.string().array(),
+  price: z.number().nullable(),
+  location: z.string().nullable(),
+  metadata: JsonValueSchema.nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
 
 export type Ad = z.infer<typeof AdSchema>
-
-/////////////////////////////////////////
-// AD DETAIL SCHEMA
-/////////////////////////////////////////
-
-export const AdDetailSchema = z.object({
-  id: z.string(),
-  adId: z.string(),
-  price: z.number().nullable(),
-  location: z.string().nullable(),
-  fields: JsonValueSchema,
-})
-
-export type AdDetail = z.infer<typeof AdDetailSchema>
 
 /////////////////////////////////////////
 // AD REVISION SCHEMA
@@ -854,12 +841,14 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   seoSlug: z.boolean().optional(),
   categoryId: z.boolean().optional(),
   tags: z.boolean().optional(),
+  price: z.boolean().optional(),
+  location: z.boolean().optional(),
+  metadata: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
   org: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
   creator: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   category: z.union([z.boolean(),z.lazy(() => CategoryArgsSchema)]).optional(),
-  detail: z.union([z.boolean(),z.lazy(() => AdDetailArgsSchema)]).optional(),
   analytics: z.union([z.boolean(),z.lazy(() => AdAnalyticsArgsSchema)]).optional(),
   payments: z.union([z.boolean(),z.lazy(() => PaymentArgsSchema)]).optional(),
   favorites: z.union([z.boolean(),z.lazy(() => FavoriteArgsSchema)]).optional(),
@@ -869,26 +858,6 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   shareEvents: z.union([z.boolean(),z.lazy(() => ShareEventArgsSchema)]).optional(),
   media: z.union([z.boolean(),z.lazy(() => AdMediaArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => AdCountOutputTypeArgsSchema)]).optional(),
-}).strict()
-
-// AD DETAIL
-//------------------------------------------------------
-
-export const AdDetailIncludeSchema: z.ZodType<Prisma.AdDetailInclude> = z.object({
-}).strict()
-
-export const AdDetailArgsSchema: z.ZodType<Prisma.AdDetailDefaultArgs> = z.object({
-  select: z.lazy(() => AdDetailSelectSchema).optional(),
-  include: z.lazy(() => AdDetailIncludeSchema).optional(),
-}).strict();
-
-export const AdDetailSelectSchema: z.ZodType<Prisma.AdDetailSelect> = z.object({
-  id: z.boolean().optional(),
-  adId: z.boolean().optional(),
-  price: z.boolean().optional(),
-  location: z.boolean().optional(),
-  fields: z.boolean().optional(),
-  ad: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
 }).strict()
 
 // AD REVISION
@@ -1961,12 +1930,14 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   seoSlug: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   categoryId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   tags: z.lazy(() => StringNullableListFilterSchema).optional(),
+  price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
+  location: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
+  metadata: z.lazy(() => JsonNullableFilterSchema).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema),z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema),z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
-  detail: z.union([ z.lazy(() => AdDetailNullableScalarRelationFilterSchema),z.lazy(() => AdDetailWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema),z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
   favorites: z.lazy(() => FavoriteListRelationFilterSchema).optional(),
@@ -1997,12 +1968,14 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   seoSlug: z.lazy(() => SortOrderSchema).optional(),
   categoryId: z.lazy(() => SortOrderSchema).optional(),
   tags: z.lazy(() => SortOrderSchema).optional(),
+  price: z.lazy(() => SortOrderSchema).optional(),
+  location: z.lazy(() => SortOrderSchema).optional(),
+  metadata: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   org: z.lazy(() => OrganizationOrderByWithRelationInputSchema).optional(),
   creator: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
   category: z.lazy(() => CategoryOrderByWithRelationInputSchema).optional(),
-  detail: z.lazy(() => AdDetailOrderByWithRelationInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsOrderByWithRelationInputSchema).optional(),
   payments: z.lazy(() => PaymentOrderByRelationAggregateInputSchema).optional(),
   favorites: z.lazy(() => FavoriteOrderByRelationAggregateInputSchema).optional(),
@@ -2048,12 +2021,14 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   seoDescription: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   categoryId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   tags: z.lazy(() => StringNullableListFilterSchema).optional(),
+  price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
+  location: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
+  metadata: z.lazy(() => JsonNullableFilterSchema).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema),z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema),z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
-  detail: z.union([ z.lazy(() => AdDetailNullableScalarRelationFilterSchema),z.lazy(() => AdDetailWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema),z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
   favorites: z.lazy(() => FavoriteListRelationFilterSchema).optional(),
@@ -2084,11 +2059,16 @@ export const AdOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdOrderByWith
   seoSlug: z.lazy(() => SortOrderSchema).optional(),
   categoryId: z.lazy(() => SortOrderSchema).optional(),
   tags: z.lazy(() => SortOrderSchema).optional(),
+  price: z.lazy(() => SortOrderSchema).optional(),
+  location: z.lazy(() => SortOrderSchema).optional(),
+  metadata: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => AdCountOrderByAggregateInputSchema).optional(),
+  _avg: z.lazy(() => AdAvgOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => AdMaxOrderByAggregateInputSchema).optional(),
-  _min: z.lazy(() => AdMinOrderByAggregateInputSchema).optional()
+  _min: z.lazy(() => AdMinOrderByAggregateInputSchema).optional(),
+  _sum: z.lazy(() => AdSumOrderByAggregateInputSchema).optional()
 }).strict();
 
 export const AdScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdScalarWhereWithAggregatesInput> = z.object({
@@ -2114,77 +2094,11 @@ export const AdScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdScalarWh
   seoSlug: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   categoryId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   tags: z.lazy(() => StringNullableListFilterSchema).optional(),
-  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
-  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
-}).strict();
-
-export const AdDetailWhereInputSchema: z.ZodType<Prisma.AdDetailWhereInput> = z.object({
-  AND: z.union([ z.lazy(() => AdDetailWhereInputSchema),z.lazy(() => AdDetailWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => AdDetailWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => AdDetailWhereInputSchema),z.lazy(() => AdDetailWhereInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
-  location: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
-  fields: z.lazy(() => JsonFilterSchema).optional(),
-  ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
-}).strict();
-
-export const AdDetailOrderByWithRelationInputSchema: z.ZodType<Prisma.AdDetailOrderByWithRelationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
-  price: z.lazy(() => SortOrderSchema).optional(),
-  location: z.lazy(() => SortOrderSchema).optional(),
-  fields: z.lazy(() => SortOrderSchema).optional(),
-  ad: z.lazy(() => AdOrderByWithRelationInputSchema).optional()
-}).strict();
-
-export const AdDetailWhereUniqueInputSchema: z.ZodType<Prisma.AdDetailWhereUniqueInput> = z.union([
-  z.object({
-    id: z.string(),
-    adId: z.string()
-  }),
-  z.object({
-    id: z.string(),
-  }),
-  z.object({
-    adId: z.string(),
-  }),
-])
-.and(z.object({
-  id: z.string().optional(),
-  adId: z.string().optional(),
-  AND: z.union([ z.lazy(() => AdDetailWhereInputSchema),z.lazy(() => AdDetailWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => AdDetailWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => AdDetailWhereInputSchema),z.lazy(() => AdDetailWhereInputSchema).array() ]).optional(),
-  price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
-  location: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
-  fields: z.lazy(() => JsonFilterSchema).optional(),
-  ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
-}).strict());
-
-export const AdDetailOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdDetailOrderByWithAggregationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
-  price: z.lazy(() => SortOrderSchema).optional(),
-  location: z.lazy(() => SortOrderSchema).optional(),
-  fields: z.lazy(() => SortOrderSchema).optional(),
-  _count: z.lazy(() => AdDetailCountOrderByAggregateInputSchema).optional(),
-  _avg: z.lazy(() => AdDetailAvgOrderByAggregateInputSchema).optional(),
-  _max: z.lazy(() => AdDetailMaxOrderByAggregateInputSchema).optional(),
-  _min: z.lazy(() => AdDetailMinOrderByAggregateInputSchema).optional(),
-  _sum: z.lazy(() => AdDetailSumOrderByAggregateInputSchema).optional()
-}).strict();
-
-export const AdDetailScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdDetailScalarWhereWithAggregatesInput> = z.object({
-  AND: z.union([ z.lazy(() => AdDetailScalarWhereWithAggregatesInputSchema),z.lazy(() => AdDetailScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  OR: z.lazy(() => AdDetailScalarWhereWithAggregatesInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => AdDetailScalarWhereWithAggregatesInputSchema),z.lazy(() => AdDetailScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  adId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   price: z.union([ z.lazy(() => FloatNullableWithAggregatesFilterSchema),z.number() ]).optional().nullable(),
   location: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
-  fields: z.lazy(() => JsonWithAggregatesFilterSchema).optional()
+  metadata: z.lazy(() => JsonNullableWithAggregatesFilterSchema).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
 export const AdRevisionWhereInputSchema: z.ZodType<Prisma.AdRevisionWhereInput> = z.object({
@@ -3942,12 +3856,14 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -3978,9 +3894,11 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -4007,12 +3925,14 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -4042,9 +3962,11 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -4075,6 +3997,9 @@ export const AdCreateManyInputSchema: z.ZodType<Prisma.AdCreateManyInput> = z.ob
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();
@@ -4095,6 +4020,9 @@ export const AdUpdateManyMutationInputSchema: z.ZodType<Prisma.AdUpdateManyMutat
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
@@ -4118,59 +4046,11 @@ export const AdUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdUncheckedUpdat
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const AdDetailCreateInputSchema: z.ZodType<Prisma.AdDetailCreateInput> = z.object({
-  id: z.string().optional(),
-  price: z.number().optional().nullable(),
-  location: z.string().optional().nullable(),
-  fields: InputJsonValueSchema,
-  ad: z.lazy(() => AdCreateNestedOneWithoutDetailInputSchema)
-}).strict();
-
-export const AdDetailUncheckedCreateInputSchema: z.ZodType<Prisma.AdDetailUncheckedCreateInput> = z.object({
-  id: z.string().optional(),
-  adId: z.string(),
-  price: z.number().optional().nullable(),
-  location: z.string().optional().nullable(),
-  fields: InputJsonValueSchema
-}).strict();
-
-export const AdDetailUpdateInputSchema: z.ZodType<Prisma.AdDetailUpdateInput> = z.object({
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
-  ad: z.lazy(() => AdUpdateOneRequiredWithoutDetailNestedInputSchema).optional()
-}).strict();
-
-export const AdDetailUncheckedUpdateInputSchema: z.ZodType<Prisma.AdDetailUncheckedUpdateInput> = z.object({
-  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
-}).strict();
-
-export const AdDetailCreateManyInputSchema: z.ZodType<Prisma.AdDetailCreateManyInput> = z.object({
-  id: z.string().optional(),
-  adId: z.string(),
-  price: z.number().optional().nullable(),
-  location: z.string().optional().nullable(),
-  fields: InputJsonValueSchema
-}).strict();
-
-export const AdDetailUpdateManyMutationInputSchema: z.ZodType<Prisma.AdDetailUpdateManyMutationInput> = z.object({
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
-}).strict();
-
-export const AdDetailUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdDetailUncheckedUpdateManyInput> = z.object({
-  adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
 }).strict();
 
 export const AdRevisionCreateInputSchema: z.ZodType<Prisma.AdRevisionCreateInput> = z.object({
@@ -5660,14 +5540,27 @@ export const StringNullableListFilterSchema: z.ZodType<Prisma.StringNullableList
   isEmpty: z.boolean().optional()
 }).strict();
 
+export const FloatNullableFilterSchema: z.ZodType<Prisma.FloatNullableFilter> = z.object({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedFloatNullableFilterSchema) ]).optional().nullable(),
+  isSet: z.boolean().optional()
+}).strict();
+
+export const JsonNullableFilterSchema: z.ZodType<Prisma.JsonNullableFilter> = z.object({
+  equals: InputJsonValueSchema.optional().nullable(),
+  not: InputJsonValueSchema.optional().nullable(),
+  isSet: z.boolean().optional()
+}).strict();
+
 export const CategoryNullableScalarRelationFilterSchema: z.ZodType<Prisma.CategoryNullableScalarRelationFilter> = z.object({
   is: z.lazy(() => CategoryWhereInputSchema).optional().nullable(),
   isNot: z.lazy(() => CategoryWhereInputSchema).optional().nullable()
-}).strict();
-
-export const AdDetailNullableScalarRelationFilterSchema: z.ZodType<Prisma.AdDetailNullableScalarRelationFilter> = z.object({
-  is: z.lazy(() => AdDetailWhereInputSchema).optional().nullable(),
-  isNot: z.lazy(() => AdDetailWhereInputSchema).optional().nullable()
 }).strict();
 
 export const AdAnalyticsNullableScalarRelationFilterSchema: z.ZodType<Prisma.AdAnalyticsNullableScalarRelationFilter> = z.object({
@@ -5735,8 +5628,15 @@ export const AdCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdCountOrderBy
   seoSlug: z.lazy(() => SortOrderSchema).optional(),
   categoryId: z.lazy(() => SortOrderSchema).optional(),
   tags: z.lazy(() => SortOrderSchema).optional(),
+  price: z.lazy(() => SortOrderSchema).optional(),
+  location: z.lazy(() => SortOrderSchema).optional(),
+  metadata: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdAvgOrderByAggregateInputSchema: z.ZodType<Prisma.AdAvgOrderByAggregateInput> = z.object({
+  price: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const AdMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMaxOrderByAggregateInput> = z.object({
@@ -5758,6 +5658,8 @@ export const AdMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMaxOrderByAggr
   seoDescription: z.lazy(() => SortOrderSchema).optional(),
   seoSlug: z.lazy(() => SortOrderSchema).optional(),
   categoryId: z.lazy(() => SortOrderSchema).optional(),
+  price: z.lazy(() => SortOrderSchema).optional(),
+  location: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
@@ -5781,8 +5683,14 @@ export const AdMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMinOrderByAggr
   seoDescription: z.lazy(() => SortOrderSchema).optional(),
   seoSlug: z.lazy(() => SortOrderSchema).optional(),
   categoryId: z.lazy(() => SortOrderSchema).optional(),
+  price: z.lazy(() => SortOrderSchema).optional(),
+  location: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const AdSumOrderByAggregateInputSchema: z.ZodType<Prisma.AdSumOrderByAggregateInput> = z.object({
+  price: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const EnumAdTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumAdTypeWithAggregatesFilter> = z.object({
@@ -5805,58 +5713,6 @@ export const EnumAdStatusWithAggregatesFilterSchema: z.ZodType<Prisma.EnumAdStat
   _max: z.lazy(() => NestedEnumAdStatusFilterSchema).optional()
 }).strict();
 
-export const FloatNullableFilterSchema: z.ZodType<Prisma.FloatNullableFilter> = z.object({
-  equals: z.number().optional().nullable(),
-  in: z.number().array().optional().nullable(),
-  notIn: z.number().array().optional().nullable(),
-  lt: z.number().optional(),
-  lte: z.number().optional(),
-  gt: z.number().optional(),
-  gte: z.number().optional(),
-  not: z.union([ z.number(),z.lazy(() => NestedFloatNullableFilterSchema) ]).optional().nullable(),
-  isSet: z.boolean().optional()
-}).strict();
-
-export const JsonFilterSchema: z.ZodType<Prisma.JsonFilter> = z.object({
-  equals: InputJsonValueSchema.optional(),
-  not: InputJsonValueSchema.optional()
-}).strict();
-
-export const AdScalarRelationFilterSchema: z.ZodType<Prisma.AdScalarRelationFilter> = z.object({
-  is: z.lazy(() => AdWhereInputSchema).optional(),
-  isNot: z.lazy(() => AdWhereInputSchema).optional()
-}).strict();
-
-export const AdDetailCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdDetailCountOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
-  price: z.lazy(() => SortOrderSchema).optional(),
-  location: z.lazy(() => SortOrderSchema).optional(),
-  fields: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const AdDetailAvgOrderByAggregateInputSchema: z.ZodType<Prisma.AdDetailAvgOrderByAggregateInput> = z.object({
-  price: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const AdDetailMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdDetailMaxOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
-  price: z.lazy(() => SortOrderSchema).optional(),
-  location: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const AdDetailMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdDetailMinOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional(),
-  price: z.lazy(() => SortOrderSchema).optional(),
-  location: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const AdDetailSumOrderByAggregateInputSchema: z.ZodType<Prisma.AdDetailSumOrderByAggregateInput> = z.object({
-  price: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
 export const FloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.FloatNullableWithAggregatesFilter> = z.object({
   equals: z.number().optional().nullable(),
   in: z.number().array().optional().nullable(),
@@ -5874,12 +5730,13 @@ export const FloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.FloatNull
   isSet: z.boolean().optional()
 }).strict();
 
-export const JsonWithAggregatesFilterSchema: z.ZodType<Prisma.JsonWithAggregatesFilter> = z.object({
-  equals: InputJsonValueSchema.optional(),
-  not: InputJsonValueSchema.optional(),
-  _count: z.lazy(() => NestedIntFilterSchema).optional(),
-  _min: z.lazy(() => NestedJsonFilterSchema).optional(),
-  _max: z.lazy(() => NestedJsonFilterSchema).optional()
+export const JsonNullableWithAggregatesFilterSchema: z.ZodType<Prisma.JsonNullableWithAggregatesFilter> = z.object({
+  equals: InputJsonValueSchema.optional().nullable(),
+  not: InputJsonValueSchema.optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedJsonNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedJsonNullableFilterSchema).optional(),
+  isSet: z.boolean().optional()
 }).strict();
 
 export const IntFilterSchema: z.ZodType<Prisma.IntFilter> = z.object({
@@ -5891,6 +5748,16 @@ export const IntFilterSchema: z.ZodType<Prisma.IntFilter> = z.object({
   gt: z.number().optional(),
   gte: z.number().optional(),
   not: z.union([ z.number(),z.lazy(() => NestedIntFilterSchema) ]).optional(),
+}).strict();
+
+export const JsonFilterSchema: z.ZodType<Prisma.JsonFilter> = z.object({
+  equals: InputJsonValueSchema.optional(),
+  not: InputJsonValueSchema.optional()
+}).strict();
+
+export const AdScalarRelationFilterSchema: z.ZodType<Prisma.AdScalarRelationFilter> = z.object({
+  is: z.lazy(() => AdWhereInputSchema).optional(),
+  isNot: z.lazy(() => AdWhereInputSchema).optional()
 }).strict();
 
 export const AdRevisionCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdRevisionCountOrderByAggregateInput> = z.object({
@@ -5937,6 +5804,14 @@ export const IntWithAggregatesFilterSchema: z.ZodType<Prisma.IntWithAggregatesFi
   _sum: z.lazy(() => NestedIntFilterSchema).optional(),
   _min: z.lazy(() => NestedIntFilterSchema).optional(),
   _max: z.lazy(() => NestedIntFilterSchema).optional()
+}).strict();
+
+export const JsonWithAggregatesFilterSchema: z.ZodType<Prisma.JsonWithAggregatesFilter> = z.object({
+  equals: InputJsonValueSchema.optional(),
+  not: InputJsonValueSchema.optional(),
+  _count: z.lazy(() => NestedIntFilterSchema).optional(),
+  _min: z.lazy(() => NestedJsonFilterSchema).optional(),
+  _max: z.lazy(() => NestedJsonFilterSchema).optional()
 }).strict();
 
 export const AdAnalyticsCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdAnalyticsCountOrderByAggregateInput> = z.object({
@@ -6126,12 +6001,6 @@ export const FloatFilterSchema: z.ZodType<Prisma.FloatFilter> = z.object({
   not: z.union([ z.number(),z.lazy(() => NestedFloatFilterSchema) ]).optional(),
 }).strict();
 
-export const JsonNullableFilterSchema: z.ZodType<Prisma.JsonNullableFilter> = z.object({
-  equals: InputJsonValueSchema.optional().nullable(),
-  not: InputJsonValueSchema.optional().nullable(),
-  isSet: z.boolean().optional()
-}).strict();
-
 export const PaymentCountOrderByAggregateInputSchema: z.ZodType<Prisma.PaymentCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   adId: z.lazy(() => SortOrderSchema).optional(),
@@ -6208,15 +6077,6 @@ export const FloatWithAggregatesFilterSchema: z.ZodType<Prisma.FloatWithAggregat
   _sum: z.lazy(() => NestedFloatFilterSchema).optional(),
   _min: z.lazy(() => NestedFloatFilterSchema).optional(),
   _max: z.lazy(() => NestedFloatFilterSchema).optional()
-}).strict();
-
-export const JsonNullableWithAggregatesFilterSchema: z.ZodType<Prisma.JsonNullableWithAggregatesFilter> = z.object({
-  equals: InputJsonValueSchema.optional().nullable(),
-  not: InputJsonValueSchema.optional().nullable(),
-  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
-  _min: z.lazy(() => NestedJsonNullableFilterSchema).optional(),
-  _max: z.lazy(() => NestedJsonNullableFilterSchema).optional(),
-  isSet: z.boolean().optional()
 }).strict();
 
 export const FavoriteCountOrderByAggregateInputSchema: z.ZodType<Prisma.FavoriteCountOrderByAggregateInput> = z.object({
@@ -7485,12 +7345,6 @@ export const CategoryCreateNestedOneWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional()
 }).strict();
 
-export const AdDetailCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdDetailCreateNestedOneWithoutAdInput> = z.object({
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdDetailCreateOrConnectWithoutAdInputSchema).optional(),
-  connect: z.lazy(() => AdDetailWhereUniqueInputSchema).optional()
-}).strict();
-
 export const AdAnalyticsCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsCreateNestedOneWithoutAdInput> = z.object({
   create: z.union([ z.lazy(() => AdAnalyticsCreateWithoutAdInputSchema),z.lazy(() => AdAnalyticsUncheckedCreateWithoutAdInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => AdAnalyticsCreateOrConnectWithoutAdInputSchema).optional(),
@@ -7544,12 +7398,6 @@ export const AdMediaCreateNestedManyWithoutAdInputSchema: z.ZodType<Prisma.AdMed
   connectOrCreate: z.union([ z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema),z.lazy(() => AdMediaCreateOrConnectWithoutAdInputSchema).array() ]).optional(),
   createMany: z.lazy(() => AdMediaCreateManyAdInputEnvelopeSchema).optional(),
   connect: z.union([ z.lazy(() => AdMediaWhereUniqueInputSchema),z.lazy(() => AdMediaWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
-export const AdDetailUncheckedCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUncheckedCreateNestedOneWithoutAdInput> = z.object({
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdDetailCreateOrConnectWithoutAdInputSchema).optional(),
-  connect: z.lazy(() => AdDetailWhereUniqueInputSchema).optional()
 }).strict();
 
 export const AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsUncheckedCreateNestedOneWithoutAdInput> = z.object({
@@ -7620,6 +7468,15 @@ export const AdUpdatetagsInputSchema: z.ZodType<Prisma.AdUpdatetagsInput> = z.ob
   push: z.union([ z.string(),z.string().array() ]).optional(),
 }).strict();
 
+export const NullableFloatFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableFloatFieldUpdateOperationsInput> = z.object({
+  set: z.number().optional().nullable(),
+  increment: z.number().optional(),
+  decrement: z.number().optional(),
+  multiply: z.number().optional(),
+  divide: z.number().optional(),
+  unset: z.boolean().optional()
+}).strict();
+
 export const OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema: z.ZodType<Prisma.OrganizationUpdateOneRequiredWithoutAdsNestedInput> = z.object({
   create: z.union([ z.lazy(() => OrganizationCreateWithoutAdsInputSchema),z.lazy(() => OrganizationUncheckedCreateWithoutAdsInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => OrganizationCreateOrConnectWithoutAdsInputSchema).optional(),
@@ -7644,16 +7501,6 @@ export const CategoryUpdateOneWithoutAdsNestedInputSchema: z.ZodType<Prisma.Cate
   delete: z.union([ z.boolean(),z.lazy(() => CategoryWhereInputSchema) ]).optional(),
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional(),
   update: z.union([ z.lazy(() => CategoryUpdateToOneWithWhereWithoutAdsInputSchema),z.lazy(() => CategoryUpdateWithoutAdsInputSchema),z.lazy(() => CategoryUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
-}).strict();
-
-export const AdDetailUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdDetailUpdateOneWithoutAdNestedInput> = z.object({
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdDetailCreateOrConnectWithoutAdInputSchema).optional(),
-  upsert: z.lazy(() => AdDetailUpsertWithoutAdInputSchema).optional(),
-  disconnect: z.union([ z.boolean(),z.lazy(() => AdDetailWhereInputSchema) ]).optional(),
-  delete: z.union([ z.boolean(),z.lazy(() => AdDetailWhereInputSchema) ]).optional(),
-  connect: z.lazy(() => AdDetailWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => AdDetailUpdateToOneWithWhereWithoutAdInputSchema),z.lazy(() => AdDetailUpdateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedUpdateWithoutAdInputSchema) ]).optional(),
 }).strict();
 
 export const AdAnalyticsUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdAnalyticsUpdateOneWithoutAdNestedInput> = z.object({
@@ -7764,16 +7611,6 @@ export const AdMediaUpdateManyWithoutAdNestedInputSchema: z.ZodType<Prisma.AdMed
   deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdDetailUncheckedUpdateOneWithoutAdNestedInput> = z.object({
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdDetailCreateOrConnectWithoutAdInputSchema).optional(),
-  upsert: z.lazy(() => AdDetailUpsertWithoutAdInputSchema).optional(),
-  disconnect: z.union([ z.boolean(),z.lazy(() => AdDetailWhereInputSchema) ]).optional(),
-  delete: z.union([ z.boolean(),z.lazy(() => AdDetailWhereInputSchema) ]).optional(),
-  connect: z.lazy(() => AdDetailWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => AdDetailUpdateToOneWithWhereWithoutAdInputSchema),z.lazy(() => AdDetailUpdateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedUpdateWithoutAdInputSchema) ]).optional(),
-}).strict();
-
 export const AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdAnalyticsUncheckedUpdateOneWithoutAdNestedInput> = z.object({
   create: z.union([ z.lazy(() => AdAnalyticsCreateWithoutAdInputSchema),z.lazy(() => AdAnalyticsUncheckedCreateWithoutAdInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => AdAnalyticsCreateOrConnectWithoutAdInputSchema).optional(),
@@ -7880,29 +7717,6 @@ export const AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema: z.ZodType<Pri
   update: z.union([ z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema),z.lazy(() => AdMediaUpdateWithWhereUniqueWithoutAdInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema),z.lazy(() => AdMediaUpdateManyWithWhereWithoutAdInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => AdMediaScalarWhereInputSchema),z.lazy(() => AdMediaScalarWhereInputSchema).array() ]).optional(),
-}).strict();
-
-export const AdCreateNestedOneWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutDetailInput> = z.object({
-  create: z.union([ z.lazy(() => AdCreateWithoutDetailInputSchema),z.lazy(() => AdUncheckedCreateWithoutDetailInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutDetailInputSchema).optional(),
-  connect: z.lazy(() => AdWhereUniqueInputSchema).optional()
-}).strict();
-
-export const NullableFloatFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableFloatFieldUpdateOperationsInput> = z.object({
-  set: z.number().optional().nullable(),
-  increment: z.number().optional(),
-  decrement: z.number().optional(),
-  multiply: z.number().optional(),
-  divide: z.number().optional(),
-  unset: z.boolean().optional()
-}).strict();
-
-export const AdUpdateOneRequiredWithoutDetailNestedInputSchema: z.ZodType<Prisma.AdUpdateOneRequiredWithoutDetailNestedInput> = z.object({
-  create: z.union([ z.lazy(() => AdCreateWithoutDetailInputSchema),z.lazy(() => AdUncheckedCreateWithoutDetailInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => AdCreateOrConnectWithoutDetailInputSchema).optional(),
-  upsert: z.lazy(() => AdUpsertWithoutDetailInputSchema).optional(),
-  connect: z.lazy(() => AdWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => AdUpdateToOneWithWhereWithoutDetailInputSchema),z.lazy(() => AdUpdateWithoutDetailInputSchema),z.lazy(() => AdUncheckedUpdateWithoutDetailInputSchema) ]).optional(),
 }).strict();
 
 export const AdCreateNestedOneWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateNestedOneWithoutRevisionsInput> = z.object({
@@ -8485,6 +8299,18 @@ export const NestedEnumAdStatusFilterSchema: z.ZodType<Prisma.NestedEnumAdStatus
   not: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => NestedEnumAdStatusFilterSchema) ]).optional(),
 }).strict();
 
+export const NestedFloatNullableFilterSchema: z.ZodType<Prisma.NestedFloatNullableFilter> = z.object({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedFloatNullableFilterSchema) ]).optional().nullable(),
+  isSet: z.boolean().optional()
+}).strict();
+
 export const NestedEnumAdTypeWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumAdTypeWithAggregatesFilter> = z.object({
   equals: z.lazy(() => AdTypeSchema).optional(),
   in: z.lazy(() => AdTypeSchema).array().optional(),
@@ -8505,18 +8331,6 @@ export const NestedEnumAdStatusWithAggregatesFilterSchema: z.ZodType<Prisma.Nest
   _max: z.lazy(() => NestedEnumAdStatusFilterSchema).optional()
 }).strict();
 
-export const NestedFloatNullableFilterSchema: z.ZodType<Prisma.NestedFloatNullableFilter> = z.object({
-  equals: z.number().optional().nullable(),
-  in: z.number().array().optional().nullable(),
-  notIn: z.number().array().optional().nullable(),
-  lt: z.number().optional(),
-  lte: z.number().optional(),
-  gt: z.number().optional(),
-  gte: z.number().optional(),
-  not: z.union([ z.number(),z.lazy(() => NestedFloatNullableFilterSchema) ]).optional().nullable(),
-  isSet: z.boolean().optional()
-}).strict();
-
 export const NestedFloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedFloatNullableWithAggregatesFilter> = z.object({
   equals: z.number().optional().nullable(),
   in: z.number().array().optional().nullable(),
@@ -8534,9 +8348,10 @@ export const NestedFloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.Nes
   isSet: z.boolean().optional()
 }).strict();
 
-export const NestedJsonFilterSchema: z.ZodType<Prisma.NestedJsonFilter> = z.object({
-  equals: InputJsonValueSchema.optional(),
-  not: InputJsonValueSchema.optional()
+export const NestedJsonNullableFilterSchema: z.ZodType<Prisma.NestedJsonNullableFilter> = z.object({
+  equals: InputJsonValueSchema.optional().nullable(),
+  not: InputJsonValueSchema.optional().nullable(),
+  isSet: z.boolean().optional()
 }).strict();
 
 export const NestedIntWithAggregatesFilterSchema: z.ZodType<Prisma.NestedIntWithAggregatesFilter> = z.object({
@@ -8564,6 +8379,11 @@ export const NestedFloatFilterSchema: z.ZodType<Prisma.NestedFloatFilter> = z.ob
   gt: z.number().optional(),
   gte: z.number().optional(),
   not: z.union([ z.number(),z.lazy(() => NestedFloatFilterSchema) ]).optional(),
+}).strict();
+
+export const NestedJsonFilterSchema: z.ZodType<Prisma.NestedJsonFilter> = z.object({
+  equals: InputJsonValueSchema.optional(),
+  not: InputJsonValueSchema.optional()
 }).strict();
 
 export const NestedEnumMediaTypeFilterSchema: z.ZodType<Prisma.NestedEnumMediaTypeFilter> = z.object({
@@ -8648,12 +8468,6 @@ export const NestedFloatWithAggregatesFilterSchema: z.ZodType<Prisma.NestedFloat
   _sum: z.lazy(() => NestedFloatFilterSchema).optional(),
   _min: z.lazy(() => NestedFloatFilterSchema).optional(),
   _max: z.lazy(() => NestedFloatFilterSchema).optional()
-}).strict();
-
-export const NestedJsonNullableFilterSchema: z.ZodType<Prisma.NestedJsonNullableFilter> = z.object({
-  equals: InputJsonValueSchema.optional().nullable(),
-  not: InputJsonValueSchema.optional().nullable(),
-  isSet: z.boolean().optional()
 }).strict();
 
 export const NestedEnumNotificationTypeFilterSchema: z.ZodType<Prisma.NestedEnumNotificationTypeFilter> = z.object({
@@ -8850,11 +8664,13 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -8884,9 +8700,11 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -9339,6 +9157,9 @@ export const AdScalarWhereInputSchema: z.ZodType<Prisma.AdScalarWhereInput> = z.
   seoSlug: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   categoryId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   tags: z.lazy(() => StringNullableListFilterSchema).optional(),
+  price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
+  location: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
+  metadata: z.lazy(() => JsonNullableFilterSchema).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
@@ -9918,11 +9739,13 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -9952,9 +9775,11 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -10694,25 +10519,6 @@ export const CategoryCreateOrConnectWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   create: z.union([ z.lazy(() => CategoryCreateWithoutAdsInputSchema),z.lazy(() => CategoryUncheckedCreateWithoutAdsInputSchema) ]),
 }).strict();
 
-export const AdDetailCreateWithoutAdInputSchema: z.ZodType<Prisma.AdDetailCreateWithoutAdInput> = z.object({
-  id: z.string().optional(),
-  price: z.number().optional().nullable(),
-  location: z.string().optional().nullable(),
-  fields: InputJsonValueSchema
-}).strict();
-
-export const AdDetailUncheckedCreateWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUncheckedCreateWithoutAdInput> = z.object({
-  id: z.string().optional(),
-  price: z.number().optional().nullable(),
-  location: z.string().optional().nullable(),
-  fields: InputJsonValueSchema
-}).strict();
-
-export const AdDetailCreateOrConnectWithoutAdInputSchema: z.ZodType<Prisma.AdDetailCreateOrConnectWithoutAdInput> = z.object({
-  where: z.lazy(() => AdDetailWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]),
-}).strict();
-
 export const AdAnalyticsCreateWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsCreateWithoutAdInput> = z.object({
   id: z.string().optional(),
   views: z.number().int().optional(),
@@ -11032,29 +10838,6 @@ export const CategoryUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
-export const AdDetailUpsertWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUpsertWithoutAdInput> = z.object({
-  update: z.union([ z.lazy(() => AdDetailUpdateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedUpdateWithoutAdInputSchema) ]),
-  create: z.union([ z.lazy(() => AdDetailCreateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedCreateWithoutAdInputSchema) ]),
-  where: z.lazy(() => AdDetailWhereInputSchema).optional()
-}).strict();
-
-export const AdDetailUpdateToOneWithWhereWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUpdateToOneWithWhereWithoutAdInput> = z.object({
-  where: z.lazy(() => AdDetailWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => AdDetailUpdateWithoutAdInputSchema),z.lazy(() => AdDetailUncheckedUpdateWithoutAdInputSchema) ]),
-}).strict();
-
-export const AdDetailUpdateWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUpdateWithoutAdInput> = z.object({
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
-}).strict();
-
-export const AdDetailUncheckedUpdateWithoutAdInputSchema: z.ZodType<Prisma.AdDetailUncheckedUpdateWithoutAdInput> = z.object({
-  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  fields: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional(),
-}).strict();
-
 export const AdAnalyticsUpsertWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsUpsertWithoutAdInput> = z.object({
   update: z.union([ z.lazy(() => AdAnalyticsUpdateWithoutAdInputSchema),z.lazy(() => AdAnalyticsUncheckedUpdateWithoutAdInputSchema) ]),
   create: z.union([ z.lazy(() => AdAnalyticsCreateWithoutAdInputSchema),z.lazy(() => AdAnalyticsUncheckedCreateWithoutAdInputSchema) ]),
@@ -11241,148 +11024,6 @@ export const AdMediaScalarWhereInputSchema: z.ZodType<Prisma.AdMediaScalarWhereI
   order: z.union([ z.lazy(() => IntFilterSchema),z.number() ]).optional(),
 }).strict();
 
-export const AdCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateWithoutDetailInput> = z.object({
-  id: z.string().optional(),
-  title: z.string(),
-  description: z.string(),
-  type: z.lazy(() => AdTypeSchema),
-  published: z.boolean().optional(),
-  isDraft: z.boolean().optional(),
-  boosted: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  boostExpiry: z.coerce.date().optional().nullable(),
-  featureExpiry: z.coerce.date().optional().nullable(),
-  status: z.lazy(() => AdStatusSchema).optional(),
-  expiryDate: z.coerce.date().optional().nullable(),
-  seoTitle: z.string().optional().nullable(),
-  seoDescription: z.string().optional().nullable(),
-  seoSlug: z.string().optional().nullable(),
-  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
-  creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
-  category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
-  payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
-  reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
-  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional()
-}).strict();
-
-export const AdUncheckedCreateWithoutDetailInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutDetailInput> = z.object({
-  id: z.string().optional(),
-  orgId: z.string(),
-  createdBy: z.string(),
-  title: z.string(),
-  description: z.string(),
-  type: z.lazy(() => AdTypeSchema),
-  published: z.boolean().optional(),
-  isDraft: z.boolean().optional(),
-  boosted: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  boostExpiry: z.coerce.date().optional().nullable(),
-  featureExpiry: z.coerce.date().optional().nullable(),
-  status: z.lazy(() => AdStatusSchema).optional(),
-  expiryDate: z.coerce.date().optional().nullable(),
-  seoTitle: z.string().optional().nullable(),
-  seoDescription: z.string().optional().nullable(),
-  seoSlug: z.string().optional().nullable(),
-  categoryId: z.string().optional().nullable(),
-  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
-  payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
-  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional()
-}).strict();
-
-export const AdCreateOrConnectWithoutDetailInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutDetailInput> = z.object({
-  where: z.lazy(() => AdWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => AdCreateWithoutDetailInputSchema),z.lazy(() => AdUncheckedCreateWithoutDetailInputSchema) ]),
-}).strict();
-
-export const AdUpsertWithoutDetailInputSchema: z.ZodType<Prisma.AdUpsertWithoutDetailInput> = z.object({
-  update: z.union([ z.lazy(() => AdUpdateWithoutDetailInputSchema),z.lazy(() => AdUncheckedUpdateWithoutDetailInputSchema) ]),
-  create: z.union([ z.lazy(() => AdCreateWithoutDetailInputSchema),z.lazy(() => AdUncheckedCreateWithoutDetailInputSchema) ]),
-  where: z.lazy(() => AdWhereInputSchema).optional()
-}).strict();
-
-export const AdUpdateToOneWithWhereWithoutDetailInputSchema: z.ZodType<Prisma.AdUpdateToOneWithWhereWithoutDetailInput> = z.object({
-  where: z.lazy(() => AdWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => AdUpdateWithoutDetailInputSchema),z.lazy(() => AdUncheckedUpdateWithoutDetailInputSchema) ]),
-}).strict();
-
-export const AdUpdateWithoutDetailInputSchema: z.ZodType<Prisma.AdUpdateWithoutDetailInput> = z.object({
-  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
-  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
-  creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
-  category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
-  payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
-  reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
-  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional()
-}).strict();
-
-export const AdUncheckedUpdateWithoutDetailInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutDetailInput> = z.object({
-  orgId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  createdBy: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
-  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
-  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  status: z.union([ z.lazy(() => AdStatusSchema),z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
-  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
-  payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
-  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional()
-}).strict();
-
 export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWithoutRevisionsInput> = z.object({
   id: z.string().optional(),
   title: z.string(),
@@ -11400,12 +11041,14 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11435,9 +11078,11 @@ export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11479,12 +11124,14 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -11513,9 +11160,11 @@ export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -11542,12 +11191,14 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11577,9 +11228,11 @@ export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11621,12 +11274,14 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -11655,9 +11310,11 @@ export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -11684,11 +11341,13 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11718,9 +11377,11 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11940,12 +11601,14 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11975,9 +11638,11 @@ export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -12082,12 +11747,14 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -12116,9 +11783,11 @@ export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -12275,12 +11944,14 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -12310,9 +11981,11 @@ export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -12421,12 +12094,14 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -12455,9 +12130,11 @@ export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -12614,12 +12291,14 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -12649,9 +12328,11 @@ export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -12693,12 +12374,14 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -12727,9 +12410,11 @@ export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13146,12 +12831,14 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13181,9 +12868,11 @@ export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13225,12 +12914,14 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13259,9 +12950,11 @@ export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13351,12 +13044,14 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13386,9 +13081,11 @@ export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13497,12 +13194,14 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13531,9 +13230,11 @@ export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13752,12 +13453,14 @@ export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMe
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
-  detail: z.lazy(() => AdDetailCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13787,9 +13490,11 @@ export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  detail: z.lazy(() => AdDetailUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13856,12 +13561,14 @@ export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMe
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13890,9 +13597,11 @@ export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13999,6 +13708,9 @@ export const AdCreateManyCreatorInputSchema: z.ZodType<Prisma.AdCreateManyCreato
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();
@@ -14232,11 +13944,13 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14265,9 +13979,11 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14296,6 +14012,9 @@ export const AdUncheckedUpdateManyWithoutCreatorInputSchema: z.ZodType<Prisma.Ad
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
@@ -14553,6 +14272,9 @@ export const AdCreateManyOrgInputSchema: z.ZodType<Prisma.AdCreateManyOrgInput> 
   seoSlug: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();
@@ -14627,11 +14349,13 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14660,9 +14384,11 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14691,6 +14417,9 @@ export const AdUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.AdUnch
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
@@ -14950,6 +14679,9 @@ export const AdCreateManyCategoryInputSchema: z.ZodType<Prisma.AdCreateManyCateg
   seoDescription: z.string().optional().nullable(),
   seoSlug: z.string().optional().nullable(),
   tags: z.union([ z.lazy(() => AdCreatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.number().optional().nullable(),
+  location: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();
@@ -14970,11 +14702,13 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
-  detail: z.lazy(() => AdDetailUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -15003,9 +14737,11 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  detail: z.lazy(() => AdDetailUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -15034,6 +14770,9 @@ export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.A
   seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema),z.string().array() ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
@@ -15671,68 +15410,6 @@ export const AdFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AdFindUniqueOrThrow
   select: AdSelectSchema.optional(),
   include: AdIncludeSchema.optional(),
   where: AdWhereUniqueInputSchema,
-}).strict() ;
-
-export const AdDetailFindFirstArgsSchema: z.ZodType<Prisma.AdDetailFindFirstArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereInputSchema.optional(),
-  orderBy: z.union([ AdDetailOrderByWithRelationInputSchema.array(),AdDetailOrderByWithRelationInputSchema ]).optional(),
-  cursor: AdDetailWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ AdDetailScalarFieldEnumSchema,AdDetailScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const AdDetailFindFirstOrThrowArgsSchema: z.ZodType<Prisma.AdDetailFindFirstOrThrowArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereInputSchema.optional(),
-  orderBy: z.union([ AdDetailOrderByWithRelationInputSchema.array(),AdDetailOrderByWithRelationInputSchema ]).optional(),
-  cursor: AdDetailWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ AdDetailScalarFieldEnumSchema,AdDetailScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const AdDetailFindManyArgsSchema: z.ZodType<Prisma.AdDetailFindManyArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereInputSchema.optional(),
-  orderBy: z.union([ AdDetailOrderByWithRelationInputSchema.array(),AdDetailOrderByWithRelationInputSchema ]).optional(),
-  cursor: AdDetailWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ AdDetailScalarFieldEnumSchema,AdDetailScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const AdDetailAggregateArgsSchema: z.ZodType<Prisma.AdDetailAggregateArgs> = z.object({
-  where: AdDetailWhereInputSchema.optional(),
-  orderBy: z.union([ AdDetailOrderByWithRelationInputSchema.array(),AdDetailOrderByWithRelationInputSchema ]).optional(),
-  cursor: AdDetailWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const AdDetailGroupByArgsSchema: z.ZodType<Prisma.AdDetailGroupByArgs> = z.object({
-  where: AdDetailWhereInputSchema.optional(),
-  orderBy: z.union([ AdDetailOrderByWithAggregationInputSchema.array(),AdDetailOrderByWithAggregationInputSchema ]).optional(),
-  by: AdDetailScalarFieldEnumSchema.array(),
-  having: AdDetailScalarWhereWithAggregatesInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const AdDetailFindUniqueArgsSchema: z.ZodType<Prisma.AdDetailFindUniqueArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereUniqueInputSchema,
-}).strict() ;
-
-export const AdDetailFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AdDetailFindUniqueOrThrowArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereUniqueInputSchema,
 }).strict() ;
 
 export const AdRevisionFindFirstArgsSchema: z.ZodType<Prisma.AdRevisionFindFirstArgs> = z.object({
@@ -17069,48 +16746,6 @@ export const AdUpdateManyArgsSchema: z.ZodType<Prisma.AdUpdateManyArgs> = z.obje
 
 export const AdDeleteManyArgsSchema: z.ZodType<Prisma.AdDeleteManyArgs> = z.object({
   where: AdWhereInputSchema.optional(),
-  limit: z.number().optional(),
-}).strict() ;
-
-export const AdDetailCreateArgsSchema: z.ZodType<Prisma.AdDetailCreateArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  data: z.union([ AdDetailCreateInputSchema,AdDetailUncheckedCreateInputSchema ]),
-}).strict() ;
-
-export const AdDetailUpsertArgsSchema: z.ZodType<Prisma.AdDetailUpsertArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereUniqueInputSchema,
-  create: z.union([ AdDetailCreateInputSchema,AdDetailUncheckedCreateInputSchema ]),
-  update: z.union([ AdDetailUpdateInputSchema,AdDetailUncheckedUpdateInputSchema ]),
-}).strict() ;
-
-export const AdDetailCreateManyArgsSchema: z.ZodType<Prisma.AdDetailCreateManyArgs> = z.object({
-  data: z.union([ AdDetailCreateManyInputSchema,AdDetailCreateManyInputSchema.array() ]),
-}).strict() ;
-
-export const AdDetailDeleteArgsSchema: z.ZodType<Prisma.AdDetailDeleteArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  where: AdDetailWhereUniqueInputSchema,
-}).strict() ;
-
-export const AdDetailUpdateArgsSchema: z.ZodType<Prisma.AdDetailUpdateArgs> = z.object({
-  select: AdDetailSelectSchema.optional(),
-  include: AdDetailIncludeSchema.optional(),
-  data: z.union([ AdDetailUpdateInputSchema,AdDetailUncheckedUpdateInputSchema ]),
-  where: AdDetailWhereUniqueInputSchema,
-}).strict() ;
-
-export const AdDetailUpdateManyArgsSchema: z.ZodType<Prisma.AdDetailUpdateManyArgs> = z.object({
-  data: z.union([ AdDetailUpdateManyMutationInputSchema,AdDetailUncheckedUpdateManyInputSchema ]),
-  where: AdDetailWhereInputSchema.optional(),
-  limit: z.number().optional(),
-}).strict() ;
-
-export const AdDetailDeleteManyArgsSchema: z.ZodType<Prisma.AdDetailDeleteManyArgs> = z.object({
-  where: AdDetailWhereInputSchema.optional(),
   limit: z.number().optional(),
 }).strict() ;
 
