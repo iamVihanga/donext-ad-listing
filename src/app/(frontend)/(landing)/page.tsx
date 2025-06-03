@@ -1,36 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { 
-  Search, 
-  ChevronDown, 
-  Filter, 
-  MapPin, 
-  Calendar, 
-  Fuel, 
-  Settings, 
-  Star, 
-  Heart, 
-  Menu, 
-  X 
-} from "lucide-react"
+import { Search, ChevronDown, Filter, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-
-// const categories = [
-//   { name: "Sell Vehicle", color: "bg-orange-500 hover:bg-orange-600", icon: "🚗" },
-//   { name: "Buy Cars", color: "bg-blue-500 hover:bg-blue-600", icon: "🚙" },
-//   { name: "Buy Bikes", color: "bg-green-500 hover:bg-green-600", icon: "🏍️" },
-//   { name: "Buy Vans", color: "bg-purple-500 hover:bg-purple-600", icon: "🚐" },
-//   { name: "Buy Trucks", color: "bg-red-500 hover:bg-red-600", icon: "🚛" },
-//   { name: "Buy SUVs", color: "bg-indigo-500 hover:bg-indigo-600", icon: "🚗" },
-//   { name: "Three Wheels", color: "bg-teal-500 hover:bg-teal-600", icon: "🛺" },
-//   { name: "Spare Parts", color: "bg-pink-500 hover:bg-pink-600", icon: "⚙️" },
-// ]
 
 const vehicles = [
   {
@@ -42,8 +18,8 @@ const vehicles = [
     mileage: "45,000 km",
     fuel: "Hybrid",
     transmission: "Auto",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: true,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: false,
   },
   {
     id: 2,
@@ -54,8 +30,8 @@ const vehicles = [
     mileage: "32,000 km",
     fuel: "Petrol",
     transmission: "Auto",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: true,
   },
   {
     id: 3,
@@ -66,8 +42,8 @@ const vehicles = [
     mileage: "68,000 km",
     fuel: "Petrol",
     transmission: "Manual",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: false,
   },
   {
     id: 4,
@@ -78,8 +54,8 @@ const vehicles = [
     mileage: "15,000 km",
     fuel: "Petrol",
     transmission: "Auto",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: true,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: true,
   },
   {
     id: 5,
@@ -90,8 +66,8 @@ const vehicles = [
     mileage: "28,000 km",
     fuel: "Electric",
     transmission: "Auto",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: false,
   },
   {
     id: 6,
@@ -102,8 +78,8 @@ const vehicles = [
     mileage: "85,000 km",
     fuel: "Diesel",
     transmission: "Auto",
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
+    image: "/placeholder.svg?height=120&width=160",
+    negotiable: true,
   },
 ]
 
@@ -112,42 +88,39 @@ export default function VehicleMarketplace() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+      <header className="bg-[#024950] text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-3 md:py-4">
             <div className="flex items-center space-x-2">
-              <div className="text-xl md:text-2xl font-bold text-blue-400">Rathagala.lk</div>
+              <div className="text-xl md:text-2xl font-bold text-white">Rathagala.lk</div>
             </div>
-            
+
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <a href="#" className="hover:text-blue-400 transition-colors">
+              <a href="#" className="hover:text-gray-200 transition-colors">
                 Home
               </a>
-              {/* <a href="#" className="hover:text-blue-400 transition-colors">
-                Browse
-              </a> */}
-              <a href="#" className="hover:text-blue-400 transition-colors">
+              <a href="#" className="hover:text-gray-200 transition-colors">
                 Sell
               </a>
-              <a href="#" className="hover:text-blue-400 transition-colors">
+              <a href="#" className="hover:text-gray-200 transition-colors">
                 About
               </a>
-              <a href="#" className="hover:text-blue-400 transition-colors">
+              <a href="#" className="hover:text-gray-200 transition-colors">
                 Contact
               </a>
             </nav>
-            
+
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" className="text-blue-600 border-white hover:bg-white hover:text-slate-900">
+              <Button variant="outline" className="text-white border-white hover:bg-white hover:text-[#024950]">
                 Login
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700">Post Free Ad</Button>
+              <Button className="bg-white text-[#024950] hover:bg-gray-100">Post Free Ad</Button>
             </div>
-            
+
             {/* Mobile Menu Button */}
             <div className="md:hidden">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -156,24 +129,34 @@ export default function VehicleMarketplace() {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85%] sm:w-[350px] bg-slate-900 text-white border-slate-800">
+                <SheetContent side="right" className="w-[85%] sm:w-[350px] bg-[#024950] text-white border-[#024950]">
                   <div className="flex items-center justify-between mb-8">
-                    <div className="text-xl font-bold text-blue-400">Rathagala.lk</div>
+                    <div className="text-xl font-bold text-white">Rathagala.lk</div>
                     <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                       <X className="h-5 w-5" />
                     </Button>
                   </div>
                   <nav className="flex flex-col space-y-5">
-                    <a href="#" className="text-lg hover:text-blue-400 transition-colors">Home</a>
-                    {/* <a href="#" className="text-lg hover:text-blue-400 transition-colors">Browse</a> */}
-                    <a href="#" className="text-lg hover:text-blue-400 transition-colors">Sell</a>
-                    <a href="#" className="text-lg hover:text-blue-400 transition-colors">About</a>
-                    <a href="#" className="text-lg hover:text-blue-400 transition-colors">Contact</a>
+                    <a href="#" className="text-lg hover:text-gray-200 transition-colors">
+                      Home
+                    </a>
+                    <a href="#" className="text-lg hover:text-gray-200 transition-colors">
+                      Sell
+                    </a>
+                    <a href="#" className="text-lg hover:text-gray-200 transition-colors">
+                      About
+                    </a>
+                    <a href="#" className="text-lg hover:text-gray-200 transition-colors">
+                      Contact
+                    </a>
                     <div className="pt-5 space-y-3">
-                      <Button variant="outline" className="w-full text-white border-white hover:bg-white hover:text-slate-900">
+                      <Button
+                        variant="outline"
+                        className="w-full text-white border-white hover:bg-white hover:text-[#024950]"
+                      >
                         Login
                       </Button>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">Post Free Ad</Button>
+                      <Button className="w-full bg-white text-[#024950] hover:bg-gray-100">Post Free Ad</Button>
                     </div>
                   </nav>
                 </SheetContent>
@@ -183,38 +166,21 @@ export default function VehicleMarketplace() {
         </div>
       </header>
 
-      {/* Category Navigation - Scrollable on mobile */}
-      {/* <div className="bg-white shadow-md overflow-x-auto">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex space-x-3 md:flex-wrap md:gap-3 md:justify-center">
-            {categories.map((category, index) => (
-              <Button
-                key={index}
-                className={`${category.color} text-white font-medium px-3 py-2 md:px-6 md:py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md whitespace-nowrap flex-shrink-0`}
-              >
-                <span className="mr-1 sm:mr-2">{category.icon}</span>
-                <span className="hidden xs:inline">{category.name}</span>
-                <span className="xs:hidden">{category.name.split(' ')[1] || category.name.split(' ')[0]}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div> */}
-
       {/* Hero Section with Search */}
-      <section className="relative py-8 md:py-16 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <section className="relative py-8 md:py-16 bg-gradient-to-r from-[#024950] to-[#036b75]">
         <div className="relative container mx-auto px-4">
           <div className="text-center mb-6 md:mb-12">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 md:mb-4">Find Your Perfect Vehicle</h1>
-            <p className="text-base sm:text-lg md:text-xl text-blue-100 max-w-2xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 md:mb-4">
+              Find Your Perfect Vehicle
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto">
               Sri Lanka's largest automobile marketplace
             </p>
           </div>
 
           {/* Search Form */}
           <div className="max-w-6xl mx-auto">
-            <Card className="p-4 md:p-8 shadow-2xl bg-white/95 backdrop-blur-sm">
+            <Card className="p-4 md:p-8 shadow-2xl bg-white">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4 mb-4 md:mb-6">
                 <Select>
                   <SelectTrigger className="h-10 md:h-12">
@@ -268,7 +234,7 @@ export default function VehicleMarketplace() {
                   </SelectContent>
                 </Select>
 
-                <Button className="h-10 md:h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold">
+                <Button className="h-10 md:h-12 bg-[#024950] hover:bg-[#036b75] text-white font-semibold">
                   <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   <span>Search</span>
                 </Button>
@@ -279,7 +245,7 @@ export default function VehicleMarketplace() {
                 <Button
                   variant="ghost"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="text-blue-600 hover:text-blue-800 text-sm md:text-base"
+                  className="text-[#024950] hover:text-[#036b75] text-sm md:text-base"
                 >
                   <Filter className="w-4 h-4 mr-2" />
                   Advanced Filters
@@ -347,314 +313,238 @@ export default function VehicleMarketplace() {
       </section>
 
       {/* Main Content Area */}
-      <div className="container mx-auto px-2 sm:px-3 py-6 md:py-8">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Vehicle Grid Layout - 1 column on smallest screens, 2 columns on larger screens */}
-          <div className="w-full max-w-[1100px] mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              {vehicles.map((vehicle) => (
-                <div 
-                  key={vehicle.id}
-                  className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-                >
-                  <div className="p-3 sm:p-4">
-                    {/* Vehicle Title */}
-                    <h3 className="font-semibold text-sm sm:text-base text-gray-800 text-center mb-2 sm:mb-3">
-                      {vehicle.title}
-                    </h3>
-                    
-                    <div className="flex flex-row">
-                      {/* Vehicle Image - Increased Size */}
-                      <div className="w-2/5 sm:w-5/12">
-                        <div className="relative">
+      <div className="bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Vehicle Listings */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Latest Vehicles</h2>
+                <div className="flex items-center space-x-4">
+                  <span className="text-gray-600 text-sm">Showing 1-6 of 1,234 results</span>
+                  <Select>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Vehicle Grid - Matching Screenshot Design */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {vehicles.map((vehicle) => (
+                  <div
+                    key={vehicle.id}
+                    className="bg-white rounded-lg border border-gray-300 overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  >
+                    <div className="p-3">
+                      {/* Vehicle Title - Centered */}
+                      <h3 className="font-semibold text-base text-gray-800 text-center mb-3">{vehicle.title}</h3>
+
+                      <div className="flex">
+                        {/* Vehicle Image */}
+                        <div className="w-36 h-24 flex-shrink-0">
                           <img
                             src={vehicle.image || "/placeholder.svg"}
                             alt={vehicle.title}
-                            className="w-full h-24 sm:h-28 md:h-32 lg:h-36 object-cover rounded-md"
+                            className="w-full h-full object-cover rounded"
                           />
                         </div>
-                      </div>
 
-                      {/* Vehicle Details */}
-                      <div className="w-3/5 sm:w-7/12 pl-3 sm:pl-4">
-                        <div className="text-xs sm:text-sm text-gray-600 mb-1">
-                          {vehicle.location}
-                        </div>
-                        
-                        {/* Price - show actual price or "Negotiable" */}
-                        <div className="text-xs sm:text-sm font-semibold text-blue-600 mb-1">
-                          {vehicle.id % 2 === 0 ? "Negotiable" : vehicle.price}
-                        </div>
-                        
-                        {/* Mileage */}
-                        <div className="text-xs text-gray-500 mb-1">
-                          {vehicle.mileage}
-                        </div>
-                        
-                        {/* Date */}
-                        <div className="text-xs text-gray-400">
-                          {vehicle.id % 2 === 0 ? "2025-06-03" : "2025-06-02"}
+                        {/* Vehicle Details */}
+                        <div className="flex-1 pl-3 flex flex-col justify-between">
+                          <div>
+                            <div className="text-sm text-gray-600 mb-1">{vehicle.location}</div>
+
+                            <div className="text-sm font-semibold text-[#024950] mb-1">
+                              {vehicle.negotiable ? "Negotiable" : vehicle.price}
+                            </div>
+
+                            <div className="text-sm text-gray-500 mb-1">{vehicle.mileage}</div>
+                          </div>
+
+                          <div className="text-xs text-gray-400">2025-06-03</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              {/* Load More */}
+              <div className="text-center mt-6">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="px-8 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
+                >
+                  Load More Vehicles
+                </Button>
+              </div>
             </div>
-            
-            {/* Load More */}
-            <div className="text-center mt-6 md:mt-8 pb-4">
-              <Button size="lg" variant="outline" className="px-4 sm:px-6 md:px-8 h-9 sm:h-10 md:h-11 text-sm sm:text-base">
-                Load More Vehicles
-              </Button>
+
+            {/* Right Sidebar - Ad Space */}
+            <div className="w-full lg:w-72 space-y-4">
+              {/* Google Ad Space 1 */}
+              <Card className="p-3 bg-gray-50 border-dashed border-2 border-gray-300">
+                <div className="text-center text-gray-500">
+                  <div className="text-sm mb-2">Advertisement</div>
+                  <div className="bg-gray-200 h-64 flex items-center justify-center rounded">
+                    <span className="text-gray-400">
+                      Google Ad Space
+                      <br />
+                      300x250
+                    </span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Featured Dealers */}
+              <Card className="p-3">
+                <h3 className="font-semibold mb-4 text-gray-800">Featured Dealers</h3>
+                <div className="space-y-3">
+                  {["Premium Motors", "City Auto", "Elite Cars"].map((dealer, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <div className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center">
+                        <span className="text-[#024950] font-semibold">{dealer[0]}</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-800">{dealer}</div>
+                        <div className="text-sm text-gray-500">Verified Dealer</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Google Ad Space 2 */}
+              <Card className="p-3 bg-gray-50 border-dashed border-2 border-gray-300">
+                <div className="text-center text-gray-500">
+                  <div className="text-sm mb-2">Advertisement</div>
+                  <div className="bg-gray-200 h-48 flex items-center justify-center rounded">
+                    <span className="text-gray-400">
+                      Google Ad Space
+                      <br />
+                      300x200
+                    </span>
+                  </div>
+                </div>
+              </Card>
             </div>
           </div>
-
-          {/* Right Sidebar - Ad Space - 2-column grid on mobile, row scroll on tablet, column on desktop */}
-            <div className="w-full lg:w-[280px]">
-              {/* Mobile (2-column grid) */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 sm:hidden">
-                {/* Google Ad Space 1 */}
-                <Card className="p-3 bg-gray-50 border-dashed border-2 border-gray-300 h-full">
-                  <div className="text-center text-gray-500">
-                    <div className="text-xs mb-1">Ad</div>
-                    <div className="bg-gray-200 h-36 flex items-center justify-center rounded">
-                      <span className="text-gray-400 text-xs">300x150</span>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Featured Dealers - Mobile */}
-                <Card className="p-3 h-full">
-                  <h3 className="font-semibold mb-2 text-xs text-gray-800">Featured Dealers</h3>
-                  <div className="space-y-2">
-                    {["Premium Motors", "City Auto"].map((dealer, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-2 p-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      >
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-xs">{dealer[0]}</span>
-                        </div>
-                        <div className="font-medium text-gray-800 text-xs truncate">{dealer}</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Google Ad Space 2 */}
-                <Card className="p-3 bg-gray-50 border-dashed border-2 border-gray-300 h-full">
-                  <div className="text-center text-gray-500">
-                    <div className="text-xs mb-1">Ad</div>
-                    <div className="bg-gray-200 h-36 flex items-center justify-center rounded">
-                      <span className="text-gray-400 text-xs">300x150</span>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Additional mobile card */}
-                <Card className="p-3 bg-gray-50 border-dashed border-2 border-gray-300 h-full">
-                  <div className="text-center text-gray-500">
-                    <div className="text-xs mb-1">Ad</div>
-                    <div className="bg-gray-200 h-36 flex items-center justify-center rounded">
-                      <span className="text-gray-400 text-xs">300x150</span>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-              
-              {/* Tablet (horizontal scroll) */}
-              <div className="hidden sm:block lg:hidden overflow-x-auto">
-                <div className="flex flex-row gap-4 pb-2 min-w-max">
-                  {/* Google Ad Space 1 */}
-                  <Card className="p-3 md:p-4 bg-gray-50 border-dashed border-2 border-gray-300 w-72 sm:w-80 flex-shrink-0">
-                    <div className="text-center text-gray-500">
-                      <div className="text-xs md:text-sm mb-1 md:mb-2">Advertisement</div>
-                      <div className="bg-gray-200 h-44 sm:h-52 flex items-center justify-center rounded">
-                        <span className="text-gray-400 text-xs md:text-sm">Google Ad Space<br/>300x250</span>
-                      </div>
-                    </div>
-                  </Card>
-
-                  {/* Featured Dealers */}
-                  <Card className="p-3 md:p-4 w-72 sm:w-80 flex-shrink-0">
-                    <h3 className="font-semibold mb-3 md:mb-4 text-sm text-gray-800">Featured Dealers</h3>
-                    <div className="space-y-2">
-                      {["Premium Motors", "City Auto", "Elite Cars"].map((dealer, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                        >
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-semibold text-sm">{dealer[0]}</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-800 text-xs sm:text-sm">{dealer}</div>
-                            <div className="text-xs text-gray-500">Verified Dealer</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-
-                  {/* Google Ad Space 2 */}
-                  <Card className="p-3 md:p-4 bg-gray-50 border-dashed border-2 border-gray-300 w-72 sm:w-80 flex-shrink-0">
-                    <div className="text-center text-gray-500">
-                      <div className="text-xs md:text-sm mb-1 md:mb-2">Advertisement</div>
-                      <div className="bg-gray-200 h-36 md:h-48 flex items-center justify-center rounded">
-                        <span className="text-gray-400 text-xs md:text-sm">Google Ad Space<br/>300x200</span>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              </div>
-              
-              {/* Desktop (vertical layout) */}
-              <div className="hidden lg:flex lg:flex-col gap-4">
-                {/* Google Ad Space 1 */}
-                <Card className="p-4 bg-gray-50 border-dashed border-2 border-gray-300">
-                  <div className="text-center text-gray-500">
-                    <div className="text-sm mb-2">Advertisement</div>
-                    <div className="bg-gray-200 h-64 flex items-center justify-center rounded">
-                      <span className="text-gray-400 text-sm">Google Ad Space<br/>300x250</span>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Featured Dealers */}
-                <Card className="p-4">
-                  <h3 className="font-semibold mb-4 text-base text-gray-800">Featured Dealers</h3>
-                  <div className="space-y-3">
-                    {["Premium Motors", "City Auto", "Elite Cars"].map((dealer, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      >
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-base">{dealer[0]}</span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-800 text-base">{dealer}</div>
-                          <div className="text-sm text-gray-500">Verified Dealer</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Google Ad Space 2 */}
-                <Card className="p-4 bg-gray-50 border-dashed border-2 border-gray-300">
-                  <div className="text-center text-gray-500">
-                    <div className="text-sm mb-2">Advertisement</div>
-                    <div className="bg-gray-200 h-48 flex items-center justify-center rounded">
-                      <span className="text-gray-400 text-sm">Google Ad Space<br/>300x200</span>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
         </div>
       </div>
 
       {/* Banner Ad Space */}
-      <div className="container mx-auto px-4 py-4 md:py-6">
-        <Card className="p-3 md:p-4 bg-gray-50 border-dashed border-2 border-gray-300">
-          <div className="text-center text-gray-500">
-            <div className="text-xs md:text-sm mb-1 md:mb-2">Advertisement</div>
-            <div className="bg-gray-200 h-16 md:h-24 flex items-center justify-center rounded">
-              <span className="text-gray-400 text-xs md:text-sm">Google Ad Banner Space - 728x90</span>
+      <div className="bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <Card className="p-4 bg-gray-50 border-dashed border-2 border-gray-300">
+            <div className="text-center text-gray-500">
+              <div className="text-sm mb-2">Advertisement</div>
+              <div className="bg-gray-200 h-24 flex items-center justify-center rounded">
+                <span className="text-gray-400">Google Ad Banner Space - 728x90</span>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white py-8 md:py-12">
+      <footer className="bg-[#024950] text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            <div className="col-span-2 md:col-span-1">
-              <div className="text-xl md:text-2xl font-bold text-blue-400 mb-3 md:mb-4">Rathagala.lk</div>
-              <p className="text-xs sm:text-sm md:text-base text-gray-300">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="text-2xl font-bold text-white mb-4">Rathagala.lk</div>
+              <p className="text-gray-200">
                 Sri Lanka's most trusted vehicle marketplace connecting buyers and sellers nationwide.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 md:mb-4 text-sm md:text-base">Quick Links</h4>
-              <ul className="space-y-1 md:space-y-2 text-xs sm:text-sm text-gray-300">
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-gray-200">
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Browse Cars
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Sell Your Car
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Car Loans
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Insurance
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 md:mb-4 text-sm md:text-base">Support</h4>
-              <ul className="space-y-1 md:space-y-2 text-xs sm:text-sm text-gray-300">
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-200">
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Help Center
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Terms of Service
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Privacy Policy
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2 md:mb-4 text-sm md:text-base">Connect</h4>
-              <ul className="space-y-1 md:space-y-2 text-xs sm:text-sm text-gray-300">
+              <h4 className="font-semibold mb-4">Connect</h4>
+              <ul className="space-y-2 text-gray-200">
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Facebook
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Instagram
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     Twitter
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
+                  <a href="#" className="hover:text-white">
                     YouTube
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 mt-6 md:mt-8 pt-4 md:pt-6 text-center text-xs md:text-sm text-gray-400">
+          <div className="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300">
             <p>&copy; 2025 Rathagala.lk. All rights reserved.</p>
           </div>
         </div>
