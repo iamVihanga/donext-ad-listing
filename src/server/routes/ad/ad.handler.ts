@@ -9,9 +9,10 @@ import {
   CreateRoute,
   GetOneRoute,
   UpdateRoute,
-  RemoveRoute
+  RemoveRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
+import { AdStatus, AdType } from "@prisma/client";
 
 // ---- List Ads Handler ----
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -19,7 +20,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const {
       page = "1",
       limit = "10",
-      search = ""
+      search = "",
     } = c.req.query() as QueryParams;
 
     // Convert to numbers and validate
@@ -27,29 +28,21 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
     const offset = (pageNum - 1) * limitNum;
 
-    // Build the where condition
-    const whereCondition = {};
-
-    // Add search condition if provided
-    let adWhereCondition = {};
+    // Build the where condition for efficient searching
+    let whereCondition: any = {};
 
     if (search && search.trim() !== "") {
-      adWhereCondition = {
+      whereCondition = {
         title: {
           contains: search,
-          mode: "insensitive"
-        }
+          mode: "insensitive",
+        },
       };
     }
 
     // Count query for total number of records
     const totalAds = await prisma.ad.count({
-      where: {
-        ...whereCondition,
-        ...(Object.keys(adWhereCondition).length > 0
-          ? adWhereCondition
-          : undefined)
-      }
+      where: whereCondition,
     });
 
     // Main query with pagination
@@ -58,26 +51,39 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       skip: offset,
       take: limitNum,
       orderBy: {
-        createdAt: "desc"
-      }
+        createdAt: "desc",
+      },
+      include: {
+        media: true,
+        category: true,
+      },
     });
 
-    // Filter out records where user doesn't match search criteria
-    const filteredAds = search
-      ? ads.filter((ad) =>
-          ad?.title?.toLowerCase().includes(search.toLowerCase())
-        )
-      : ads;
+    // Format the response data to ensure it matches the expected types
+    const formattedAds = ads.map((ad) => ({
+      ...ad,
+      // Ensure these fields have the correct types
+      price: ad.price ?? null,
+      location: ad.location ?? null,
+      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+      tags: ad.tags ?? [],
+      // Convert Date objects to ISO strings
+      createdAt: ad.createdAt.toISOString(),
+      updatedAt: ad.updatedAt.toISOString(),
+      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+      expiryDate: ad.expiryDate?.toISOString() ?? null,
+    }));
 
     return c.json(
       {
-        ads: filteredAds,
+        ads: formattedAds,
         pagination: {
           total: totalAds,
           page: pageNum,
           limit: limitNum,
-          totalPages: Math.ceil(totalAds / limitNum)
-        }
+          totalPages: Math.ceil(totalAds / limitNum),
+        },
       },
       HttpStatusCodes.OK
     );
@@ -91,89 +97,327 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   }
 };
 
-// ---- Create Ads Handler ----
+// ---- Create Ad Handler ----
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
-  const adDetails = c.req.valid("json");
-  const user = c.get("user");
-  const session = c.get("session");
+  try {
+    const adDetails = c.req.valid("json");
+    const user = c.get("user");
+    const session = c.get("session");
 
-  if (!user) {
-    return c.json(
-      { message: HttpStatusPhrases.UNAUTHORIZED },
-      HttpStatusCodes.UNAUTHORIZED
-    );
-  }
-
-  if (!session?.activeOrganizationId) {
-    return c.json(
-      { message: "Active organization is required to create an ad." },
-      HttpStatusCodes.UNAUTHORIZED
-    );
-  }
-
-  // Prepare Seo slug based on title
-  let seoSlug = adDetails
-    .title!.toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  // Bind random suffix to seoSlug for ensure uniqueness
-  seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
-
-  const createdAd = await prisma.ad.create({
-    data: {
-      ...adDetails,
-      createdBy: user.id,
-      orgId: session.activeOrganizationId,
-      title: adDetails.title || "",
-      description: adDetails.description || "",
-      type: adDetails.type || "PRODUCT",
-      status: "DRAFT",
-      seoSlug: seoSlug
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      ) as any;
     }
-  });
 
-  return c.json(createdAd, HttpStatusCodes.CREATED);
+    if (!session?.activeOrganizationId) {
+      return c.json(
+        { message: "Active organization is required to create an ad." },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
+
+    // Prepare Seo slug based on title
+    let seoSlug = adDetails
+      .title!.toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    // Bind random suffix to seoSlug for ensure uniqueness
+    seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
+
+    const createdAd = await prisma.ad.create({
+      data: {
+        orgId: session.activeOrganizationId,
+        createdBy: user.id,
+        title: adDetails.title || "",
+        description: adDetails.description || "",
+        type: (adDetails.type as AdType) || AdType.PRODUCT,
+        status: AdStatus.DRAFT,
+        seoSlug: seoSlug,
+        // Price and location
+        price: adDetails.price || null,
+        location: adDetails.location || null,
+        // Other fields
+        published: adDetails.published || false,
+        isDraft: true,
+        boosted: adDetails.boosted || false,
+        featured: adDetails.featured || false,
+        tags: adDetails.tags || [],
+        categoryId: adDetails.categoryId || null,
+        metadata: adDetails.metadata || {},
+      },
+    });
+
+    // Format dates for the response and ensure metadata is an object or null
+    const formattedAd = {
+      ...createdAd,
+      createdAt: createdAd.createdAt.toISOString(),
+      updatedAt: createdAd.updatedAt.toISOString(),
+      boostExpiry: createdAd.boostExpiry?.toISOString() ?? null,
+      featureExpiry: createdAd.featureExpiry?.toISOString() ?? null,
+      expiryDate: createdAd.expiryDate?.toISOString() ?? null,
+      // Ensure metadata is an object or null
+      metadata:
+        typeof createdAd.metadata === "object" ? createdAd.metadata : null,
+    };
+
+    return c.json(formattedAd, HttpStatusCodes.CREATED);
+  } catch (error: any) {
+    console.error("[CREATE AD] Error:", error);
+
+    if (error.name === "ZodError") {
+      return c.json(
+        {
+          message: "Validation error",
+          details: error.issues,
+        },
+        HttpStatusCodes.UNPROCESSABLE_ENTITY
+      );
+    }
+
+    return c.json(
+      { message: error.message || HttpStatusPhrases.UNPROCESSABLE_ENTITY },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
+    );
+  }
 };
 
 // ---- Get single Ad Handler ----
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
-  const adId = c.req.valid("param").id;
+  try {
+    const adId = c.req.valid("param").id;
 
-  const ad = await prisma.ad.findUnique({
-    where: { id: adId }
-  });
+    const ad = await prisma.ad.findUnique({
+      where: { id: adId },
+      include: {
+        media: {
+          include: {
+            media: true,
+          },
+        },
+        category: true,
+      },
+    });
 
-  if (!ad) {
+    if (!ad) {
+      return c.json(
+        { message: HttpStatusPhrases.NOT_FOUND },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // Format dates for the response and ensure metadata is an object or null
+    const formattedAd = {
+      ...ad,
+      createdAt: ad.createdAt.toISOString(),
+      updatedAt: ad.updatedAt.toISOString(),
+      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+      expiryDate: ad.expiryDate?.toISOString() ?? null,
+      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+    };
+
+    return c.json(formattedAd, HttpStatusCodes.OK);
+  } catch (error: any) {
+    console.error("[GET AD] Error:", error);
+
     return c.json(
-      { message: HttpStatusPhrases.NOT_FOUND },
-      HttpStatusCodes.NOT_FOUND
+      { message: error.message || "Invalid request" },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
     );
   }
-
-  return c.json(ad, HttpStatusCodes.OK);
 };
 
 // ---- Update Ad Handler ----
 export const update: AppRouteHandler<UpdateRoute> = async (c) => {
-  const adId = c.req.valid("param").id;
-  const adUpdates = c.req.valid("json");
+  try {
+    const adId = c.req.valid("param").id;
+    const adUpdates = c.req.valid("json");
+    const user = c.get("user");
 
-  const ad = await prisma.ad.update({
-    where: { id: adId },
-    data: adUpdates
-  });
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
 
-  return c.json(ad, HttpStatusCodes.OK);
+    // Check if ad exists and if user has permission
+    const existingAd = await prisma.ad.findUnique({
+      where: { id: adId },
+    });
+
+    if (!existingAd) {
+      return c.json(
+        { message: HttpStatusPhrases.NOT_FOUND },
+        HttpStatusCodes.NOT_FOUND
+      ) as any;
+    }
+
+    // Verify user is the owner of the ad
+    if (existingAd.createdBy !== user.id) {
+      return c.json(
+        { message: "You don't have permission to update this ad" },
+        HttpStatusCodes.FORBIDDEN
+      ) as any;
+    }
+
+    // Make the update
+    const updatedAd = await prisma.ad.update({
+      where: { id: adId },
+      data: {
+        ...adUpdates,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Format dates for the response
+    const formattedAd = {
+      ...updatedAd,
+      createdAt: updatedAd.createdAt.toISOString(),
+      updatedAt: updatedAd.updatedAt.toISOString(),
+      boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
+      featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
+      expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
+    };
+
+    return c.json(formattedAd, HttpStatusCodes.OK);
+  } catch (error: any) {
+    console.error("[UPDATE AD] Error:", error);
+
+    // Match the error structure required by jsonContentOneOf
+    if (error.name === "ZodError") {
+      return c.json(
+        {
+          error: {
+            issues: error.issues,
+            name: "ZodError",
+          },
+          success: false,
+        },
+        HttpStatusCodes.UNPROCESSABLE_ENTITY
+      ) as any;
+    }
+
+    return c.json(
+      {
+        error: {
+          issues: [
+            {
+              code: "custom_error",
+              message: error.message || "Invalid request",
+              path: ["id"],
+            },
+          ],
+          name: "ValidationError",
+        },
+        success: false,
+      },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
+    ) as any;
+  }
 };
 
 // ---- Delete Ad Handler ----
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
-  const adId = c.req.valid("param").id;
+  try {
+    const adId = c.req.valid("param").id;
+    const user = c.get("user");
 
-  const deletedAd = await prisma.ad.delete({
-    where: { id: adId }
-  });
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
 
-  return c.json(deletedAd, HttpStatusCodes.OK);
+    // Check if ad exists and if user has permission
+    const existingAd = await prisma.ad.findUnique({
+      where: { id: adId },
+    });
+
+    if (!existingAd) {
+      return c.json(
+        { message: HttpStatusPhrases.NOT_FOUND },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // Verify user is the owner of the ad
+    if (existingAd.createdBy !== user.id) {
+      return c.json(
+        { message: "You don't have permission to delete this ad" },
+        HttpStatusCodes.FORBIDDEN
+      );
+    }
+
+    // Delete related records to avoid foreign key constraints
+    await prisma.adMedia.deleteMany({
+      where: { adId },
+    });
+
+    // Also delete any related records in analytics, GeoHeatmap, etc.
+    await prisma.adAnalytics.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.geoHeatmap.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.shareEvent.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.adRevision.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.favorite.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.payment.deleteMany({
+      where: { adId },
+    });
+
+    await prisma.report.deleteMany({
+      where: { adId },
+    });
+
+    // Now delete the ad itself
+    await prisma.ad.delete({
+      where: { id: adId },
+    });
+
+    return c.body(null, HttpStatusCodes.NO_CONTENT);
+  } catch (error: any) {
+    console.error("[DELETE AD] Error:", error);
+
+    if (error.message && error.message.includes("Invalid")) {
+      return c.json(
+        {
+          error: {
+            issues: [
+              {
+                code: "validation_error",
+                path: ["id"],
+                message: error.message,
+              },
+            ],
+            name: "ValidationError",
+          },
+          success: false,
+        },
+        HttpStatusCodes.UNPROCESSABLE_ENTITY
+      );
+    }
+
+    return c.json(
+      { message: error.message || "Failed to delete ad" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
 };
