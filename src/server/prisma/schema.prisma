@@ -238,7 +238,6 @@ model Ad {
   categoryId     String?
   category       Category?    @relation(fields: [categoryId], references: [id])
   tags           String[] // Store tag names directly for MongoDB
-  detail         AdDetail?
   analytics      AdAnalytics?
   payments       Payment[]
   favorites      Favorite[]
@@ -246,24 +245,18 @@ model Ad {
   revisions      AdRevision[]
   geoViews       GeoHeatmap[]
   shareEvents    ShareEvent[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+
+  price    Float?
+  location String?
+
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   media AdMedia[]
 
   @@unique([seoSlug])
   @@map("ad")
-}
-
-model AdDetail {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  adId     String  @unique
-  ad       Ad      @relation(fields: [adId], references: [id])
-  price    Float?
-  location String?
-  fields   Json // Custom fields specific to ad type
-
-  @@map("adDetail")
 }
 
 model AdRevision {
