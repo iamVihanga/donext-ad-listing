@@ -21,11 +21,19 @@ generator zod {
 
 // Enums for Ad Listing
 enum AdType {
-  PRODUCT
-  SERVICE
-  JOB
-  EVENT
-  REAL_ESTATE
+  CAR
+  VAN
+  SUV_JEEP
+  MOTORCYCLE
+  CREW_CAB
+  PICKUP_DOUBLE_CAB
+  BUS
+  LORRY
+  THREE_WHEEL
+  OTHER
+  TRACTOR
+  HEAVY_DUTY
+  BICYCLE
 }
 
 enum MediaType {

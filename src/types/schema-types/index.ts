@@ -108,7 +108,7 @@ export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
 
-export const AdTypeSchema = z.enum(['PRODUCT','SERVICE','JOB','EVENT','REAL_ESTATE']);
+export const AdTypeSchema = z.enum(['CAR','VAN','SUV_JEEP','MOTORCYCLE','CREW_CAB','PICKUP_DOUBLE_CAB','BUS','LORRY','THREE_WHEEL','OTHER','TRACTOR','HEAVY_DUTY','BICYCLE']);
 
 export type AdTypeType = `${z.infer<typeof AdTypeSchema>}`
 

@@ -41,6 +41,30 @@ import {
   type CreateAdSchema
 } from "@/server/routes/ad/ad.schemas";
 
+// Vehicle type labels - same as in page.tsx
+const vehicleTypeLabels: Record<string, string> = {
+  "CAR": "CAR",
+  "VAN": "VAN",
+  "SUV_JEEP": "SUV / JEEP",
+  "MOTORCYCLE": "MOTORCYCLE",
+  "CREW_CAB": "CREW CAB",
+  "PICKUP_DOUBLE_CAB": "PICKUP / DOUBLE CAB",
+  "BUS": "BUS",
+  "LORRY": "LORRY",
+  "THREE_WHEEL": "THREE WHEEL",
+  "OTHER": "OTHER",
+  "TRACTOR": "TRACTOR",
+  "HEAVY_DUTY": "HEAVY-DUTY",
+  "BICYCLE": "BICYCLE"
+};
+
+// Vehicle types array
+const vehicleTypes = [
+  "CAR", "VAN", "SUV_JEEP", "MOTORCYCLE", "CREW_CAB",
+  "PICKUP_DOUBLE_CAB", "BUS", "LORRY", "THREE_WHEEL", 
+  "OTHER", "TRACTOR", "HEAVY_DUTY", "BICYCLE"
+];
+
 export function SetupAdDialog() {
   const { mutate, isPending } = useSetupAd();
   const router = useRouter();
@@ -51,7 +75,7 @@ export function SetupAdDialog() {
     defaultValues: {
       title: "",
       description: "",
-      type: "PRODUCT"
+      type: "CAR" // Updated default type
     }
   });
 
@@ -126,7 +150,7 @@ export function SetupAdDialog() {
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Listing Type</FormLabel>
+                  <FormLabel>Vehicle Type</FormLabel>
                   <Select
                     defaultValue={field.value}
                     onValueChange={(type) => {
@@ -135,13 +159,15 @@ export function SetupAdDialog() {
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a listing type" />
+                        <SelectValue placeholder="Select a vehicle type">
+                          {field.value ? vehicleTypeLabels[field.value] : "Select a vehicle type"}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="w-full">
-                      {Object.values(AdTypes).map((type) => (
+                      {vehicleTypes.map((type) => (
                         <SelectItem key={type} value={type}>
-                          {type}
+                          {vehicleTypeLabels[type]}
                         </SelectItem>
                       ))}
                     </SelectContent>

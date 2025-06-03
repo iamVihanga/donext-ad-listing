@@ -6,7 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Save, ArrowLeft, ImagePlus, MapPin, DollarSign } from "lucide-react";
+import { 
+  CalendarIcon, Loader2, Save, ArrowLeft, ImagePlus, 
+  MapPin, DollarSign, Car, Truck 
+} from "lucide-react";
 
 import PageContainer from "@/components/layouts/page-container";
 import { AppPageShell } from "@/components/layouts/page-shell";
@@ -43,13 +46,34 @@ import { toast } from "sonner";
 
 import { client } from "@/lib/rpc";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
-import { AdTypes } from "@/server/routes/ad/ad.schemas";
+import { AdTypes, AdStatuses } from "@/server/routes/ad/ad.schemas";
 
-// Form schema that aligns with your backend schema
+const vehicleTypeLabels: Record<string, string> = {
+  "CAR": "CAR",
+  "VAN": "VAN",
+  "SUV_JEEP": "SUV / JEEP",
+  "MOTORCYCLE": "MOTORCYCLE",
+  "CREW_CAB": "CREW CAB",
+  "PICKUP_DOUBLE_CAB": "PICKUP / DOUBLE CAB",
+  "BUS": "BUS",
+  "LORRY": "LORRY",
+  "THREE_WHEEL": "THREE WHEEL",
+  "OTHER": "OTHER",
+  "TRACTOR": "TRACTOR",
+  "HEAVY_DUTY": "HEAVY-DUTY",
+  "BICYCLE": "BICYCLE"
+};
+
+// Updated form schema that aligns with your backend schema and new enum values
 const adUpdateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  type: z.enum(["PRODUCT", "SERVICE", "JOB", "EVENT", "REAL_ESTATE"]),
+  // Updated to use new vehicle-specific AdType enum values
+  type: z.enum([
+    "CAR", "VAN", "SUV_JEEP", "MOTORCYCLE", "CREW_CAB", 
+    "PICKUP_DOUBLE_CAB", "BUS", "LORRY", "THREE_WHEEL", 
+    "OTHER", "TRACTOR", "HEAVY_DUTY", "BICYCLE"
+  ]),
   status: z.enum(["ACTIVE", "DRAFT", "PENDING_REVIEW", "EXPIRED", "REJECTED"]),
   // Add price and location fields
   price: z.number().nullable().optional(),
@@ -66,6 +90,15 @@ const adUpdateSchema = z.object({
   tag: z.string().optional(),
 });
 
+// Helper function to format enum values for display
+const formatEnumValue = (value: string): string => {
+  return value
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 type Props = {
   params: { id: string };
 };
@@ -80,13 +113,13 @@ export default function AdDetailsPage({ params }: Props) {
   // Fetch ad data using the hook
   const { data: ad, error, isLoading, refetch } = useGetAdById({ adId: params.id });
   
-  // Form setup
+  // Form setup with updated default values
   const form = useForm<z.infer<typeof adUpdateSchema>>({
     resolver: zodResolver(adUpdateSchema),
     defaultValues: {
       title: "",
       description: "",
-      type: "PRODUCT",
+      type: "CAR", // Default to CAR instead of PRODUCT
       status: "ACTIVE",
       // Add default values for price and location
       price: null,
@@ -111,7 +144,8 @@ export default function AdDetailsPage({ params }: Props) {
       form.reset({
         title: ad.title || "",
         description: ad.description || "",
-        type: ad.type || "PRODUCT",
+        // Use ad.type directly, with fallback to CAR
+        type: ad.type || "CAR",
         status: ad.status || "ACTIVE",
         // Set price and location from ad data
         price: ad.price,
@@ -197,7 +231,7 @@ export default function AdDetailsPage({ params }: Props) {
       <PageContainer>
         <div className="flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin mb-4" />
-          <p className="text-muted-foreground">Loading ad details...</p>
+          <p className="text-muted-foreground">Loading vehicle details...</p>
         </div>
       </PageContainer>
     );
@@ -207,12 +241,19 @@ export default function AdDetailsPage({ params }: Props) {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <p className="text-red-500 mb-4">{error?.message || "Failed to load ad details"}</p>
-          <Button onClick={() => router.push('/dashboard/ads')}>Go back to ads</Button>
+          <p className="text-red-500 mb-4">{error?.message || "Failed to load vehicle details"}</p>
+          <Button onClick={() => router.push('/dashboard/ads')}>Go back to listings</Button>
         </div>
       </PageContainer>
     );
   }
+
+  // For debugging - all available vehicle types
+  const vehicleTypes = [
+    "CAR", "VAN", "SUV_JEEP", "MOTORCYCLE", "CREW_CAB", 
+    "PICKUP_DOUBLE_CAB", "BUS", "LORRY", "THREE_WHEEL", 
+    "OTHER", "TRACTOR", "HEAVY_DUTY", "BICYCLE"
+  ];
 
   return (
     <PageContainer scrollable>
@@ -235,9 +276,9 @@ export default function AdDetailsPage({ params }: Props) {
                     {ad?.status}
                   </Badge>
                 </div>
-                <h1 className="text-2xl font-bold">Edit Advertisement</h1>
+                <h1 className="text-2xl font-bold">Edit Vehicle Listing</h1>
                 <p className="text-muted-foreground">
-                  Update the details of your advertisement.
+                  Update the details of your vehicle listing.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -275,7 +316,8 @@ export default function AdDetailsPage({ params }: Props) {
                     {JSON.stringify({
                       formValues: form.getValues(),
                       adData: ad,
-                      tags
+                      tags,
+                      availableTypes: vehicleTypes
                     }, null, 2)}
                   </pre>
                 </CardContent>
@@ -287,7 +329,7 @@ export default function AdDetailsPage({ params }: Props) {
               {/* Left column - Basic info */}
               <Card className="col-span-2">
                 <CardContent className="p-6 space-y-6">
-                  <h3 className="text-lg font-semibold">Basic Information</h3>
+                  <h3 className="text-lg font-semibold">Vehicle Information</h3>
                   
                   <div className="space-y-4">
                     <FormField
@@ -297,8 +339,39 @@ export default function AdDetailsPage({ params }: Props) {
                         <FormItem>
                           <FormLabel>Title</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Ad title" />
+                            <Input {...field} placeholder="Vehicle title" />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Vehicle Type - Updated for new enum values */}
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select vehicle type">
+                                  {field.value ? vehicleTypeLabels[field.value] : "Select vehicle type"}
+                                </SelectValue>
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {vehicleTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {vehicleTypeLabels[type]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -329,7 +402,7 @@ export default function AdDetailsPage({ params }: Props) {
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Enter the price for this item (leave empty if not applicable)
+                            Enter the price for this vehicle
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -348,14 +421,14 @@ export default function AdDetailsPage({ params }: Props) {
                               <MapPin className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                               <Input
                                 className="pl-8"
-                                placeholder="e.g. New York, NY"
+                                placeholder="e.g. Colombo, Sri Lanka"
                                 value={field.value || ''}
                                 onChange={field.onChange}
                               />
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Where is this item or service located?
+                            Where is this vehicle located?
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -371,38 +444,10 @@ export default function AdDetailsPage({ params }: Props) {
                           <FormControl>
                             <Textarea
                               {...field}
-                              placeholder="Describe your ad in detail"
+                              placeholder="Describe your vehicle in detail"
                               className="min-h-[120px]"
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select ad type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.values(AdTypes).map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type.replace(/_/g, ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -445,7 +490,7 @@ export default function AdDetailsPage({ params }: Props) {
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">Published</FormLabel>
                               <FormDescription>
-                                Make this ad visible to the public
+                                Make this listing visible to the public
                               </FormDescription>
                             </div>
                             <FormControl>
@@ -487,9 +532,9 @@ export default function AdDetailsPage({ params }: Props) {
               <Card className="h-min">
                 <CardContent className="p-6">
                   <div className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center h-[200px] bg-muted/50">
-                    <ImagePlus className="h-10 w-10 text-muted-foreground mb-2" />
+                    <Car className="h-10 w-10 text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground text-center">
-                      Image upload coming soon
+                      Vehicle image upload coming soon
                     </p>
                   </div>
                 </CardContent>
@@ -498,7 +543,7 @@ export default function AdDetailsPage({ params }: Props) {
               {/* Marketing Options */}
               <Card className="col-span-2">
                 <CardContent className="p-6 space-y-6">
-                  <h3 className="text-lg font-semibold">Marketing Options</h3>
+                  <h3 className="text-lg font-semibold">Promotion Options</h3>
                   
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -630,7 +675,7 @@ export default function AdDetailsPage({ params }: Props) {
                             </PopoverContent>
                           </Popover>
                           <FormDescription>
-                            When this ad should expire and be removed from listings
+                            When this listing should expire
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -694,7 +739,7 @@ export default function AdDetailsPage({ params }: Props) {
                 </CardContent>
                 <CardFooter className="flex justify-between px-6 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    Tags help users find your ad
+                    Tags help buyers find your vehicle
                   </p>
                 </CardFooter>
               </Card>
