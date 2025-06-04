@@ -758,13 +758,13 @@ export function AdForm({
             Cancel
           </Button>
           <div className="space-x-2">
-            <Button 
+            {/* <Button 
               type="button" 
               variant="outline" 
               disabled={isSubmitting}
             >
               Preview
-            </Button>
+            </Button> */}
             <Button 
               type="submit" 
               disabled={isSubmitting}
