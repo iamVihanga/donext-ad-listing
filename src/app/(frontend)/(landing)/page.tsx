@@ -73,7 +73,7 @@ export default function VehicleMarketplace() {
 
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" className="text-white border-white hover:bg-white hover:text-[#024950]">
+              <Button variant="outline" className="text-[#024950] border-white hover:bg-white hover:text-[#024950]">
                 Login
               </Button>
               <Button className="bg-white text-[#024950] hover:bg-gray-100">Post Free Ad</Button>
