@@ -229,6 +229,8 @@ model Ad {
   org            Organization @relation(fields: [orgId], references: [id])
   createdBy      String
   creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
+
+  // Basic Info
   title          String
   description    String
   type           AdType
@@ -240,32 +242,66 @@ model Ad {
   featureExpiry  DateTime?
   status         AdStatus     @default(ACTIVE)
   expiryDate     DateTime?
+
+  // SEO
   seoTitle       String?
   seoDescription String?
-  seoSlug        String?
+  seoSlug        String? @unique
+
+  // Category & Tags
   categoryId     String?
   category       Category?    @relation(fields: [categoryId], references: [id])
-  tags           String[] // Store tag names directly for MongoDB
-  analytics      AdAnalytics?
-  payments       Payment[]
-  favorites      Favorite[]
-  reports        Report[]
-  revisions      AdRevision[]
-  geoViews       GeoHeatmap[]
-  shareEvents    ShareEvent[]
+  tags           String[]     // Store tag names directly for MongoDB
 
-  price    Float?
-  location String?
+  // Pricing & Vehicle Info
+  price             Float?
+  discountPrice     Float?      // e.g., discounted price if applicable
+  condition         String?     // e.g., "Antique", "Brand New", "Registered (Used)", "Unregistered (Recondition)"
+  brand             String?     // e.g., "Toyota", "Honda"
+  model             String?     // e.g., "Corolla", "Civic"
+  mileage           Float?      // e.g., in kilometers
+  vehicleType       String?     // e.g., "Car", "Van", "SUV / Jeep", "Motorcycle"
+  manufacturedYear  String?     // e.g., "2025", "2024", ..., "Before 1948"
+  transmission      String?     // e.g., "Automatic", "Manual"
+  fuelType          String?     // e.g., "Diesel", "Petrol", "Electric", "Hybrid", "Gas"
+  engineCapacity    Float?      // e.g., engine capacity in cc
+  options           String[]    // e.g., ["AIR CONDITION", "POWER STEERING"]
+  isLeased          Boolean?    // Indicates if the vehicle has an ongoing lease
 
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Contact Info
+  name              String?     
+  phoneNumber       String?     
+  whatsappNumber    String?     
+  termsAndConditions Boolean?   // Checkbox agreement
 
-  media AdMedia[]
+  // Location Info
+  location          String?     // General location
+  address           String?     // Specific address
+  province          String?     // e.g., "Southern Province"
+  district          String?     // e.g., "Galle District"
+  city              String?     // e.g., "Galle"
 
-  @@unique([seoSlug])
+  // Miscellaneous
+  specialNote       String?     // Additional info from textarea
+  metadata          Json?
+
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  analytics         AdAnalytics?
+  payments          Payment[]
+  favorites         Favorite[]
+  reports           Report[]
+  revisions         AdRevision[]
+  geoViews          GeoHeatmap[]
+  shareEvents       ShareEvent[]
+  media             AdMedia[]
+
   @@map("ad")
 }
+
 
 model AdRevision {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

@@ -133,19 +133,54 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
         createdBy: user.id,
         title: adDetails.title || "",
         description: adDetails.description || "",
-        type: (adDetails.type as AdType) || AdType.PRODUCT,
+        type: (adDetails.type as AdType) || AdType.CAR,
         status: AdStatus.DRAFT,
         seoSlug: seoSlug,
-        // Price and location
-        price: adDetails.price || null,
-        location: adDetails.location || null,
-        // Other fields
+
+        // Basic Info
         published: adDetails.published || false,
         isDraft: true,
         boosted: adDetails.boosted || false,
         featured: adDetails.featured || false,
-        tags: adDetails.tags || [],
+
+        // SEO fields
+        seoTitle: adDetails.seoTitle || null,
+        seoDescription: adDetails.seoDescription || null,
+
+        // Category & Tags
         categoryId: adDetails.categoryId || null,
+        tags: adDetails.tags || [],
+
+        // Pricing & Vehicle Info
+        price: adDetails.price || null,
+        discountPrice: adDetails.discountPrice || null,
+        condition: adDetails.condition || null,
+        brand: adDetails.brand || null,
+        model: adDetails.model || null,
+        mileage: adDetails.mileage || null,
+        vehicleType: adDetails.vehicleType || null,
+        manufacturedYear: adDetails.manufacturedYear || null,
+        transmission: adDetails.transmission || null,
+        fuelType: adDetails.fuelType || null,
+        engineCapacity: adDetails.engineCapacity || null,
+        options: adDetails.options || [],
+        isLeased: adDetails.isLeased || null,
+
+        // Contact Info
+        name: adDetails.name || null,
+        phoneNumber: adDetails.phoneNumber || null,
+        whatsappNumber: adDetails.whatsappNumber || null,
+        termsAndConditions: adDetails.termsAndConditions || null,
+
+        // Location Info
+        location: adDetails.location || null,
+        address: adDetails.address || null,
+        province: adDetails.province || null,
+        district: adDetails.district || null,
+        city: adDetails.city || null,
+
+        // Miscellaneous
+        specialNote: adDetails.specialNote || null,
         metadata: adDetails.metadata || {},
       },
     });
