@@ -2,7 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { Edit, LogOut, MoreHorizontal, Trash, TrashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Edit, MoreHorizontal, Trash } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -24,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { AdType } from "./columns";
-import { authClient } from "@/lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CellActionProps {
   data: AdType;
@@ -32,79 +34,78 @@ interface CellActionProps {
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const [open, setOpen] = useState(false);
-  const { data: sessionData } = authClient.useSession();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  // const { mutate, isPending } = useDeleteNursery();
-  // const { mutate: mutateLeave, isPending: leaving } = useLeaveNursery();
+  const handleEdit = () => {
+    router.push(`/dashboard/ads/${data.id}`);
+  };
 
-  // const [isUpdateOpen, setUpdateOpen] = useState(false);
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
 
-  // const onConfirm = () => {
-  //   mutate(data);
-  // };
+      const response = await fetch(`/api/ad/${data.id}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || `Failed to delete ad: ${response.status}`
+        );
+      }
+
+      // Close dialog
+      setOpen(false);
+
+      // Show success message
+      toast.success("Advertisement deleted successfully");
+
+      // Invalidate cache to refresh list
+      queryClient.invalidateQueries({ queryKey: ["ads"] });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete ad"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
-      {/* Update Sheet */}
-      {/* <UpdateNurserySheet
-        open={isUpdateOpen}
-        setOpen={setUpdateOpen}
-        updateNurseryId={data.id}
-      /> */}
-
-      {/* Alert Dialog */}
-      {/* <AlertDialog open={open} onOpenChange={setOpen}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete created
-              nursery and remove data from our servers.
+              This action cannot be undone. This will permanently delete the
+              advertisement "{data.title}" and remove its data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={onConfirm}
-                loading={isPending}
-                disabled={isPending}
-                icon={<TrashIcon className="size-4" />}
-              >
-                Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              asChild
+              onClick={(e) => {
+                // Prevent default to handle it manually
+                e.preventDefault();
+                handleDelete();
+              }}
+            >
+              <Button variant="destructive" disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
               </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog> */}
+      </AlertDialog>
 
-      {/* Alert Dialog */}
-      {/* <AlertDialog open={isLeaveOpen} onOpenChange={setLeaveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {`You'll be left from the selected nursery.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={() =>
-                  mutateLeave({ email: sessionData?.user?.email || "" })
-                }
-                loading={leaving}
-                disabled={leaving}
-                icon={<TrashIcon className="size-4" />}
-              >
-                Leave
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
-
+      {/* Action Dropdown Menu */}
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -114,22 +115,15 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-          {/* {sessionData?.user?.role === "admin" ? (
-            <>
-              <DropdownMenuItem onClick={() => setUpdateOpen(true)}>
-                <Edit className="mr-2 h-4 w-4" /> Update
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => setOpen(true)}>
-                <Trash className="mr-2 h-4 w-4" /> Delete
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <DropdownMenuItem onClick={() => setLeaveOpen(true)}>
-              <LogOut className="mr-2 h-4 w-4" /> Leave
-            </DropdownMenuItem>
-          )} */}
+          <DropdownMenuItem onClick={handleEdit}>
+            <Edit className="mr-2 h-4 w-4" /> Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setOpen(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </>

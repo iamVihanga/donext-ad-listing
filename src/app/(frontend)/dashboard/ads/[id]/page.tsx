@@ -1,9 +1,9 @@
-import React from "react";
+import CreateAdForm from "./update-ad-form"
 
-type Props = {
-  params: { id: string };
-};
-
-export default function SingleAdPage({ params }: Props) {
-  return <div>SingleAdPage - {params.id}</div>;
+export default function Page() {
+  return (
+    <div>
+      <CreateAdForm />
+    </div>
+  )
 }
