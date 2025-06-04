@@ -15,9 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Car, DollarSign, MapPin, Phone, Settings, Tag, X, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
-import { Upload, XCircle, PlusCircle, ImageIcon, Edit, Crop, Check } from "lucide-react";
+import { XCircle, ImageIcon, PlusCircle } from "lucide-react";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { MediaGallery } from "@/modules/media/components/media-gallery";
+import type { MediaFile } from "@/modules/media/types";;
 
 export type AdFormProps = {
   initialData?: any;
@@ -44,15 +45,11 @@ export function AdForm({
   // Define tab order for navigation
   const tabOrder = ["vehicle", "images", "pricing", "contact", "location", "basic"];
 
-  const [uploadedImages, setUploadedImages] = useState<Array<{
-    id: string, 
-    url: string, 
-    file?: File,
-    name?: string, 
-    size?: number,
-    title?: string,
-    alt?: string
-  }>>([]);
+  // State for controlling the media gallery dialog
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+  // Replace the uploadedImages state with media files
+  const [selectedMedia, setSelectedMedia] = useState<MediaFile[]>([]);
   
   const [isUploading, setIsUploading] = useState(false);
   
@@ -140,7 +137,17 @@ export function AdForm({
       
       // Load images from initialData if available
       if (initialData.media && Array.isArray(initialData.media)) {
-        setUploadedImages(initialData.media);
+        // Convert to MediaFile format
+        setSelectedMedia(initialData.media.map((media: any) => ({
+          id: media.id,
+          url: media.url,
+          type: 'IMAGE', // Default to image type
+          filename: media.title || 'image',
+          size: 0, // Size may not be available from initialData
+          createdAt: new Date(),
+          title: media.title || '',
+          alt: media.alt || ''
+        })));
       }
     }
   }, [initialData]);
@@ -196,7 +203,7 @@ export function AdForm({
     if (!e.target.files || e.target.files.length === 0) return;
     
     const filesArray = Array.from(e.target.files);
-    const remainingSlots = 6 - uploadedImages.length;
+    const remainingSlots = 6 - selectedMedia.length;
     
     if (filesArray.length > remainingSlots) {
       alert(`You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? 's' : ''}.`);
@@ -223,7 +230,7 @@ export function AdForm({
     
     // Mock delay for upload
     setTimeout(() => {
-      setUploadedImages(prev => [...prev, ...newImages]);
+      setSelectedMedia(prev => [...prev, ...newImages]);
       setIsUploading(false);
       
       // Reset the input value so the same file can be selected again
@@ -234,20 +241,34 @@ export function AdForm({
     // where they would be processed and compressed
   };
 
-  const removeImage = (idToRemove: string) => {
-    setUploadedImages(prev => prev.filter(image => image.id !== idToRemove));
+  // Handle media selection from gallery
+  const handleMediaSelect = (media: MediaFile[]) => {
+    // Check if we exceed the maximum allowed (6 images)
+    if (media.length > 6) {
+      // Take only the first 6
+      setSelectedMedia(media.slice(0, 6));
+    } else {
+      setSelectedMedia(media);
+    }
   };
 
-  const reorderImages = (fromIndex: number, toIndex: number) => {
+  // Handle removing a media item
+  const removeMedia = (idToRemove: string) => {
+    setSelectedMedia(prev => prev.filter(media => media.id !== idToRemove));
+  };
+
+  // Handle reordering media
+  const reorderMedia = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
     
-    const updatedImages = [...uploadedImages];
-    const [movedImage] = updatedImages.splice(fromIndex, 1);
-    updatedImages.splice(toIndex, 0, movedImage);
+    const updatedMedia = [...selectedMedia];
+    const [movedMedia] = updatedMedia.splice(fromIndex, 1);
+    updatedMedia.splice(toIndex, 0, movedMedia);
     
-    setUploadedImages(updatedImages);
+    setSelectedMedia(updatedMedia);
   };
 
+  // Drag and drop functionality for reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const handleDragStart = (index: number) => {
@@ -265,7 +286,7 @@ export function AdForm({
     if (draggedIndex === null) return;
     if (draggedIndex === dropIndex) return;
     
-    reorderImages(draggedIndex, dropIndex);
+    reorderMedia(draggedIndex, dropIndex);
     setDraggedIndex(null);
   };
 
@@ -275,7 +296,7 @@ export function AdForm({
 
   // Image editor functions
   const openImageEditor = (index: number) => {
-    const image = uploadedImages[index];
+    const image = selectedMedia[index];
     setEditingImage({ index, image });
     setImageTitle(image.title || "");
     setImageAlt(image.alt || "");
@@ -284,7 +305,7 @@ export function AdForm({
   const saveImageEdits = () => {
     if (!editingImage) return;
     
-    setUploadedImages(prev => prev.map((img, idx) => 
+    setSelectedMedia(prev => prev.map((img, idx) => 
       idx === editingImage.index 
         ? { ...img, title: imageTitle, alt: imageAlt }
         : img
@@ -341,13 +362,13 @@ export function AdForm({
       specialNote: formData.specialNote || undefined,
       metadata: formData.metadata,
       
-      // Include media with SEO data
-      media: uploadedImages.length > 0 
-        ? uploadedImages.map(img => ({
-            id: img.id,
-            url: img.url,
-            title: img.title || undefined,
-            alt: img.alt || undefined
+      // Now using selectedMedia for the media field
+      media: selectedMedia.length > 0 
+        ? selectedMedia.map(media => ({
+            id: media.id,
+            url: media.url,
+            title: media.title || undefined,
+            alt: media.alt || undefined
           })) 
         : undefined,
     };
@@ -456,8 +477,7 @@ export function AdForm({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="manufacturedYear">Year</Label>
-                    <Input
+                   
                       id="manufacturedYear"
                       type="number"
                       placeholder="2020"
@@ -590,78 +610,65 @@ export function AdForm({
                 <CardDescription>Upload up to 6 images of your vehicle (First image will be the main image)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Compact upload area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    id="vehicleImages"
-                    className="hidden"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    disabled={uploadedImages.length >= 6 || isUploading}
-                  />
-                  
-                  <div className="flex items-center justify-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Upload className="w-5 h-5 text-muted-foreground" />
+                {/* Media Gallery Button */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
                     </div>
                     
-                    <div className="text-left space-y-1">
+                    <div className="space-y-1 text-center">
                       <p className="text-sm font-medium">
-                        {uploadedImages.length === 0 ? (
-                          "Upload up to 6 images"
-                        ) : uploadedImages.length >= 6 ? (
-                          "Maximum number of images reached (6/6)"
+                        {selectedMedia.length === 0 ? (
+                          "No images selected yet"
+                        ) : selectedMedia.length >= 6 ? (
+                          "Maximum number of images selected (6/6)"
                         ) : (
-                          `Upload more images (${uploadedImages.length}/6)`
+                          `${selectedMedia.length} image(s) selected, you can add ${6 - selectedMedia.length} more`
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Supported formats: JPEG, PNG, WebP
+                        Select up to 6 images from your media gallery
                       </p>
                     </div>
                     
-                    {uploadedImages.length < 6 && (
+                    <MediaGallery
+                      onMediaSelect={handleMediaSelect}
+                      multiSelect={true}
+                      open={isGalleryOpen}
+                      onOpenChange={setIsGalleryOpen}
+                      title="Select Vehicle Images"
+                    >
                       <Button 
                         type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('vehicleImages')?.click()}
-                        disabled={isUploading}
+                        variant="outline"
+                        onClick={() => setIsGalleryOpen(true)}
+                        className="flex items-center gap-2"
+                        disabled={selectedMedia.length >= 6}
                       >
-                        {isUploading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" /> 
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <PlusCircle className="w-4 h-4 mr-1" /> 
-                            Select Images
-                          </>
-                        )}
+                        <PlusCircle className="w-4 h-4" />
+                        {selectedMedia.length === 0 ? "Select Images" : "Select More Images"}
                       </Button>
-                    )}
+                    </MediaGallery>
                   </div>
                 </div>
                 
-                {/* Image preview grid with drag and drop */}
-                {uploadedImages.length > 0 && (
+                {/* Selected Media Preview */}
+                {selectedMedia.length > 0 && (
                   <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>
-                          Uploaded Images ({uploadedImages.length}/6)
+                          Selected Images ({selectedMedia.length}/6)
                         </Label>
                         <span className="text-sm text-muted-foreground">
                           Drag images to reorder • First image is main
                         </span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {uploadedImages.map((image, index) => (
+                        {selectedMedia.map((media, index) => (
                           <div 
-                            key={image.id} 
+                            key={media.id} 
                             className={`
                               relative group aspect-video border rounded-md overflow-hidden cursor-move
                               ${index === 0 ? 'border-[#024950] border-2' : 'border-gray-200'}
@@ -679,21 +686,10 @@ export function AdForm({
                                 variant="destructive" 
                                 size="sm"
                                 className="w-3/4" 
-                                onClick={() => removeImage(image.id)}
+                                onClick={() => removeMedia(media.id)}
                               >
                                 <XCircle className="w-4 h-4 mr-1" /> 
                                 Remove
-                              </Button>
-                              
-                              <Button 
-                                type="button"
-                                variant="secondary" 
-                                size="sm"
-                                className="w-3/4" 
-                                onClick={() => openImageEditor(index)}
-                              >
-                                <Edit className="w-4 h-4 mr-1" /> 
-                                Edit Image
                               </Button>
                               
                               {index !== 0 && (
@@ -702,7 +698,7 @@ export function AdForm({
                                   variant="outline" 
                                   size="sm"
                                   className="w-3/4" 
-                                  onClick={() => reorderImages(index, 0)}
+                                  onClick={() => reorderMedia(index, 0)}
                                 >
                                   Set as Main
                                 </Button>
@@ -722,15 +718,17 @@ export function AdForm({
                             </div>
                             
                             {/* SEO info badge - if title or alt text is set */}
-                            {(image.title || image.alt) && (
+                            {(media.title || media.alt) && (
                               <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-sm z-20">
                                 SEO
                               </div>
                             )}
                             
-                            <img 
-                              src={image.url} 
-                              alt={image.alt || `Vehicle image ${index + 1}`} 
+                            <Image 
+                              src={media.url} 
+                              alt={media.alt || `Vehicle image ${index + 1}`} 
+                              width={300}
+                              height={200}
                               className="object-cover w-full h-full"
                             />
                           </div>
