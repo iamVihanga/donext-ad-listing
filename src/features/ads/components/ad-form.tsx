@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Car, DollarSign, MapPin, Phone, Settings, Tag, X, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
+import { Upload, XCircle, PlusCircle, ImageIcon, Edit, Crop, Check } from "lucide-react";
+import Image from "next/image";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export type AdFormProps = {
   initialData?: any;
@@ -39,7 +42,24 @@ export function AdForm({
   const [activeTab, setActiveTab] = useState("vehicle");
   
   // Define tab order for navigation
-  const tabOrder = ["vehicle", "pricing", "contact", "location", "basic"];
+  const tabOrder = ["vehicle", "images", "pricing", "contact", "location", "basic"];
+
+  const [uploadedImages, setUploadedImages] = useState<Array<{
+    id: string, 
+    url: string, 
+    file?: File,
+    name?: string, 
+    size?: number,
+    title?: string,
+    alt?: string
+  }>>([]);
+  
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Image editor state
+  const [editingImage, setEditingImage] = useState<{index: number, image: any} | null>(null);
+  const [imageTitle, setImageTitle] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -117,6 +137,11 @@ export function AdForm({
         specialNote: initialData.specialNote || "",
         metadata: initialData.metadata || {},
       });
+      
+      // Load images from initialData if available
+      if (initialData.media && Array.isArray(initialData.media)) {
+        setUploadedImages(initialData.media);
+      }
     }
   }, [initialData]);
 
@@ -166,6 +191,116 @@ export function AdForm({
     setFormData((prev) => ({ ...prev, options: prev.options.filter((option) => option !== optionToRemove) }));
   };
 
+  // Image handling functions
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const filesArray = Array.from(e.target.files);
+    const remainingSlots = 6 - uploadedImages.length;
+    
+    if (filesArray.length > remainingSlots) {
+      alert(`You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? 's' : ''}.`);
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    // Process images one by one (without restriction on size)
+    const newImages = filesArray.map(file => {
+      // Create a temporary URL for preview
+      const previewUrl = URL.createObjectURL(file);
+      
+      return {
+        id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        url: previewUrl,
+        file: file,
+        name: file.name,
+        size: file.size,
+        title: "", // Adding title field for SEO
+        alt: ""    // Adding alt field for SEO
+      };
+    });
+    
+    // Mock delay for upload
+    setTimeout(() => {
+      setUploadedImages(prev => [...prev, ...newImages]);
+      setIsUploading(false);
+      
+      // Reset the input value so the same file can be selected again
+      e.target.value = '';
+    }, 1000);
+    
+    // Note: In a real implementation, you'd send these files to your backend
+    // where they would be processed and compressed
+  };
+
+  const removeImage = (idToRemove: string) => {
+    setUploadedImages(prev => prev.filter(image => image.id !== idToRemove));
+  };
+
+  const reorderImages = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    
+    const updatedImages = [...uploadedImages];
+    const [movedImage] = updatedImages.splice(fromIndex, 1);
+    updatedImages.splice(toIndex, 0, movedImage);
+    
+    setUploadedImages(updatedImages);
+  };
+
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null) return;
+    if (draggedIndex === dropIndex) return;
+    
+    reorderImages(draggedIndex, dropIndex);
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  // Image editor functions
+  const openImageEditor = (index: number) => {
+    const image = uploadedImages[index];
+    setEditingImage({ index, image });
+    setImageTitle(image.title || "");
+    setImageAlt(image.alt || "");
+  };
+
+  const saveImageEdits = () => {
+    if (!editingImage) return;
+    
+    setUploadedImages(prev => prev.map((img, idx) => 
+      idx === editingImage.index 
+        ? { ...img, title: imageTitle, alt: imageAlt }
+        : img
+    ));
+    
+    setEditingImage(null);
+    setImageTitle("");
+    setImageAlt("");
+  };
+
+  const cancelImageEdit = () => {
+    setEditingImage(null);
+    setImageTitle("");
+    setImageAlt("");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -205,6 +340,16 @@ export function AdForm({
       city: formData.city || undefined,
       specialNote: formData.specialNote || undefined,
       metadata: formData.metadata,
+      
+      // Include media with SEO data
+      media: uploadedImages.length > 0 
+        ? uploadedImages.map(img => ({
+            id: img.id,
+            url: img.url,
+            title: img.title || undefined,
+            alt: img.alt || undefined
+          })) 
+        : undefined,
     };
 
     onSubmit(adData);
@@ -219,10 +364,14 @@ export function AdForm({
 
       <form onSubmit={handleSubmit}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="vehicle" className="flex items-center gap-2">
               <Car className="w-4 h-4" />
               Vehicle
+            </TabsTrigger>
+            <TabsTrigger value="images" className="flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Images
             </TabsTrigger>
             <TabsTrigger value="pricing" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
@@ -433,6 +582,191 @@ export function AdForm({
             </Card>
           </TabsContent>
 
+          {/* Images Section */}
+          <TabsContent value="images">
+            <Card>
+              <CardHeader>
+                <CardTitle>Vehicle Images</CardTitle>
+                <CardDescription>Upload up to 6 images of your vehicle (First image will be the main image)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Compact upload area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    id="vehicleImages"
+                    className="hidden"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploadedImages.length >= 6 || isUploading}
+                  />
+                  
+                  <div className="flex items-center justify-center space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <Upload className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    
+                    <div className="text-left space-y-1">
+                      <p className="text-sm font-medium">
+                        {uploadedImages.length === 0 ? (
+                          "Upload up to 6 images"
+                        ) : uploadedImages.length >= 6 ? (
+                          "Maximum number of images reached (6/6)"
+                        ) : (
+                          `Upload more images (${uploadedImages.length}/6)`
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: JPEG, PNG, WebP
+                      </p>
+                    </div>
+                    
+                    {uploadedImages.length < 6 && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById('vehicleImages')?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" /> 
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <PlusCircle className="w-4 h-4 mr-1" /> 
+                            Select Images
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Image preview grid with drag and drop */}
+                {uploadedImages.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>
+                          Uploaded Images ({uploadedImages.length}/6)
+                        </Label>
+                        <span className="text-sm text-muted-foreground">
+                          Drag images to reorder • First image is main
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {uploadedImages.map((image, index) => (
+                          <div 
+                            key={image.id} 
+                            className={`
+                              relative group aspect-video border rounded-md overflow-hidden cursor-move
+                              ${index === 0 ? 'border-[#024950] border-2' : 'border-gray-200'}
+                              ${draggedIndex === index ? 'opacity-50' : 'opacity-100'}
+                            `}
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDrop={(e) => handleDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center space-y-2 z-10">
+                              <Button 
+                                type="button"
+                                variant="destructive" 
+                                size="sm"
+                                className="w-3/4" 
+                                onClick={() => removeImage(image.id)}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" /> 
+                                Remove
+                              </Button>
+                              
+                              <Button 
+                                type="button"
+                                variant="secondary" 
+                                size="sm"
+                                className="w-3/4" 
+                                onClick={() => openImageEditor(index)}
+                              >
+                                <Edit className="w-4 h-4 mr-1" /> 
+                                Edit Image
+                              </Button>
+                              
+                              {index !== 0 && (
+                                <Button 
+                                  type="button"
+                                  variant="outline" 
+                                  size="sm"
+                                  className="w-3/4" 
+                                  onClick={() => reorderImages(index, 0)}
+                                >
+                                  Set as Main
+                                </Button>
+                              )}
+                            </div>
+                            
+                            {/* Badge for main image */}
+                            {index === 0 && (
+                              <div className="absolute top-2 left-2 bg-[#024950] text-white text-xs px-2 py-1 rounded z-20">
+                                Main Image
+                              </div>
+                            )}
+                            
+                            {/* Image order badge */}
+                            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full z-20">
+                              {index + 1}
+                            </div>
+                            
+                            {/* SEO info badge - if title or alt text is set */}
+                            {(image.title || image.alt) && (
+                              <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-sm z-20">
+                                SEO
+                              </div>
+                            )}
+                            
+                            <img 
+                              src={image.url} 
+                              alt={image.alt || `Vehicle image ${index + 1}`} 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <p>
+                        <span className="font-medium">Tip:</span> High-quality images from multiple angles will increase interest in your vehicle.
+                      </p>
+                    </div>
+                  </>
+                )}
+                
+                <div className="flex justify-between mt-4">
+                  <Button 
+                    type="button" 
+                    onClick={goToPrevTab} 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" /> Previous
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={goToNextTab} 
+                    className="flex items-center gap-2"
+                  >
+                    Next <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Pricing */}
           <TabsContent value="pricing">
             <Card>
@@ -454,14 +788,17 @@ export function AdForm({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="discountPrice">Discount Price</Label>
+                    <Label htmlFor="discountPrice">Original Price</Label>
                     <Input
                       id="discountPrice"
                       type="number"
-                      placeholder="23000"
+                      placeholder="28000"
                       value={formData.discountPrice}
                       onChange={(e) => handleInputChange("discountPrice", e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      If there's a discount, enter the original price here
+                    </p>
                   </div>
                 </div>
                 <div className="flex justify-between mt-4">
@@ -747,6 +1084,86 @@ export function AdForm({
           </TabsContent>
         </Tabs>
 
+        {/* Image Editor Dialog */}
+        <Dialog open={!!editingImage} onOpenChange={(open) => !open && cancelImageEdit()}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Image</DialogTitle>
+              <DialogDescription>
+                Add SEO metadata and crop your image if needed.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {editingImage && (
+              <div className="space-y-4">
+                {/* Image preview */}
+                <div className="relative aspect-video rounded-md overflow-hidden border border-gray-200">
+                  <img 
+                    src={editingImage.image.url} 
+                    alt="Image preview" 
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+                
+                {/* Image metadata fields */}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="imageTitle">Image Title (for SEO)</Label>
+                    <Input
+                      id="imageTitle"
+                      placeholder="Descriptive title for this image"
+                      value={imageTitle}
+                      onChange={(e) => setImageTitle(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A concise, descriptive title helps with SEO.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="imageAlt">Alt Text (for accessibility)</Label>
+                    <Input
+                      id="imageAlt"
+                      placeholder="Describe what's in the image"
+                      value={imageAlt}
+                      onChange={(e) => setImageAlt(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Describe the image for screen readers and SEO.
+                    </p>
+                  </div>
+                  
+                  {/* Image crop functionality would be here in a real implementation */}
+                  <div className="bg-muted p-3 rounded-md">
+                    <p className="text-sm flex items-center gap-2">
+                      <Crop className="w-4 h-4" />
+                      Image cropping functionality would be implemented here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter className="sm:justify-between">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={cancelImageEdit}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button"
+                variant="default"
+                onClick={saveImageEdits}
+                className="flex items-center gap-1"
+              >
+                <Check className="w-4 h-4" /> Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Form submission buttons */}
         <div className="flex justify-between pt-6">
           <Button 
@@ -758,13 +1175,6 @@ export function AdForm({
             Cancel
           </Button>
           <div className="space-x-2">
-            {/* <Button 
-              type="button" 
-              variant="outline" 
-              disabled={isSubmitting}
-            >
-              Preview
-            </Button> */}
             <Button 
               type="submit" 
               disabled={isSubmitting}
