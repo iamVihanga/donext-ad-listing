@@ -10,7 +10,7 @@ export const querySchema = z.object({
   search: z.string().optional(),
   minPrice: z.string().optional(),
   maxPrice: z.string().optional(),
-  location: z.string().optional(),
+  location: z.string().optional()
 });
 
 export type QueryParams = z.infer<typeof querySchema>;
@@ -24,7 +24,7 @@ const formattedAdSchema = AdSchema.extend({
   updatedAt: z.string(),
   boostExpiry: z.string().nullable(),
   featureExpiry: z.string().nullable(),
-  expiryDate: z.string().nullable(),
+  expiryDate: z.string().nullable()
 });
 
 export const withPaginationSchema = z.object({
@@ -33,8 +33,8 @@ export const withPaginationSchema = z.object({
     total: z.number(),
     page: z.number(),
     limit: z.number(),
-    totalPages: z.number(),
-  }),
+    totalPages: z.number()
+  })
 });
 
 // CRUD Schemas
@@ -50,25 +50,27 @@ export const createAdSchema = AdSchema.partial()
     id: true,
     createdBy: true,
     createdAt: true,
-    updatedAt: true,
+    updatedAt: true
   })
   .extend({
     // Explicitly define price and location to ensure they match the Prisma schema
     price: z.number().nullable().optional(),
     location: z.string().nullable().optional(),
     metadata: z.record(z.any()).optional(),
+    // Add mediaIds field for media relationships
+    mediaIds: z.array(z.string()).optional()
   })
   .refine((data) => data.title !== "", {
     message: "Ad title is required !",
-    path: ["title"],
+    path: ["title"]
   })
   .refine((data) => data.description !== "", {
     message: "Ad description is required !",
-    path: ["description"],
+    path: ["description"]
   })
   .refine((data) => !!data.type, {
     message: "Please select an ad type",
-    path: ["type"],
+    path: ["type"]
   });
 
 export type CreateAdSchema = z.infer<typeof createAdSchema>;
@@ -77,7 +79,7 @@ export const updateAdSchema = AdSchema.partial().extend({
   // Explicitly define price and location for update operations
   price: z.number().nullable().optional(),
   location: z.string().nullable().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.any()).optional()
 });
 
 export type UpdateAdSchema = z.infer<typeof updateAdSchema>;
