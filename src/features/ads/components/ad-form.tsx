@@ -1,23 +1,60 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import {
+  Car,
+  ImageIcon,
+  DollarSign,
+  Phone,
+  MapPin,
+  Settings,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  PlusCircle,
+  XCircle,
+  Loader2,
+  Check,
+  TagIcon
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Car, DollarSign, MapPin, Phone, Settings, Tag, X, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select";
+
+import { MediaGallery } from "@/modules/media/components/media-gallery";
+import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
-import { Upload, XCircle, PlusCircle, ImageIcon, Edit, Crop, Check } from "lucide-react";
-import Image from "next/image";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export type AdFormProps = {
   initialData?: any;
@@ -26,7 +63,7 @@ export type AdFormProps = {
   title: string;
   description: string;
   submitButtonText: string;
-}
+};
 
 export function AdForm({
   initialData,
@@ -37,27 +74,31 @@ export function AdForm({
   submitButtonText
 }: AdFormProps) {
   const router = useRouter();
-  
+
   // Set "vehicle" as the default active tab
   const [activeTab, setActiveTab] = useState("vehicle");
-  
-  // Define tab order for navigation
-  const tabOrder = ["vehicle", "images", "pricing", "contact", "location", "basic"];
 
-  const [uploadedImages, setUploadedImages] = useState<Array<{
-    id: string, 
-    url: string, 
-    file?: File,
-    name?: string, 
-    size?: number,
-    title?: string,
-    alt?: string
-  }>>([]);
-  
-  const [isUploading, setIsUploading] = useState(false);
-  
+  // Define tab order for navigation
+  const tabOrder = [
+    "vehicle",
+    "images",
+    "pricing",
+    "contact",
+    "location",
+    "basic"
+  ];
+
+  // State for controlling the media gallery dialog
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+  // Replace the uploadedImages state with media files
+  const [selectedMedia, setSelectedMedia] = useState<MediaFile[]>([]);
+
   // Image editor state
-  const [editingImage, setEditingImage] = useState<{index: number, image: any} | null>(null);
+  const [editingImage, setEditingImage] = useState<{
+    index: number;
+    image: any;
+  } | null>(null);
   const [imageTitle, setImageTitle] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
@@ -95,7 +136,7 @@ export function AdForm({
     district: "",
     city: "",
     specialNote: "",
-    metadata: {},
+    metadata: {}
   });
 
   // Update form data if initialData changes (for edit form)
@@ -113,16 +154,20 @@ export function AdForm({
         categoryId: initialData.categoryId || "",
         tags: initialData.tags || [],
         price: initialData.price ? String(initialData.price) : "",
-        discountPrice: initialData.discountPrice ? String(initialData.discountPrice) : "",
+        discountPrice: initialData.discountPrice
+          ? String(initialData.discountPrice)
+          : "",
         condition: initialData.condition || "",
         brand: initialData.brand || "",
         model: initialData.model || "",
-        mileage: initialData.mileage ? String(initialData.mileage) : "",
+        mileage: initialData.mileage || "",
         vehicleType: initialData.vehicleType || "",
         manufacturedYear: initialData.manufacturedYear || "",
         transmission: initialData.transmission || "",
         fuelType: initialData.fuelType || "",
-        engineCapacity: initialData.engineCapacity ? String(initialData.engineCapacity) : "",
+        engineCapacity: initialData.engineCapacity
+          ? String(initialData.engineCapacity)
+          : "",
         options: initialData.options || [],
         isLeased: initialData.isLeased || false,
         name: initialData.name || "",
@@ -135,12 +180,24 @@ export function AdForm({
         district: initialData.district || "",
         city: initialData.city || "",
         specialNote: initialData.specialNote || "",
-        metadata: initialData.metadata || {},
+        metadata: initialData.metadata || {}
       });
-      
+
       // Load images from initialData if available
       if (initialData.media && Array.isArray(initialData.media)) {
-        setUploadedImages(initialData.media);
+        // Convert to MediaFile format
+        setSelectedMedia(
+          initialData.media.map((media: any) => ({
+            id: media.id,
+            url: media.url,
+            type: "IMAGE", // Default to image type
+            filename: media.title || "image",
+            size: 0, // Size may not be available from initialData
+            createdAt: new Date(),
+            title: media.title || "",
+            alt: media.alt || ""
+          }))
+        );
       }
     }
   }, [initialData]);
@@ -177,95 +234,66 @@ export function AdForm({
   };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData((prev) => ({ ...prev, tags: prev.tags.filter((tag) => tag !== tagToRemove) }));
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove)
+    }));
   };
 
   const addOption = () => {
     if (newOption.trim() && !formData.options.includes(newOption.trim())) {
-      setFormData((prev) => ({ ...prev, options: [...prev.options, newOption.trim()] }));
+      setFormData((prev) => ({
+        ...prev,
+        options: [...prev.options, newOption.trim()]
+      }));
       setNewOption("");
     }
   };
 
   const removeOption = (optionToRemove: string) => {
-    setFormData((prev) => ({ ...prev, options: prev.options.filter((option) => option !== optionToRemove) }));
+    setFormData((prev) => ({
+      ...prev,
+      options: prev.options.filter((option) => option !== optionToRemove)
+    }));
   };
 
-  // Image handling functions
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    const filesArray = Array.from(e.target.files);
-    const remainingSlots = 6 - uploadedImages.length;
-    
-    if (filesArray.length > remainingSlots) {
-      alert(`You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? 's' : ''}.`);
-      return;
+  // Handle media selection from gallery
+  const handleMediaSelect = (media: MediaFile[]) => {
+    // Check if we exceed the maximum allowed (6 images)
+    if (media.length > 6) {
+      // Take only the first 6
+      setSelectedMedia(media.slice(0, 6));
+    } else {
+      setSelectedMedia(media);
     }
-    
-    setIsUploading(true);
-    
-    // Process images one by one (without restriction on size)
-    const newImages = filesArray.map(file => {
-      // Create a temporary URL for preview
-      const previewUrl = URL.createObjectURL(file);
-      
-      return {
-        id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        url: previewUrl,
-        file: file,
-        name: file.name,
-        size: file.size,
-        title: "", // Adding title field for SEO
-        alt: ""    // Adding alt field for SEO
-      };
-    });
-    
-    // Mock delay for upload
-    setTimeout(() => {
-      setUploadedImages(prev => [...prev, ...newImages]);
-      setIsUploading(false);
-      
-      // Reset the input value so the same file can be selected again
-      e.target.value = '';
-    }, 1000);
-    
-    // Note: In a real implementation, you'd send these files to your backend
-    // where they would be processed and compressed
   };
 
-  const removeImage = (idToRemove: string) => {
-    setUploadedImages(prev => prev.filter(image => image.id !== idToRemove));
+  // Handle removing a media item
+  const removeMedia = (idToRemove: string) => {
+    setSelectedMedia((prev) => prev.filter((media) => media.id !== idToRemove));
   };
 
-  const reorderImages = (fromIndex: number, toIndex: number) => {
+  // Handle reordering media
+  const reorderMedia = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    
-    const updatedImages = [...uploadedImages];
-    const [movedImage] = updatedImages.splice(fromIndex, 1);
-    updatedImages.splice(toIndex, 0, movedImage);
-    
-    setUploadedImages(updatedImages);
+
+    const updatedMedia = [...selectedMedia];
+    const [movedMedia] = updatedMedia.splice(fromIndex, 1);
+    updatedMedia.splice(toIndex, 0, movedMedia);
+
+    setSelectedMedia(updatedMedia);
   };
 
+  // Drag and drop functionality for reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null) return;
     if (draggedIndex === dropIndex) return;
-    
-    reorderImages(draggedIndex, dropIndex);
+
+    reorderMedia(draggedIndex, dropIndex);
     setDraggedIndex(null);
   };
 
@@ -275,21 +303,23 @@ export function AdForm({
 
   // Image editor functions
   const openImageEditor = (index: number) => {
-    const image = uploadedImages[index];
+    const image = selectedMedia[index];
     setEditingImage({ index, image });
-    setImageTitle(image.title || "");
-    setImageAlt(image.alt || "");
+    // setImageTitle(image.title || "");
+    // setImageAlt(image.alt || "");
   };
 
   const saveImageEdits = () => {
     if (!editingImage) return;
-    
-    setUploadedImages(prev => prev.map((img, idx) => 
-      idx === editingImage.index 
-        ? { ...img, title: imageTitle, alt: imageAlt }
-        : img
-    ));
-    
+
+    setSelectedMedia((prev) =>
+      prev.map((img, idx) =>
+        idx === editingImage.index
+          ? { ...img, title: imageTitle, alt: imageAlt }
+          : img
+      )
+    );
+
     setEditingImage(null);
     setImageTitle("");
     setImageAlt("");
@@ -317,7 +347,9 @@ export function AdForm({
       categoryId: formData.categoryId || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       price: formData.price ? parseFloat(formData.price) : undefined,
-      discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : undefined,
+      discountPrice: formData.discountPrice
+        ? parseFloat(formData.discountPrice)
+        : undefined,
       condition: formData.condition || undefined,
       brand: formData.brand || undefined,
       model: formData.model || undefined,
@@ -326,7 +358,9 @@ export function AdForm({
       manufacturedYear: formData.manufacturedYear || undefined,
       transmission: formData.transmission || undefined,
       fuelType: formData.fuelType || undefined,
-      engineCapacity: formData.engineCapacity ? parseInt(formData.engineCapacity) : undefined,
+      engineCapacity: formData.engineCapacity
+        ? parseInt(formData.engineCapacity)
+        : undefined,
       options: formData.options.length > 0 ? formData.options : undefined,
       isLeased: formData.isLeased,
       name: formData.name || undefined,
@@ -340,16 +374,12 @@ export function AdForm({
       city: formData.city || undefined,
       specialNote: formData.specialNote || undefined,
       metadata: formData.metadata,
-      
-      // Include media with SEO data
-      media: uploadedImages.length > 0 
-        ? uploadedImages.map(img => ({
-            id: img.id,
-            url: img.url,
-            title: img.title || undefined,
-            alt: img.alt || undefined
-          })) 
-        : undefined,
+
+      // Fixed media handling - only include valid media IDs, not the full media objects
+      mediaIds:
+        selectedMedia.length > 0
+          ? selectedMedia.map((media) => media.id)
+          : undefined
     };
 
     onSubmit(adData);
@@ -363,7 +393,11 @@ export function AdForm({
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="vehicle" className="flex items-center gap-2">
               <Car className="w-4 h-4" />
@@ -396,7 +430,9 @@ export function AdForm({
             <Card>
               <CardHeader>
                 <CardTitle>Vehicle Details</CardTitle>
-                <CardDescription>Specific information about the vehicle</CardDescription>
+                <CardDescription>
+                  Specific information about the vehicle
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -406,13 +442,20 @@ export function AdForm({
                       id="title"
                       placeholder="e.g., 2020 Toyota Camry - Excellent Condition"
                       value={formData.title}
-                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("title", e.target.value)
+                      }
                       required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">Ad Type</Label>
-                    <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
+                    <Select
+                      value={formData.type}
+                      onValueChange={(value) =>
+                        handleInputChange("type", value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -432,7 +475,9 @@ export function AdForm({
                     id="description"
                     placeholder="Describe your vehicle in detail..."
                     value={formData.description}
-                    onChange={(e) => handleInputChange("description", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
                     rows={4}
                   />
                 </div>
@@ -443,7 +488,9 @@ export function AdForm({
                       id="brand"
                       placeholder="e.g., Toyota"
                       value={formData.brand}
-                      onChange={(e) => handleInputChange("brand", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("brand", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -452,17 +499,20 @@ export function AdForm({
                       id="model"
                       placeholder="e.g., Camry"
                       value={formData.model}
-                      onChange={(e) => handleInputChange("model", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("model", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="manufacturedYear">Year</Label>
                     <Input
                       id="manufacturedYear"
                       type="number"
                       placeholder="2020"
                       value={formData.manufacturedYear}
-                      onChange={(e) => handleInputChange("manufacturedYear", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("manufacturedYear", e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -470,7 +520,12 @@ export function AdForm({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="condition">Condition</Label>
-                    <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                    <Select
+                      value={formData.condition}
+                      onValueChange={(value) =>
+                        handleInputChange("condition", value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
@@ -487,7 +542,9 @@ export function AdForm({
                     <Label htmlFor="transmission">Transmission</Label>
                     <Select
                       value={formData.transmission}
-                      onValueChange={(value) => handleInputChange("transmission", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("transmission", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select transmission" />
@@ -501,7 +558,12 @@ export function AdForm({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="fuelType">Fuel Type</Label>
-                    <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                    <Select
+                      value={formData.fuelType}
+                      onValueChange={(value) =>
+                        handleInputChange("fuelType", value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select fuel type" />
                       </SelectTrigger>
@@ -523,7 +585,9 @@ export function AdForm({
                       type="number"
                       placeholder="50000"
                       value={formData.mileage}
-                      onChange={(e) => handleInputChange("mileage", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("mileage", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -533,7 +597,9 @@ export function AdForm({
                       type="number"
                       placeholder="2000"
                       value={formData.engineCapacity}
-                      onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("engineCapacity", e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -542,7 +608,9 @@ export function AdForm({
                   <Switch
                     id="isLeased"
                     checked={formData.isLeased}
-                    onCheckedChange={(checked) => handleInputChange("isLeased", checked)}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("isLeased", checked)
+                    }
                   />
                   <Label htmlFor="isLeased">This vehicle is leased</Label>
                 </div>
@@ -554,7 +622,9 @@ export function AdForm({
                       placeholder="Add an option/feature"
                       value={newOption}
                       onChange={(e) => setNewOption(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addOption())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addOption())
+                      }
                     />
                     <Button type="button" onClick={addOption} variant="outline">
                       Add
@@ -562,17 +632,24 @@ export function AdForm({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.options.map((option) => (
-                      <Badge key={option} variant="outline" className="flex items-center gap-1">
+                      <Badge
+                        key={option}
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
                         {option}
-                        <X className="w-3 h-3 cursor-pointer" onClick={() => removeOption(option)} />
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => removeOption(option)}
+                        />
                       </Badge>
                     ))}
                   </div>
                 </div>
                 <div className="flex justify-end mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToNextTab} 
+                  <Button
+                    type="button"
+                    onClick={goToNextTab}
                     className="flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -587,177 +664,172 @@ export function AdForm({
             <Card>
               <CardHeader>
                 <CardTitle>Vehicle Images</CardTitle>
-                <CardDescription>Upload up to 6 images of your vehicle (First image will be the main image)</CardDescription>
+                <CardDescription>
+                  Upload up to 6 images of your vehicle (First image will be the
+                  main image)
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Compact upload area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    id="vehicleImages"
-                    className="hidden"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    disabled={uploadedImages.length >= 6 || isUploading}
-                  />
-                  
-                  <div className="flex items-center justify-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Upload className="w-5 h-5 text-muted-foreground" />
+                {/* Media Gallery Button */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    
-                    <div className="text-left space-y-1">
+
+                    <div className="space-y-1 text-center">
                       <p className="text-sm font-medium">
-                        {uploadedImages.length === 0 ? (
-                          "Upload up to 6 images"
-                        ) : uploadedImages.length >= 6 ? (
-                          "Maximum number of images reached (6/6)"
-                        ) : (
-                          `Upload more images (${uploadedImages.length}/6)`
-                        )}
+                        {selectedMedia.length === 0
+                          ? "No images selected yet"
+                          : selectedMedia.length >= 6
+                          ? "Maximum number of images selected (6/6)"
+                          : `${
+                              selectedMedia.length
+                            } image(s) selected, you can add ${
+                              6 - selectedMedia.length
+                            } more`}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Supported formats: JPEG, PNG, WebP
+                        Select up to 6 images from your media gallery
                       </p>
                     </div>
-                    
-                    {uploadedImages.length < 6 && (
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('vehicleImages')?.click()}
-                        disabled={isUploading}
+
+                    <MediaGallery
+                      onMediaSelect={handleMediaSelect}
+                      multiSelect={true}
+                      open={isGalleryOpen}
+                      onOpenChange={setIsGalleryOpen}
+                      title="Select Vehicle Images"
+                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsGalleryOpen(true)}
+                        className="flex items-center gap-2"
+                        disabled={selectedMedia.length >= 6}
                       >
-                        {isUploading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" /> 
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <PlusCircle className="w-4 h-4 mr-1" /> 
-                            Select Images
-                          </>
-                        )}
+                        <PlusCircle className="w-4 h-4" />
+                        {selectedMedia.length === 0
+                          ? "Select Images"
+                          : "Select More Images"}
                       </Button>
-                    )}
+                    </MediaGallery>
                   </div>
                 </div>
-                
-                {/* Image preview grid with drag and drop */}
-                {uploadedImages.length > 0 && (
+
+                {/* Selected Media Preview */}
+                {selectedMedia.length > 0 && (
                   <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>
-                          Uploaded Images ({uploadedImages.length}/6)
+                          Selected Images ({selectedMedia.length}/6)
                         </Label>
                         <span className="text-sm text-muted-foreground">
                           Drag images to reorder • First image is main
                         </span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {uploadedImages.map((image, index) => (
-                          <div 
-                            key={image.id} 
+                        {selectedMedia.map((media, index) => (
+                          <div
+                            key={media.id}
                             className={`
                               relative group aspect-video border rounded-md overflow-hidden cursor-move
-                              ${index === 0 ? 'border-[#024950] border-2' : 'border-gray-200'}
-                              ${draggedIndex === index ? 'opacity-50' : 'opacity-100'}
+                              ${
+                                index === 0
+                                  ? "border-[#024950] border-2"
+                                  : "border-gray-200"
+                              }
+                              ${
+                                draggedIndex === index
+                                  ? "opacity-50"
+                                  : "opacity-100"
+                              }
                             `}
-                            draggable
-                            onDragStart={() => handleDragStart(index)}
-                            onDragOver={(e) => handleDragOver(e, index)}
+                            // draggable
+                            // onDragStart={() => handleDragStart(index)}
+                            // onDragOver={(e) => handleDragOver(e, index)}
                             onDrop={(e) => handleDrop(e, index)}
                             onDragEnd={handleDragEnd}
                           >
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center space-y-2 z-10">
-                              <Button 
+                              <Button
                                 type="button"
-                                variant="destructive" 
+                                variant="destructive"
                                 size="sm"
-                                className="w-3/4" 
-                                onClick={() => removeImage(image.id)}
+                                className="w-3/4"
+                                onClick={() => removeMedia(media.id)}
                               >
-                                <XCircle className="w-4 h-4 mr-1" /> 
+                                <XCircle className="w-4 h-4 mr-1" />
                                 Remove
                               </Button>
-                              
-                              <Button 
-                                type="button"
-                                variant="secondary" 
-                                size="sm"
-                                className="w-3/4" 
-                                onClick={() => openImageEditor(index)}
-                              >
-                                <Edit className="w-4 h-4 mr-1" /> 
-                                Edit Image
-                              </Button>
-                              
+
                               {index !== 0 && (
-                                <Button 
+                                <Button
                                   type="button"
-                                  variant="outline" 
+                                  variant="secondary"
                                   size="sm"
-                                  className="w-3/4" 
-                                  onClick={() => reorderImages(index, 0)}
+                                  className="w-3/4"
+                                  onClick={() => openImageEditor(index)}
                                 >
-                                  Set as Main
+                                  Edit Details
                                 </Button>
                               )}
                             </div>
-                            
+
                             {/* Badge for main image */}
                             {index === 0 && (
                               <div className="absolute top-2 left-2 bg-[#024950] text-white text-xs px-2 py-1 rounded z-20">
                                 Main Image
                               </div>
                             )}
-                            
+
                             {/* Image order badge */}
                             <div className="absolute top-2 right-2 bg-black/70 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full z-20">
                               {index + 1}
                             </div>
-                            
+
                             {/* SEO info badge - if title or alt text is set */}
-                            {(image.title || image.alt) && (
+                            {/* {(media.title || media.alt) && (
                               <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-sm z-20">
                                 SEO
                               </div>
-                            )}
-                            
-                            <img 
-                              src={image.url} 
-                              alt={image.alt || `Vehicle image ${index + 1}`} 
+                            )} */}
+
+                            <Image
+                              src={media.url}
+                              alt={`Vehicle image ${index + 1}`}
+                              width={300}
+                              height={200}
                               className="object-cover w-full h-full"
                             />
                           </div>
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="text-sm text-muted-foreground">
                       <p>
-                        <span className="font-medium">Tip:</span> High-quality images from multiple angles will increase interest in your vehicle.
+                        <span className="font-medium">Tip:</span> High-quality
+                        images from multiple angles will increase interest in
+                        your vehicle
                       </p>
                     </div>
                   </>
                 )}
-                
+
                 <div className="flex justify-between mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToPrevTab} 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    onClick={goToPrevTab}
+                    variant="outline"
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={goToNextTab} 
+                  <Button
+                    type="button"
+                    onClick={goToNextTab}
                     className="flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -772,7 +844,9 @@ export function AdForm({
             <Card>
               <CardHeader>
                 <CardTitle>Pricing Information</CardTitle>
-                <CardDescription>Set your asking price and any discounts</CardDescription>
+                <CardDescription>
+                  Set your asking price and any discounts
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -783,7 +857,9 @@ export function AdForm({
                       type="number"
                       placeholder="25000"
                       value={formData.price}
-                      onChange={(e) => handleInputChange("price", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("price", e.target.value)
+                      }
                       required
                     />
                   </div>
@@ -794,25 +870,27 @@ export function AdForm({
                       type="number"
                       placeholder="28000"
                       value={formData.discountPrice}
-                      onChange={(e) => handleInputChange("discountPrice", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("discountPrice", e.target.value)
+                      }
                     />
                     <p className="text-xs text-muted-foreground">
-                      If there's a discount, enter the original price here
+                      {` If there's a discount, enter the original price here`}
                     </p>
                   </div>
                 </div>
                 <div className="flex justify-between mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToPrevTab} 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    onClick={goToPrevTab}
+                    variant="outline"
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={goToNextTab} 
+                  <Button
+                    type="button"
+                    onClick={goToNextTab}
                     className="flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -837,7 +915,9 @@ export function AdForm({
                       id="name"
                       placeholder="Your name"
                       value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -846,7 +926,9 @@ export function AdForm({
                       id="phoneNumber"
                       placeholder="+1234567890"
                       value={formData.phoneNumber}
-                      onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("phoneNumber", e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -857,7 +939,9 @@ export function AdForm({
                     id="whatsappNumber"
                     placeholder="+1234567890"
                     value={formData.whatsappNumber}
-                    onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("whatsappNumber", e.target.value)
+                    }
                   />
                 </div>
 
@@ -866,23 +950,27 @@ export function AdForm({
                     <Switch
                       id="termsAndConditions"
                       checked={formData.termsAndConditions}
-                      onCheckedChange={(checked) => handleInputChange("termsAndConditions", checked)}
+                      onCheckedChange={(checked) =>
+                        handleInputChange("termsAndConditions", checked)
+                      }
                     />
-                    <Label htmlFor="termsAndConditions">I agree to the terms and conditions</Label>
+                    <Label htmlFor="termsAndConditions">
+                      I agree to the terms and conditions
+                    </Label>
                   </div>
                 </div>
                 <div className="flex justify-between mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToPrevTab} 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    onClick={goToPrevTab}
+                    variant="outline"
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={goToNextTab} 
+                  <Button
+                    type="button"
+                    onClick={goToNextTab}
                     className="flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -907,7 +995,9 @@ export function AdForm({
                       id="province"
                       placeholder="e.g., California"
                       value={formData.province}
-                      onChange={(e) => handleInputChange("province", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("province", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -916,7 +1006,9 @@ export function AdForm({
                       id="district"
                       placeholder="e.g., Los Angeles County"
                       value={formData.district}
-                      onChange={(e) => handleInputChange("district", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("district", e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -928,7 +1020,9 @@ export function AdForm({
                       id="city"
                       placeholder="e.g., Los Angeles"
                       value={formData.city}
-                      onChange={(e) => handleInputChange("city", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("city", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -937,7 +1031,9 @@ export function AdForm({
                       id="location"
                       placeholder="e.g., Downtown"
                       value={formData.location}
-                      onChange={(e) => handleInputChange("location", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("location", e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -948,7 +1044,9 @@ export function AdForm({
                     id="address"
                     placeholder="Complete address where the vehicle can be viewed..."
                     value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("address", e.target.value)
+                    }
                     rows={3}
                   />
                 </div>
@@ -959,22 +1057,24 @@ export function AdForm({
                     id="specialNote"
                     placeholder="Any additional information or special instructions..."
                     value={formData.specialNote}
-                    onChange={(e) => handleInputChange("specialNote", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("specialNote", e.target.value)
+                    }
                     rows={3}
                   />
                 </div>
                 <div className="flex justify-between mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToPrevTab} 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    onClick={goToPrevTab}
+                    variant="outline"
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={goToNextTab} 
+                  <Button
+                    type="button"
+                    onClick={goToNextTab}
                     className="flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
@@ -989,7 +1089,9 @@ export function AdForm({
             <Card>
               <CardHeader>
                 <CardTitle>Settings</CardTitle>
-                <CardDescription>Additional settings about your ad</CardDescription>
+                <CardDescription>
+                  Additional settings about your ad
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -999,17 +1101,26 @@ export function AdForm({
                       placeholder="Add a tag"
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addTag())
+                      }
                     />
                     <Button type="button" onClick={addTag} variant="outline">
-                      <Tag className="w-4 h-4" />
+                      <TagIcon className="w-4 h-4" />
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
                         {tag}
-                        <X className="w-3 h-3 cursor-pointer" onClick={() => removeTag(tag)} />
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => removeTag(tag)}
+                        />
                       </Badge>
                     ))}
                   </div>
@@ -1022,7 +1133,9 @@ export function AdForm({
                     <Switch
                       id="published"
                       checked={formData.published}
-                      onCheckedChange={(checked) => handleInputChange("published", checked)}
+                      onCheckedChange={(checked) =>
+                        handleInputChange("published", checked)
+                      }
                     />
                     <Label htmlFor="published">Publish immediately</Label>
                   </div>
@@ -1030,7 +1143,9 @@ export function AdForm({
                     <Switch
                       id="boosted"
                       checked={formData.boosted}
-                      onCheckedChange={(checked) => handleInputChange("boosted", checked)}
+                      onCheckedChange={(checked) =>
+                        handleInputChange("boosted", checked)
+                      }
                     />
                     <Label htmlFor="boosted">Boost ad</Label>
                   </div>
@@ -1038,7 +1153,9 @@ export function AdForm({
                     <Switch
                       id="featured"
                       checked={formData.featured}
-                      onCheckedChange={(checked) => handleInputChange("featured", checked)}
+                      onCheckedChange={(checked) =>
+                        handleInputChange("featured", checked)
+                      }
                     />
                     <Label htmlFor="featured">Featured ad</Label>
                   </div>
@@ -1055,7 +1172,9 @@ export function AdForm({
                         id="seoTitle"
                         placeholder="SEO optimized title"
                         value={formData.seoTitle}
-                        onChange={(e) => handleInputChange("seoTitle", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("seoTitle", e.target.value)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -1064,16 +1183,18 @@ export function AdForm({
                         id="seoDescription"
                         placeholder="SEO meta description"
                         value={formData.seoDescription}
-                        onChange={(e) => handleInputChange("seoDescription", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("seoDescription", e.target.value)
+                        }
                       />
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-start mt-4">
-                  <Button 
-                    type="button" 
-                    onClick={goToPrevTab} 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    onClick={goToPrevTab}
+                    variant="outline"
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
@@ -1085,7 +1206,10 @@ export function AdForm({
         </Tabs>
 
         {/* Image Editor Dialog */}
-        <Dialog open={!!editingImage} onOpenChange={(open) => !open && cancelImageEdit()}>
+        <Dialog
+          open={!!editingImage}
+          onOpenChange={(open) => !open && cancelImageEdit()}
+        >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Image</DialogTitle>
@@ -1093,66 +1217,59 @@ export function AdForm({
                 Add SEO metadata and crop your image if needed.
               </DialogDescription>
             </DialogHeader>
-            
+
             {editingImage && (
               <div className="space-y-4">
                 {/* Image preview */}
                 <div className="relative aspect-video rounded-md overflow-hidden border border-gray-200">
-                  <img 
-                    src={editingImage.image.url} 
-                    alt="Image preview" 
+                  <Image
+                    src={editingImage.image.url}
+                    alt="Image preview"
                     className="object-contain w-full h-full"
+                    width={600}
+                    height={300}
                   />
                 </div>
-                
+
                 {/* Image metadata fields */}
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <Label htmlFor="imageTitle">Image Title (for SEO)</Label>
                     <Input
                       id="imageTitle"
-                      placeholder="Descriptive title for this image"
                       value={imageTitle}
                       onChange={(e) => setImageTitle(e.target.value)}
+                      placeholder="Descriptive title of the image"
                     />
                     <p className="text-xs text-muted-foreground">
-                      A concise, descriptive title helps with SEO.
+                      A descriptive title helps with search engine visibility
                     </p>
                   </div>
-                  
+
                   <div className="space-y-1">
-                    <Label htmlFor="imageAlt">Alt Text (for accessibility)</Label>
+                    <Label htmlFor="imageAlt">
+                      Alt Text (for accessibility)
+                    </Label>
                     <Input
                       id="imageAlt"
-                      placeholder="Describe what's in the image"
                       value={imageAlt}
                       onChange={(e) => setImageAlt(e.target.value)}
+                      placeholder="Description for screen readers"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Describe the image for screen readers and SEO.
-                    </p>
-                  </div>
-                  
-                  {/* Image crop functionality would be here in a real implementation */}
-                  <div className="bg-muted p-3 rounded-md">
-                    <p className="text-sm flex items-center gap-2">
-                      <Crop className="w-4 h-4" />
-                      Image cropping functionality would be implemented here.
+                      Alt text helps people using screen readers understand the
+                      image
                     </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <DialogFooter className="sm:justify-between">
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={cancelImageEdit}
-              >
+              <Button type="button" variant="outline" onClick={cancelImageEdit}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 type="button"
                 variant="default"
                 onClick={saveImageEdits}
@@ -1166,23 +1283,24 @@ export function AdForm({
 
         {/* Form submission buttons */}
         <div className="flex justify-between pt-6">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             disabled={isSubmitting}
-            onClick={() => router.push('/dashboard/ads')}
+            onClick={() => router.push("/dashboard/ads")}
           >
             Cancel
           </Button>
           <div className="space-x-2">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting}
               className="flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> {submitButtonText}...
+                  <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                  {submitButtonText}...
                 </>
               ) : (
                 submitButtonText
