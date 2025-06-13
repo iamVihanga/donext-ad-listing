@@ -1,15 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  Filter,
-  Menu,
-  X,
-  Loader2,
-  Car
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, ChevronDown, Filter, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +12,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
 
 // Import the existing hook
@@ -43,15 +34,179 @@ const vehicleTypeLabels: Record<string, string> = {
   BICYCLE: "BICYCLE"
 };
 
+// Define filter state interface
+interface FilterState {
+  make: string | null;
+  model: string | null;
+  vehicleType: string | null;
+  priceRange: string | null;
+  // Advanced filters
+  yearFrom: string | null;
+  yearTo: string | null;
+  fuelType: string | null;
+  transmission: string | null;
+}
+
 export default function VehicleMarketplace() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+
+  // Initialize filter state (pending filters)
+  const [filters, setFilters] = useState<FilterState>({
+    make: null,
+    model: null,
+    vehicleType: null,
+    priceRange: null,
+    yearFrom: null,
+    yearTo: null,
+    fuelType: null,
+    transmission: null
+  });
+
+  // Add new state for active filters (applied filters)
+  const [activeFilters, setActiveFilters] = useState<FilterState>({
+    make: null,
+    model: null,
+    vehicleType: null,
+    priceRange: null,
+    yearFrom: null,
+    yearTo: null,
+    fuelType: null,
+    transmission: null
+  });
+
+  // Track if filters are active
+  const hasActiveFilters = Object.values(activeFilters).some(
+    (value) => value !== null
+  );
 
   // Use the existing hook to fetch real vehicle data
   const { data, isLoading, error } = useGetAds({
     page: 1,
     limit: 8 // Show 8 items initially for better grid layout
   });
+
+  // Parse price range values
+  const parsePriceRange = (range: string | null) => {
+    if (!range) return { min: null, max: null };
+
+    switch (range) {
+      case "0-2m":
+        return { min: 0, max: 2000000 };
+      case "2m-5m":
+        return { min: 2000000, max: 5000000 };
+      case "5m-10m":
+        return { min: 5000000, max: 10000000 };
+      case "10m+":
+        return { min: 10000000, max: null };
+      default:
+        return { min: null, max: null };
+    }
+  };
+
+  // Apply filters to the data - modify to use activeFilters instead of filters
+  const filteredAds = useMemo(() => {
+    if (!data?.ads || data.ads.length === 0) return [];
+
+    return data.ads.filter((ad) => {
+      // Make filter
+      if (
+        activeFilters.make &&
+        ad.brand?.toLowerCase() !== activeFilters.make.toLowerCase()
+      ) {
+        return false;
+      }
+
+      // Model filter (case insensitive partial match)
+      if (
+        activeFilters.model &&
+        !ad.model?.toLowerCase().includes(activeFilters.model.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Vehicle type filter
+      if (
+        activeFilters.vehicleType &&
+        ad.type !== activeFilters.vehicleType.toUpperCase()
+      ) {
+        return false;
+      }
+
+      // Price range filter
+      if (activeFilters.priceRange) {
+        const { min, max } = parsePriceRange(activeFilters.priceRange);
+        if (min !== null && ad.price && ad.price < min) return false;
+        if (max !== null && ad.price && ad.price > max) return false;
+      }
+
+      // Advanced filters
+      if (
+        activeFilters.yearFrom &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) < parseInt(activeFilters.yearFrom)
+      ) {
+        return false;
+      }
+
+      if (
+        activeFilters.yearTo &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) > parseInt(activeFilters.yearTo)
+      ) {
+        return false;
+      }
+
+      if (
+        activeFilters.fuelType &&
+        ad.fuelType?.toLowerCase() !== activeFilters.fuelType.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        activeFilters.transmission &&
+        ad.transmission?.toLowerCase() !==
+          activeFilters.transmission.toLowerCase()
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [data?.ads, activeFilters]);
+
+  // Handle filter changes - only updates pending filters
+  const handleFilterChange = (
+    filterName: keyof FilterState,
+    value: string | null
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterName]: value === "any" ? null : value
+    }));
+  };
+
+  // Apply all current filters
+  const applyFilters = () => {
+    setActiveFilters(filters);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    const emptyFilters = {
+      make: null,
+      model: null,
+      vehicleType: null,
+      priceRange: null,
+      yearFrom: null,
+      yearTo: null,
+      fuelType: null,
+      transmission: null
+    };
+
+    setFilters(emptyFilters);
+    setActiveFilters(emptyFilters);
+  };
 
   // Format price for display
   const formatPrice = (price: number | null) => {
@@ -60,126 +215,7 @@ export default function VehicleMarketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-teal-900 to-teal-800 text-white shadow-md sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-2">
-              <Car className="h-6 w-6" />
-              <div className="text-xl md:text-2xl font-bold text-white">
-                Rathagala.lk
-              </div>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Home
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Sell
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                About
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Contact
-              </a>
-            </nav>
-
-            {/* Desktop Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" className="text-white hover:bg-teal-700">
-                Login
-              </Button>
-              <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
-                Post Free Ad
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className="w-[85%] sm:w-[350px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900"
-                >
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="text-xl font-bold text-white flex items-center gap-2">
-                      <Car className="h-5 w-5" />
-                      Rathagala.lk
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsOpen(false)}
-                      className="hover:bg-teal-800"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <nav className="flex flex-col space-y-5">
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Home
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Sell
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      About
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Contact
-                    </a>
-                    <div className="pt-5 space-y-3">
-                      <Button
-                        variant="outline"
-                        className="w-full text-white border-white hover:bg-white hover:text-teal-900"
-                      >
-                        Login
-                      </Button>
-                      <Button className="w-full bg-white text-teal-900 hover:bg-teal-50">
-                        Post Free Ad
-                      </Button>
-                    </div>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div>
       {/* Hero Section with Search */}
       <section className="relative py-12 md:py-20 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 overflow-hidden">
         {/* Abstract shapes for visual interest */}
@@ -190,7 +226,7 @@ export default function VehicleMarketplace() {
 
         <div className="relative container mx-auto px-4">
           <div className="text-center mb-8 md:mb-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5 font-heading">
               Find Your Perfect Vehicle
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
@@ -198,15 +234,22 @@ export default function VehicleMarketplace() {
             </p>
           </div>
 
-          {/* Search Form - Refined for better proportions */}
+          {/* Search Form - Update the search button onClick handler */}
           <div className="max-w-6xl mx-auto">
             <Card className="p-5 md:p-7 shadow-xl bg-white rounded-xl border-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-5">
-                <Select>
-                  <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                <Select
+                  value={filters.make || "any"}
+                  defaultValue=""
+                  onValueChange={(value) =>
+                    handleFilterChange("make", value || null)
+                  }
+                >
+                  <SelectTrigger className="min-h-14 w-full rounded-md py-3 bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                     <SelectValue placeholder="Any Make" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="any">Any Make</SelectItem>
                     <SelectItem value="toyota">Toyota</SelectItem>
                     <SelectItem value="honda">Honda</SelectItem>
                     <SelectItem value="nissan">Nissan</SelectItem>
@@ -217,27 +260,46 @@ export default function VehicleMarketplace() {
 
                 <Input
                   placeholder="Model (e.g., Prius)"
-                  className="h-11 rounded-lg bg-white border-slate-200 focus-visible:ring-teal-500"
+                  className="min-h-14 w-full rounded-md bg-white border-slate-200 focus-visible:ring-teal-500"
+                  value={filters.model || ""}
+                  onChange={(e) =>
+                    handleFilterChange("model", e.target.value || null)
+                  }
                 />
 
-                <Select>
-                  <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                <Select
+                  value={filters.vehicleType || ""}
+                  defaultValue=""
+                  onValueChange={(value) =>
+                    handleFilterChange("vehicleType", value || null)
+                  }
+                >
+                  <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                     <SelectValue placeholder="Any Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="car">Car</SelectItem>
-                    <SelectItem value="suv">SUV</SelectItem>
-                    <SelectItem value="van">Van</SelectItem>
-                    <SelectItem value="truck">Truck</SelectItem>
-                    <SelectItem value="bike">Motorcycle</SelectItem>
+                    <SelectItem value="any">Any Type</SelectItem>
+                    <SelectItem value="CAR">Car</SelectItem>
+                    <SelectItem value="SUV_JEEP">SUV / Jeep</SelectItem>
+                    <SelectItem value="VAN">Van</SelectItem>
+                    <SelectItem value="LORRY">Lorry</SelectItem>
+                    <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
+                    <SelectItem value="THREE_WHEEL">Three Wheel</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Select>
-                  <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                <Select
+                  value={filters.priceRange || ""}
+                  defaultValue=""
+                  onValueChange={(value) =>
+                    handleFilterChange("priceRange", value || null)
+                  }
+                >
+                  <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                     <SelectValue placeholder="Price Range" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="any">Any Price</SelectItem>
                     <SelectItem value="0-2m">Under Rs. 2M</SelectItem>
                     <SelectItem value="2m-5m">Rs. 2M - 5M</SelectItem>
                     <SelectItem value="5m-10m">Rs. 5M - 10M</SelectItem>
@@ -245,11 +307,29 @@ export default function VehicleMarketplace() {
                   </SelectContent>
                 </Select>
 
-                <Button className="h-11 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-lg">
+                <Button
+                  className="h-14 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-lg"
+                  onClick={applyFilters}
+                  disabled={isLoading}
+                >
                   <Search className="w-4 h-4 mr-2" />
                   <span>Search</span>
                 </Button>
               </div>
+
+              {/* Clear filters button - only show when filters are active */}
+              {hasActiveFilters && (
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="text-teal-700 border-teal-700 hover:bg-teal-50"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
 
               {/* Advanced Filters Toggle */}
               <div className="flex justify-center">
@@ -270,25 +350,39 @@ export default function VehicleMarketplace() {
 
               {/* Advanced Filters */}
               {showAdvancedFilters && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className="pt-4 border-t border-slate-100">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <Select>
-                      <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                    <Select
+                      value={filters.yearFrom || ""}
+                      onValueChange={(value) =>
+                        handleFilterChange("yearFrom", value || null)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="Year From" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="any">Any Year</SelectItem>
                         <SelectItem value="2020">2020</SelectItem>
                         <SelectItem value="2019">2019</SelectItem>
                         <SelectItem value="2018">2018</SelectItem>
                         <SelectItem value="2017">2017</SelectItem>
+                        <SelectItem value="2016">2016</SelectItem>
+                        <SelectItem value="2015">2015</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <Select>
-                      <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                    <Select
+                      value={filters.yearTo || ""}
+                      onValueChange={(value) =>
+                        handleFilterChange("yearTo", value || null)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="Year To" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="any">Any Year</SelectItem>
                         <SelectItem value="2024">2024</SelectItem>
                         <SelectItem value="2023">2023</SelectItem>
                         <SelectItem value="2022">2022</SelectItem>
@@ -296,11 +390,17 @@ export default function VehicleMarketplace() {
                       </SelectContent>
                     </Select>
 
-                    <Select>
-                      <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                    <Select
+                      value={filters.fuelType || ""}
+                      onValueChange={(value) =>
+                        handleFilterChange("fuelType", value || null)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="Fuel Type" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="any">Any Fuel Type</SelectItem>
                         <SelectItem value="petrol">Petrol</SelectItem>
                         <SelectItem value="diesel">Diesel</SelectItem>
                         <SelectItem value="hybrid">Hybrid</SelectItem>
@@ -308,11 +408,17 @@ export default function VehicleMarketplace() {
                       </SelectContent>
                     </Select>
 
-                    <Select>
-                      <SelectTrigger className="h-11 rounded-lg bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                    <Select
+                      value={filters.transmission || ""}
+                      onValueChange={(value) =>
+                        handleFilterChange("transmission", value || null)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="Transmission" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="any">Any Transmission</SelectItem>
                         <SelectItem value="auto">Automatic</SelectItem>
                         <SelectItem value="manual">Manual</SelectItem>
                       </SelectContent>
@@ -389,10 +495,36 @@ export default function VehicleMarketplace() {
                 </div>
               )}
 
+              {/* No results */}
+              {filteredAds.length === 0 && !isLoading && data?.ads && (
+                <div className="p-12 text-center border rounded-xl bg-white shadow-sm">
+                  {hasActiveFilters ? (
+                    <>
+                      <p className="text-slate-600 mb-2">
+                        No vehicles match your filter criteria
+                      </p>
+                      <Button
+                        className="mt-4 bg-teal-700 hover:bg-teal-600"
+                        onClick={clearFilters}
+                      >
+                        Clear Filters
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-slate-600 mb-2">No vehicles found</p>
+                      <Button className="mt-4 bg-teal-700 hover:bg-teal-600">
+                        Create Your First Listing
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Vehicle Grid - Using Real Data */}
-              {data?.ads && data.ads.length > 0 && !isLoading && (
+              {filteredAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {data.ads.map((vehicle) => (
+                  {filteredAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
                       className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
@@ -418,7 +550,7 @@ export default function VehicleMarketplace() {
                           <div className="flex-1 pl-4 flex flex-col justify-between">
                             <div>
                               <div className="text-sm text-slate-600 mb-2">
-                                {vehicle.location || "Location not specified"}
+                                {vehicle.location || ""}
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-2">
@@ -446,19 +578,21 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Load More */}
-              <div className="text-center mt-8">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
-                  disabled={
-                    !data ||
-                    data.pagination?.page === data.pagination?.totalPages
-                  }
-                >
-                  Load More Vehicles
-                </Button>
-              </div>
+              {!hasActiveFilters && filteredAds.length > 0 && (
+                <div className="text-center mt-8">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                    disabled={
+                      !data ||
+                      data.pagination?.page === data.pagination?.totalPages
+                    }
+                  >
+                    Load More Vehicles
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Right Sidebar - Ad Space */}
@@ -541,104 +675,6 @@ export default function VehicleMarketplace() {
           </Card>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-slate-900 to-teal-900 text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-6">
-                <Car className="h-6 w-6" />
-                <div className="text-2xl font-bold text-white">
-                  Rathagala.lk
-                </div>
-              </div>
-              <p className="text-slate-300 leading-relaxed">
-                {`Sri Lanka's most trusted vehicle marketplace connecting buyers
-                and sellers nationwide.`}
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Quick Links</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Browse Cars
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Sell Your Car
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Car Loans
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Insurance
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Support</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Connect</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    YouTube
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-slate-800 mt-10 pt-8 text-center text-slate-400">
-            <p>&copy; 2025 Rathagala.lk. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
