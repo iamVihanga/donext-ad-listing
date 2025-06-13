@@ -1,16 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  Filter,
-  Menu,
-  X,
-  Loader2,
-  Car,
-  RefreshCw
-} from "lucide-react";
+import { Search, ChevronDown, Filter, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,7 +12,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
 
 // Import the existing hook
@@ -59,7 +49,6 @@ interface FilterState {
 
 export default function VehicleMarketplace() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
   // Initialize filter state (pending filters)
   const [filters, setFilters] = useState<FilterState>({
@@ -226,126 +215,7 @@ export default function VehicleMarketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-teal-900 to-teal-800 text-white shadow-md sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-2">
-              <Car className="h-6 w-6" />
-              <div className="text-xl md:text-2xl font-bold text-white">
-                Rathagala.lk
-              </div>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Home
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Sell
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                About
-              </a>
-              <a
-                href="#"
-                className="hover:text-teal-200 transition-colors font-medium"
-              >
-                Contact
-              </a>
-            </nav>
-
-            {/* Desktop Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" className="text-white hover:bg-teal-700">
-                Login
-              </Button>
-              <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
-                Post Free Ad
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className="w-[85%] sm:w-[350px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900"
-                >
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="text-xl font-bold text-white flex items-center gap-2">
-                      <Car className="h-5 w-5" />
-                      Rathagala.lk
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsOpen(false)}
-                      className="hover:bg-teal-800"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <nav className="flex flex-col space-y-5">
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Home
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Sell
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      About
-                    </a>
-                    <a
-                      href="#"
-                      className="text-lg hover:text-teal-200 transition-colors"
-                    >
-                      Contact
-                    </a>
-                    <div className="pt-5 space-y-3">
-                      <Button
-                        variant="outline"
-                        className="w-full text-white border-white hover:bg-white hover:text-teal-900"
-                      >
-                        Login
-                      </Button>
-                      <Button className="w-full bg-white text-teal-900 hover:bg-teal-50">
-                        Post Free Ad
-                      </Button>
-                    </div>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div>
       {/* Hero Section with Search */}
       <section className="relative py-12 md:py-20 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 overflow-hidden">
         {/* Abstract shapes for visual interest */}
@@ -356,7 +226,7 @@ export default function VehicleMarketplace() {
 
         <div className="relative container mx-auto px-4">
           <div className="text-center mb-8 md:mb-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5 font-heading">
               Find Your Perfect Vehicle
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
@@ -805,104 +675,6 @@ export default function VehicleMarketplace() {
           </Card>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-slate-900 to-teal-900 text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-6">
-                <Car className="h-6 w-6" />
-                <div className="text-2xl font-bold text-white">
-                  Rathagala.lk
-                </div>
-              </div>
-              <p className="text-slate-300 leading-relaxed">
-                {`Sri Lanka's most trusted vehicle marketplace connecting buyers
-                and sellers nationwide.`}
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Quick Links</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Browse Cars
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Sell Your Car
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Car Loans
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Insurance
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Support</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6 text-lg">Connect</h4>
-              <ul className="space-y-3 text-slate-300">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    YouTube
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-slate-800 mt-10 pt-8 text-center text-slate-400">
-            <p>&copy; 2025 Rathagala.lk. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
