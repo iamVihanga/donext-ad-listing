@@ -76,12 +76,16 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" className="text-white hover:bg-teal-700">
-              Login
-            </Button>
-            <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
-              Post Free Ad
-            </Button>
+            <Link href="/signin">
+              <Button variant="ghost" className="text-white hover:bg-teal-700">
+                Login
+              </Button>
+            </Link>
+            <Link href="/dashboard/ads/new">
+              <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
+                Post Free Ad
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
