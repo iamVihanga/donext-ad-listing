@@ -523,51 +523,47 @@ export default function VehicleMarketplace() {
 
               {/* Vehicle Grid - Using Real Data */}
               {filteredAds.length > 0 && !isLoading && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
-                      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
                       onClick={() => (window.location.href = `/${vehicle.id}`)}
                     >
-                      <div className="p-4">
+                      <div className="p-3">
                         {/* Vehicle Title - Centered */}
-                        <h3 className="font-semibold text-base text-slate-800 text-center mb-3 transition-colors group-hover:text-teal-700">
+                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
                           {vehicle.title}
                         </h3>
 
                         <div className="flex">
                           {/* Vehicle Image */}
-                          <div className="w-40 h-28 flex-shrink-0">
+                          <div className="w-32 h-20 flex-shrink-0">
                             <img
                               src="/placeholder.svg"
                               alt={vehicle.title}
-                              className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
 
                           {/* Vehicle Details */}
-                          <div className="flex-1 pl-4 flex flex-col justify-between">
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
                             <div>
-                              <div className="text-sm text-slate-600 mb-2">
+                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
                                 {vehicle.location || ""}
                               </div>
 
-                              <div className="text-sm font-semibold text-teal-700 mb-2">
+                              <div className="text-sm font-semibold text-teal-700 mb-1">
                                 {formatPrice(vehicle.price)}
                               </div>
 
-                              <div className="text-sm text-slate-500 mb-1">
-                                {vehicleTypeLabels[vehicle.type] ||
-                                  vehicle.type}
+                              <div className="text-xs text-slate-500">
+                                {vehicleTypeLabels[vehicle.type] || vehicle.type}
                               </div>
                             </div>
 
-                            <div className="text-xs text-slate-400">
-                              {format(
-                                new Date(vehicle.createdAt),
-                                "MMM d, yyyy"
-                              )}
+                            <div className="text-xs text-slate-400 mt-1">
+                              {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
                             </div>
                           </div>
                         </div>
