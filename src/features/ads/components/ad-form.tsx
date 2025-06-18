@@ -385,6 +385,28 @@ export function AdForm({
     onSubmit(adData);
   };
 
+  const vehicleMakes = [
+    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
+    "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet", 
+    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun", 
+    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat", 
+    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO", 
+    "Hitachi", "Holden", "Honda", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco", 
+    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway", 
+    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM", 
+    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus", 
+    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz", 
+    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", "Mitsubishi", 
+    "Morgan", "Morris", "New-Holland", "Nissan", "NWOW", "Opel", "Other", 
+    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton", 
+    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab", 
+    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru", 
+    "Suzuki", "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", "Toyota", 
+    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys", 
+    "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
+  ];
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-8">
@@ -435,7 +457,7 @@ export function AdForm({
               <CardContent>
                 <div className="space-y-4">
                   {/* Title */}
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Title<span className="text-red-500">*</span>
                     </div>
@@ -449,7 +471,7 @@ export function AdForm({
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Type */}
                   <div className="flex items-center">
@@ -458,41 +480,22 @@ export function AdForm({
                     </div>
                     <div className="flex-1">
                       <Select
-                        value={formData.type}
-                        onValueChange={(value) => handleInputChange("type", value)}
+                        value={formData.vehicleType}
+                        onValueChange={(value) => handleInputChange("vehicleType", value)}
                       >
                         <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                           <SelectValue placeholder="Select Type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="CAR">Car</SelectItem>
-                          <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
-                          <SelectItem value="TRUCK">Truck</SelectItem>
-                          <SelectItem value="VAN">Van</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Condition */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Vehicle Condition<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.condition}
-                        onValueChange={(value) => handleInputChange("condition", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Condition" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="NEW">New</SelectItem>
-                          <SelectItem value="EXCELLENT">Excellent</SelectItem>
-                          <SelectItem value="GOOD">Good</SelectItem>
-                          <SelectItem value="FAIR">Fair</SelectItem>
-                          <SelectItem value="POOR">Poor</SelectItem>
+                          <SelectItem value="Car">Car</SelectItem>
+                          <SelectItem value="Van">Van</SelectItem>
+                          <SelectItem value="SUV / Jeep">SUV / Jeep</SelectItem>
+                          <SelectItem value="Motorcycle">Motorcycle</SelectItem>
+                          <SelectItem value="Bus">Bus</SelectItem>
+                          <SelectItem value="Truck">Truck</SelectItem>
+                          <SelectItem value="Three Wheeler">Three Wheeler</SelectItem>
+                          <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -511,12 +514,12 @@ export function AdForm({
                         <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                           <SelectValue placeholder="Select Make" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="TOYOTA">Toyota</SelectItem>
-                          <SelectItem value="HONDA">Honda</SelectItem>
-                          <SelectItem value="NISSAN">Nissan</SelectItem>
-                          <SelectItem value="FORD">Ford</SelectItem>
-                          {/* Add more brands as needed */}
+                        <SelectContent className="max-h-[200px] overflow-y-auto">
+                          {vehicleMakes.map((make) => (
+                            <SelectItem key={make} value={make}>
+                              {make}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -562,6 +565,31 @@ export function AdForm({
                       </Select>
                     </div>
                   </div>
+
+                  {/* Condition */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Vehicle Condition<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Select
+                        value={formData.condition}
+                        onValueChange={(value) => handleInputChange("condition", value)}
+                      >
+                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                          <SelectValue placeholder="Select Condition" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Brand New">Brand New</SelectItem>
+                          <SelectItem value="Unregistered (Recondition)">Unregistered (Recondition)</SelectItem>
+                          <SelectItem value="Registered (Used)">Registered (Used)</SelectItem>
+                          <SelectItem value="Antique">Antique</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  
 
                   {/* Price */}
                   <div className="flex items-center">
@@ -620,6 +648,7 @@ export function AdForm({
                           <SelectItem value="DIESEL">Diesel</SelectItem>
                           <SelectItem value="HYBRID">Hybrid</SelectItem>
                           <SelectItem value="ELECTRIC">Electric</SelectItem>
+                          <SelectItem value="ELECTRIC">Gas</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -656,6 +685,25 @@ export function AdForm({
                         onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="w-48 text-right pr-4 pt-2 text-gray-600">
+                      Description<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        id="description"
+                        placeholder="Provide detailed information about your vehicle..."
+                        value={formData.description}
+                        onChange={(e) => handleInputChange("description", e.target.value)}
+                        rows={5}
+                        className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Include important details about the vehicle's history, special features, and reason for selling.
+                      </p>
                     </div>
                   </div>
 
@@ -1032,15 +1080,49 @@ export function AdForm({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* City - Now required */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      City<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        id="city"
+                        placeholder="e.g., Colombo"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
+                        required
+                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Location/Area - Now required */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Location/Area<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        id="location"
+                        placeholder="e.g., Nugegoda"
+                        value={formData.location}
+                        onChange={(e) => handleInputChange("location", e.target.value)}
+                        required
+                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                      />
+                    </div>
+                  </div>
+
                   {/* Province/State */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
-                      Province/State
+                      Province
                     </div>
                     <div className="flex-1">
                       <Input
                         id="province"
-                        placeholder="e.g., California"
+                        placeholder="e.g., Western Province"
                         value={formData.province}
                         onChange={(e) => handleInputChange("province", e.target.value)}
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
@@ -1056,41 +1138,9 @@ export function AdForm({
                     <div className="flex-1">
                       <Input
                         id="district"
-                        placeholder="e.g., Los Angeles County"
+                        placeholder="e.g., Colombo District"
                         value={formData.district}
                         onChange={(e) => handleInputChange("district", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* City */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      City
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="city"
-                        placeholder="e.g., Los Angeles"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Location/Area */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Location/Area
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="location"
-                        placeholder="e.g., Downtown"
-                        value={formData.location}
-                        onChange={(e) => handleInputChange("location", e.target.value)}
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
                     </div>
@@ -1104,7 +1154,7 @@ export function AdForm({
                     <div className="flex-1">
                       <Textarea
                         id="address"
-                        placeholder="Complete address where the vehicle can be viewed..."
+                        placeholder="Complete address where the vehicle can be viewed in Sri Lanka..."
                         value={formData.address}
                         onChange={(e) => handleInputChange("address", e.target.value)}
                         rows={3}
@@ -1121,7 +1171,7 @@ export function AdForm({
                     <div className="flex-1">
                       <Textarea
                         id="specialNote"
-                        placeholder="Any additional information or special instructions..."
+                        placeholder="Any additional information or special instructions about the location..."
                         value={formData.specialNote}
                         onChange={(e) => handleInputChange("specialNote", e.target.value)}
                         rows={3}
@@ -1262,13 +1312,38 @@ export function AdForm({
                       SEO Title
                     </div>
                     <div className="flex-1">
-                      <Input
-                        id="seoTitle"
-                        placeholder="SEO optimized title"
-                        value={formData.seoTitle}
-                        onChange={(e) => handleInputChange("seoTitle", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
+                      <div className="space-y-2">
+                        <Input
+                          id="seoTitle"
+                          placeholder="SEO optimized title"
+                          value={formData.seoTitle}
+                          onChange={(e) => handleInputChange("seoTitle", e.target.value)}
+                          className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              const autoTitle = [
+                                formData.brand,
+                                formData.model,
+                                formData.manufacturedYear,
+                                formData.vehicleType
+                              ].filter(Boolean).join(' ');
+                              
+                              handleInputChange("seoTitle", autoTitle);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                          >
+                            Auto-Generate Title
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Auto-generated title format: Make + Model + Year + Vehicle Type
+                        </p>
+                      </div>
                     </div>
                   </div>
                   

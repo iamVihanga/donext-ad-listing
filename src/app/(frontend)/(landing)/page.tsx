@@ -230,7 +230,7 @@ export default function VehicleMarketplace() {
               Find Your Perfect Vehicle
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
-              {`Sri Lanka's largest automobile marketplace with thousands of verified listings`}
+              {`Sri Lanka's largest automobile marketplace`}
             </p>
           </div>
 
