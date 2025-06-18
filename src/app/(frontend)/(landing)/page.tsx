@@ -533,7 +533,9 @@ export default function VehicleMarketplace() {
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {vehicle.title}
+                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicle.vehicleType]
+                            .filter(Boolean)
+                            .join(' ') || vehicle.title}
                         </h3>
 
                         <div className="flex">
