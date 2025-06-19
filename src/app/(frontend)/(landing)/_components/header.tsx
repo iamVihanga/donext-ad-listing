@@ -39,12 +39,12 @@ export function Header() {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
             <CarIcon className="h-6 w-6" />
             <div className="text-xl md:text-2xl font-bold text-white font-heading">
               Rathagala<span className="text-teal-600">.lk</span>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">

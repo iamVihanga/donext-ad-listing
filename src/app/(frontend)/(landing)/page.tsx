@@ -34,15 +34,39 @@ const vehicleTypeLabels: Record<string, string> = {
   BICYCLE: "BICYCLE"
 };
 
-// Define filter state interface
+// List of vehicle makes for dropdown
+const vehicleMakes = [
+  "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
+  "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+  "Cadillac", "CAT", "Changan", "Chery", "Chevrolet", "Chrysler", "Citroen",
+  "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
+  "Honda", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
+  "Land-Rover", "Lexus", "Mahindra", "Mazda", "Mercedes-Benz", "Micro", "Mini",
+  "Mitsubishi", "Nissan", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
+  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Toyota", "TVS", "Volkswagen",
+  "Volvo", "Yamaha"
+];
+
+// Sri Lankan cities for dropdown
+const sriLankanCities = [
+  "Colombo", "Kandy", "Galle", "Jaffna", "Negombo", "Batticaloa", "Trincomalee",
+  "Anuradhapura", "Ratnapura", "Kotte", "Moratuwa", "Nuwara Eliya", "Gampaha",
+  "Matara", "Kurunegala", "Badulla", "Hambantota", "Kalmunai", "Vavuniya"
+];
+
+// Define filter state interface with updated fields
 interface FilterState {
   make: string | null;
   model: string | null;
   vehicleType: string | null;
-  priceRange: string | null;
+  city: string | null;
+  condition: string | null;
+  
   // Advanced filters
-  yearFrom: string | null;
-  yearTo: string | null;
+  minYear: string | null;
+  maxYear: string | null;
+  minPrice: string | null;
+  maxPrice: string | null;
   fuelType: string | null;
   transmission: string | null;
 }
@@ -55,9 +79,12 @@ export default function VehicleMarketplace() {
     make: null,
     model: null,
     vehicleType: null,
-    priceRange: null,
-    yearFrom: null,
-    yearTo: null,
+    city: null,
+    condition: null,
+    minYear: null,
+    maxYear: null,
+    minPrice: null,
+    maxPrice: null,
     fuelType: null,
     transmission: null
   });
@@ -67,9 +94,12 @@ export default function VehicleMarketplace() {
     make: null,
     model: null,
     vehicleType: null,
-    priceRange: null,
-    yearFrom: null,
-    yearTo: null,
+    city: null,
+    condition: null,
+    minYear: null,
+    maxYear: null,
+    minPrice: null,
+    maxPrice: null,
     fuelType: null,
     transmission: null
   });
@@ -84,24 +114,6 @@ export default function VehicleMarketplace() {
     page: 1,
     limit: 8 // Show 8 items initially for better grid layout
   });
-
-  // Parse price range values
-  const parsePriceRange = (range: string | null) => {
-    if (!range) return { min: null, max: null };
-
-    switch (range) {
-      case "0-2m":
-        return { min: 0, max: 2000000 };
-      case "2m-5m":
-        return { min: 2000000, max: 5000000 };
-      case "5m-10m":
-        return { min: 5000000, max: 10000000 };
-      case "10m+":
-        return { min: 10000000, max: null };
-      default:
-        return { min: null, max: null };
-    }
-  };
 
   // Apply filters to the data - modify to use activeFilters instead of filters
   const filteredAds = useMemo(() => {
@@ -131,31 +143,60 @@ export default function VehicleMarketplace() {
       ) {
         return false;
       }
-
-      // Price range filter
-      if (activeFilters.priceRange) {
-        const { min, max } = parsePriceRange(activeFilters.priceRange);
-        if (min !== null && ad.price && ad.price < min) return false;
-        if (max !== null && ad.price && ad.price > max) return false;
-      }
-
-      // Advanced filters
+      
+      // City filter
       if (
-        activeFilters.yearFrom &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) < parseInt(activeFilters.yearFrom)
+        activeFilters.city && 
+        ad.city?.toLowerCase() !== activeFilters.city.toLowerCase()
+      ) {
+        return false;
+      }
+      
+      // Condition filter
+      if (
+        activeFilters.condition && 
+        ad.condition?.toLowerCase() !== activeFilters.condition.toLowerCase()
       ) {
         return false;
       }
 
+      // Min price filter
       if (
-        activeFilters.yearTo &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) > parseInt(activeFilters.yearTo)
+        activeFilters.minPrice &&
+        ad.price &&
+        ad.price < parseInt(activeFilters.minPrice)
+      ) {
+        return false;
+      }
+      
+      // Max price filter
+      if (
+        activeFilters.maxPrice &&
+        ad.price &&
+        ad.price > parseInt(activeFilters.maxPrice)
       ) {
         return false;
       }
 
+      // Min year filter
+      if (
+        activeFilters.minYear &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) < parseInt(activeFilters.minYear)
+      ) {
+        return false;
+      }
+
+      // Max year filter
+      if (
+        activeFilters.maxYear &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) > parseInt(activeFilters.maxYear)
+      ) {
+        return false;
+      }
+
+      // Fuel type filter
       if (
         activeFilters.fuelType &&
         ad.fuelType?.toLowerCase() !== activeFilters.fuelType.toLowerCase()
@@ -163,10 +204,10 @@ export default function VehicleMarketplace() {
         return false;
       }
 
+      // Transmission filter
       if (
         activeFilters.transmission &&
-        ad.transmission?.toLowerCase() !==
-          activeFilters.transmission.toLowerCase()
+        ad.transmission?.toLowerCase() !== activeFilters.transmission.toLowerCase()
       ) {
         return false;
       }
@@ -197,9 +238,12 @@ export default function VehicleMarketplace() {
       make: null,
       model: null,
       vehicleType: null,
-      priceRange: null,
-      yearFrom: null,
-      yearTo: null,
+      city: null,
+      condition: null,
+      minYear: null,
+      maxYear: null,
+      minPrice: null,
+      maxPrice: null,
       fuelType: null,
       transmission: null
     };
@@ -213,6 +257,12 @@ export default function VehicleMarketplace() {
     if (price === null) return "Price on request";
     return `Rs. ${price.toLocaleString()}`;
   };
+
+  // Generate year options
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 30 }, (_, i) => currentYear - i);
+  }, []);
 
   return (
     <div>
@@ -234,30 +284,32 @@ export default function VehicleMarketplace() {
             </p>
           </div>
 
-          {/* Search Form - Update the search button onClick handler */}
+          {/* Search Form with updated filters */}
           <div className="max-w-6xl mx-auto">
             <Card className="p-5 md:p-7 shadow-xl bg-white rounded-xl border-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-5">
+                {/* Make filter */}
                 <Select
                   value={filters.make || "any"}
-                  defaultValue=""
+                  defaultValue="any"
                   onValueChange={(value) =>
-                    handleFilterChange("make", value || null)
+                    handleFilterChange("make", value)
                   }
                 >
                   <SelectTrigger className="min-h-14 w-full rounded-md py-3 bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
                     <SelectValue placeholder="Any Make" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px] overflow-y-auto">
                     <SelectItem value="any">Any Make</SelectItem>
-                    <SelectItem value="toyota">Toyota</SelectItem>
-                    <SelectItem value="honda">Honda</SelectItem>
-                    <SelectItem value="nissan">Nissan</SelectItem>
-                    <SelectItem value="bmw">BMW</SelectItem>
-                    <SelectItem value="mercedes">Mercedes</SelectItem>
+                    {vehicleMakes.map((make) => (
+                      <SelectItem key={make} value={make.toLowerCase()}>
+                        {make}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* Model filter */}
                 <Input
                   placeholder="Model (e.g., Prius)"
                   className="min-h-14 w-full rounded-md bg-white border-slate-200 focus-visible:ring-teal-500"
@@ -267,11 +319,12 @@ export default function VehicleMarketplace() {
                   }
                 />
 
+                {/* Vehicle Type filter */}
                 <Select
-                  value={filters.vehicleType || ""}
-                  defaultValue=""
+                  value={filters.vehicleType || "any"}
+                  defaultValue="any"
                   onValueChange={(value) =>
-                    handleFilterChange("vehicleType", value || null)
+                    handleFilterChange("vehicleType", value)
                   }
                 >
                   <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
@@ -279,34 +332,36 @@ export default function VehicleMarketplace() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any Type</SelectItem>
-                    <SelectItem value="CAR">Car</SelectItem>
-                    <SelectItem value="SUV_JEEP">SUV / Jeep</SelectItem>
-                    <SelectItem value="VAN">Van</SelectItem>
-                    <SelectItem value="LORRY">Lorry</SelectItem>
-                    <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
-                    <SelectItem value="THREE_WHEEL">Three Wheel</SelectItem>
+                    {Object.entries(vehicleTypeLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* City filter */}
                 <Select
-                  value={filters.priceRange || ""}
-                  defaultValue=""
+                  value={filters.city || "any"}
+                  defaultValue="any"
                   onValueChange={(value) =>
-                    handleFilterChange("priceRange", value || null)
+                    handleFilterChange("city", value)
                   }
                 >
                   <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                    <SelectValue placeholder="Price Range" />
+                    <SelectValue placeholder="Any City" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Price</SelectItem>
-                    <SelectItem value="0-2m">Under Rs. 2M</SelectItem>
-                    <SelectItem value="2m-5m">Rs. 2M - 5M</SelectItem>
-                    <SelectItem value="5m-10m">Rs. 5M - 10M</SelectItem>
-                    <SelectItem value="10m+">Above Rs. 10M</SelectItem>
+                  <SelectContent className="max-h-[200px] overflow-y-auto">
+                    <SelectItem value="any">Any City</SelectItem>
+                    {sriLankanCities.map((city) => (
+                      <SelectItem key={city} value={city.toLowerCase()}>
+                        {city}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* Search button */}
                 <Button
                   className="h-14 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-lg"
                   onClick={applyFilters}
@@ -348,52 +403,118 @@ export default function VehicleMarketplace() {
                 </Button>
               </div>
 
-              {/* Advanced Filters */}
+              {/* Advanced Filters - Updated with requested filters */}
               {showAdvancedFilters && (
                 <div className="pt-4 border-t border-slate-100">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                    {/* Condition filter */}
                     <Select
-                      value={filters.yearFrom || ""}
+                      value={filters.condition || "any"}
                       onValueChange={(value) =>
-                        handleFilterChange("yearFrom", value || null)
+                        handleFilterChange("condition", value)
                       }
                     >
                       <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="Year From" />
+                        <SelectValue placeholder="Condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="any">Any Year</SelectItem>
-                        <SelectItem value="2020">2020</SelectItem>
-                        <SelectItem value="2019">2019</SelectItem>
-                        <SelectItem value="2018">2018</SelectItem>
-                        <SelectItem value="2017">2017</SelectItem>
-                        <SelectItem value="2016">2016</SelectItem>
-                        <SelectItem value="2015">2015</SelectItem>
+                        <SelectItem value="any">Any Condition</SelectItem>
+                        <SelectItem value="Brand New">Brand New</SelectItem>
+                        <SelectItem value="Unregistered (Recondition)">Unregistered (Recondition)</SelectItem>
+                        <SelectItem value="Registered (Used)">Registered (Used)</SelectItem>
+                        <SelectItem value="Antique">Antique</SelectItem>
                       </SelectContent>
                     </Select>
 
+                    {/* Min Year filter */}
                     <Select
-                      value={filters.yearTo || ""}
+                      value={filters.minYear || "any"}
                       onValueChange={(value) =>
-                        handleFilterChange("yearTo", value || null)
+                        handleFilterChange("minYear", value)
                       }
                     >
                       <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="Year To" />
+                        <SelectValue placeholder="Min Year" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any Year</SelectItem>
-                        <SelectItem value="2024">2024</SelectItem>
-                        <SelectItem value="2023">2023</SelectItem>
-                        <SelectItem value="2022">2022</SelectItem>
-                        <SelectItem value="2021">2021</SelectItem>
+                      <SelectContent className="max-h-[200px] overflow-y-auto">
+                        <SelectItem value="any">Min Year</SelectItem>
+                        {years.map(year => (
+                          <SelectItem key={`min-${year}`} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 
+                    {/* Max Year filter */}
                     <Select
-                      value={filters.fuelType || ""}
+                      value={filters.maxYear || "any"}
                       onValueChange={(value) =>
-                        handleFilterChange("fuelType", value || null)
+                        handleFilterChange("maxYear", value)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="Max Year" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px] overflow-y-auto">
+                        <SelectItem value="any">Max Year</SelectItem>
+                        {years.map(year => (
+                          <SelectItem key={`max-${year}`} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Min Price filter */}
+                    <Select
+                      value={filters.minPrice || "any"}
+                      onValueChange={(value) =>
+                        handleFilterChange("minPrice", value)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="Min Price" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Min Price</SelectItem>
+                        <SelectItem value="500000">Rs. 500,000</SelectItem>
+                        <SelectItem value="1000000">Rs. 1,000,000</SelectItem>
+                        <SelectItem value="2000000">Rs. 2,000,000</SelectItem>
+                        <SelectItem value="3000000">Rs. 3,000,000</SelectItem>
+                        <SelectItem value="5000000">Rs. 5,000,000</SelectItem>
+                        <SelectItem value="8000000">Rs. 8,000,000</SelectItem>
+                        <SelectItem value="10000000">Rs. 10,000,000</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Max Price filter */}
+                    <Select
+                      value={filters.maxPrice || "any"}
+                      onValueChange={(value) =>
+                        handleFilterChange("maxPrice", value)
+                      }
+                    >
+                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="Max Price" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Max Price</SelectItem>
+                        <SelectItem value="2000000">Rs. 2,000,000</SelectItem>
+                        <SelectItem value="5000000">Rs. 5,000,000</SelectItem>
+                        <SelectItem value="10000000">Rs. 10,000,000</SelectItem>
+                        <SelectItem value="15000000">Rs. 15,000,000</SelectItem>
+                        <SelectItem value="20000000">Rs. 20,000,000</SelectItem>
+                        <SelectItem value="30000000">Rs. 30,000,000</SelectItem>
+                        <SelectItem value="50000000">Rs. 50,000,000</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Fuel Type filter */}
+                    <Select
+                      value={filters.fuelType || "any"}
+                      onValueChange={(value) =>
+                        handleFilterChange("fuelType", value)
                       }
                     >
                       <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
@@ -401,17 +522,19 @@ export default function VehicleMarketplace() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Fuel Type</SelectItem>
-                        <SelectItem value="petrol">Petrol</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="electric">Electric</SelectItem>
+                        <SelectItem value="Petrol">Petrol</SelectItem>
+                        <SelectItem value="Diesel">Diesel</SelectItem>
+                        <SelectItem value="Hybrid">Hybrid</SelectItem>
+                        <SelectItem value="Electric">Electric</SelectItem>
+                        <SelectItem value="Gas">Gas</SelectItem>
                       </SelectContent>
                     </Select>
 
+                    {/* Transmission filter */}
                     <Select
-                      value={filters.transmission || ""}
+                      value={filters.transmission || "any"}
                       onValueChange={(value) =>
-                        handleFilterChange("transmission", value || null)
+                        handleFilterChange("transmission", value)
                       }
                     >
                       <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
@@ -419,8 +542,10 @@ export default function VehicleMarketplace() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Transmission</SelectItem>
-                        <SelectItem value="auto">Automatic</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
+                        <SelectItem value="Automatic">Automatic</SelectItem>
+                        <SelectItem value="Manual">Manual</SelectItem>
+                        <SelectItem value="CVT">CVT</SelectItem>
+                        <SelectItem value="Tiptronic">Tiptronic</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
