@@ -107,6 +107,7 @@ export function AdForm({
     description: "",
     type: "CAR",
     published: false,
+    isDraft: true,
     boosted: false,
     featured: false,
     seoTitle: "",
@@ -147,6 +148,7 @@ export function AdForm({
         description: initialData.description || "",
         type: initialData.type || "CAR",
         published: initialData.published || false,
+        isDraft: initialData.isDraft ?? true,
         boosted: initialData.boosted || false,
         featured: initialData.featured || false,
         seoTitle: initialData.seoTitle || "",
@@ -334,12 +336,29 @@ export function AdForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    let autoTitle = formData.title;
+    if (!autoTitle || autoTitle.trim() === "") {
+      const titleParts = [
+        formData.brand,
+        formData.model,
+        formData.manufacturedYear,
+        formData.vehicleType
+      ].filter(Boolean);
+      
+      if (titleParts.length > 0) {
+        autoTitle = titleParts.join(" ");
+      } else {
+        autoTitle = "Vehicle Ad"; // Fallback title
+      }
+    }
+
     // Map formData to CreateAdSchema
     const adData: CreateAdSchema = {
-      title: formData.title || undefined,
+      title: autoTitle,
       description: formData.description || undefined,
       type: formData.type as any, // Ensure type matches AdType enum
       published: formData.published,
+      isDraft: formData.isDraft,
       boosted: formData.boosted,
       featured: formData.featured,
       seoTitle: formData.seoTitle || undefined,
@@ -1361,6 +1380,23 @@ export function AdForm({
                         rows={3}
                         className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
                       />
+                    </div>
+                  </div>
+
+                  {/* Draft status */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Save as Draft
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isDraft"
+                          checked={formData.isDraft}
+                          onCheckedChange={(checked) => handleInputChange("isDraft", checked)}
+                        />
+                        <Label htmlFor="isDraft">Save as draft (not visible to public)</Label>
+                      </div>
                     </div>
                   </div>
 
