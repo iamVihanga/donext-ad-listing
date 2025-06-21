@@ -119,10 +119,31 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     }
 
     // Prepare Seo slug based on title
-    let seoSlug = adDetails
-      .title!.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    let seoSlug = "";
+    if (adDetails.title) {
+      seoSlug = adDetails.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+    } else {
+      // Generate a slug from brand, model, and year if available
+      const slugParts = [
+        adDetails.brand,
+        adDetails.model,
+        adDetails.manufacturedYear,
+      ].filter(Boolean);
+
+      if (slugParts.length > 0) {
+        seoSlug = slugParts
+          .join(" ")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      } else {
+        // If no title or vehicle info, use a placeholder with timestamp
+        seoSlug = `vehicle-${Date.now()}`;
+      }
+    }
 
     // Bind random suffix to seoSlug for ensure uniqueness
     seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;

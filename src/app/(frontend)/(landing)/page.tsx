@@ -16,6 +16,7 @@ import { format } from "date-fns";
 
 // Import the existing hook
 import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -263,6 +264,83 @@ export default function VehicleMarketplace() {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 30 }, (_, i) => currentYear - i);
   }, []);
+
+  function FeaturedDealers() {
+    const { data, isLoading, error } = useGetOrganizations({
+      limit: 3,
+      // Add filter parameters for featured organizations if your API supports it
+    });
+
+    // Loading state
+    if (isLoading) {
+      return (
+        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg animate-pulse">
+                <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      );
+    }
+
+    // Error or empty state
+    if (error || !data?.organizations || data.organizations.length === 0) {
+      return (
+        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+          <div className="p-3 text-center text-slate-500">
+            No dealers available at the moment
+          </div>
+        </Card>
+      );
+    }
+
+    // Success state with real data
+    return (
+      <Card className="p-5 bg-white rounded-xl border border-slate-100">
+        <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+        <div className="space-y-3">
+          {data.organizations.map((org) => (
+            <div
+              key={org.id}
+              className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
+              onClick={() => window.location.href = `/organization/${org.id}`}
+            >
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center overflow-hidden">
+                {org.logo ? (
+                  <img 
+                    src={org.logo} 
+                    alt={org.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-teal-700 font-semibold">
+                    {org.name?.charAt(0) || 'D'}
+                  </span>
+                )}
+              </div>
+              <div>
+                <div className="font-medium text-slate-800">
+                  {org.name || "Unnamed Dealer"}
+                </div>
+                <div className="text-sm text-slate-500">
+                  {(org as any).verified ? "Verified Dealer" : "Dealer"} • {(org as any)._count?.ads || 0} listing{(org as any)._count?.ads !== 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div>
@@ -701,35 +779,7 @@ export default function VehicleMarketplace() {
               </Card>
 
               {/* Featured Dealers */}
-              <Card className="p-5 bg-white rounded-xl border border-slate-100">
-                <h3 className="font-semibold mb-4 text-slate-800">
-                  Featured Dealers
-                </h3>
-                <div className="space-y-3">
-                  {["Premium Motors", "City Auto", "Elite Cars"].map(
-                    (dealer, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
-                      >
-                        <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
-                          <span className="text-teal-700 font-semibold">
-                            {dealer[0]}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-800">
-                            {dealer}
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            Verified Dealer
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </Card>
+              <FeaturedDealers />
 
               {/* Google Ad Space 2 */}
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
