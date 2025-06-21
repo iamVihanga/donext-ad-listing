@@ -336,21 +336,17 @@ export function AdForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let autoTitle = formData.title;
-    if (!autoTitle || autoTitle.trim() === "") {
-      const titleParts = [
-        formData.brand,
-        formData.model,
-        formData.manufacturedYear,
-        formData.vehicleType
-      ].filter(Boolean);
-      
-      if (titleParts.length > 0) {
-        autoTitle = titleParts.join(" ");
-      } else {
-        autoTitle = "Vehicle Ad"; // Fallback title
-      }
-    }
+    // Always generate title from vehicle details (don't rely on formData.title which may be empty)
+    const titleParts = [
+      formData.brand,
+      formData.model, 
+      formData.manufacturedYear,
+      formData.vehicleType
+    ].filter(Boolean);
+    
+    const autoTitle = titleParts.length > 0 
+      ? titleParts.join(" ")
+      : "Vehicle Ad"; // Fallback title if no details provided
 
     // Map formData to CreateAdSchema
     const adData: CreateAdSchema = {
@@ -500,7 +496,26 @@ export function AdForm({
                     <div className="flex-1">
                       <Select
                         value={formData.vehicleType}
-                        onValueChange={(value) => handleInputChange("vehicleType", value)}
+                        onValueChange={(value) => {
+                          // Update vehicleType with the display name
+                          handleInputChange("vehicleType", value);
+                          
+                          // Map to the API enum value for type
+                          const typeMap: Record<string, string> = {
+                            "Car": "CAR",
+                            "Van": "VAN",
+                            "SUV / Jeep": "SUV_JEEP",
+                            "Motorcycle": "MOTORCYCLE",
+                            "Bus": "BUS",
+                            "Truck": "LORRY",
+                            "Three Wheeler": "THREE_WHEEL",
+                            "Heavy Vehicle": "HEAVY_DUTY",
+                            "Other": "OTHER"
+                          };
+                          
+                          // Set the correct enum value for type
+                          handleInputChange("type", typeMap[value] || "OTHER");
+                        }}
                       >
                         <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                           <SelectValue placeholder="Select Type" />
