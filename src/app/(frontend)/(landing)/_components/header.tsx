@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { CarIcon, Menu, XIcon } from "lucide-react";
+import { ArrowRight, CarIcon, Menu, XIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -77,13 +77,19 @@ export function Header() {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/signin">
-              <Button variant="ghost" className="text-white hover:bg-teal-700">
+              <Button 
+                variant="ghost" 
+                className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
+              >
                 Login
               </Button>
             </Link>
+
             <Link href="/dashboard/ads/new">
-              <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
-                Post Free Ad
+              <Button 
+                className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
+              >
+                Post Free Ad <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           </div>
