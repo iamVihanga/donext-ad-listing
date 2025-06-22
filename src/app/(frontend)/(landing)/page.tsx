@@ -468,10 +468,11 @@ export default function VehicleMarketplace() {
                 )}
               </div>
 
-              {/* Simple Advanced Filters */}
+              {/* Simple Advanced Filters - Reorganized for better mobile experience */}
               {showAdvancedFilters && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                  {/* First row - condition, min year, max year */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     <Select
                       value={filters.condition || "any"}
                       onValueChange={(value) => handleFilterChange("condition", value)}
@@ -520,7 +521,10 @@ export default function VehicleMarketplace() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
 
+                  {/* Second row - price range, fuel type, transmission */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <Select
                       value={filters.minPrice || "any"}
                       onValueChange={(value) => handleFilterChange("minPrice", value)}
@@ -553,15 +557,6 @@ export default function VehicleMarketplace() {
                       </SelectContent>
                     </Select>
 
-                    <Button
-                      onClick={applyFilters} 
-                      className="bg-teal-700 hover:bg-teal-600 text-white"
-                    >
-                      Apply
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-3">
                     <Select
                       value={filters.fuelType || "any"}
                       onValueChange={(value) => handleFilterChange("fuelType", value)}
@@ -592,6 +587,16 @@ export default function VehicleMarketplace() {
                         <SelectItem value="CVT">CVT</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Apply button - Full width on mobile, right-aligned on desktop */}
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      onClick={applyFilters} 
+                      className="w-full sm:w-auto bg-teal-700 hover:bg-teal-600 text-white"
+                    >
+                      Apply Filters
+                    </Button>
                   </div>
                 </div>
               )}

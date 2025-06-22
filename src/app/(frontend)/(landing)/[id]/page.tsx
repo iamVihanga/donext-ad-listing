@@ -130,19 +130,19 @@ export default function AdDetailPage() {
       {/* Header */}
       <header className="bg-[#024950] text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-4">
             <Button
               variant="ghost"
-              className="text-white hover:bg-white/10"
+              className="text-white hover:bg-white/10 px-0 sm:px-3"
               onClick={() => window.history.back()}
             >
               <ChevronLeft className="w-5 h-5 mr-2" />
               Back to Search
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-semibold">{ad.title}</h1>
+              <h1 className="text-lg sm:text-xl font-semibold">{ad.title}</h1>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
               <Button
                 variant="ghost"
                 size="sm"
