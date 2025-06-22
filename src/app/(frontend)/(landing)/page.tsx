@@ -711,7 +711,7 @@ export default function VehicleMarketplace() {
                           {/* Vehicle Image */}
                           <div className="w-32 h-20 flex-shrink-0">
                             <img
-                              src="/placeholder.svg"
+                              src="/placeholder-image.jpg"
                               alt={vehicle.title}
                               className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                             />
