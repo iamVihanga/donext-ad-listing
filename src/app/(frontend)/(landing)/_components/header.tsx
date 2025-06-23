@@ -85,7 +85,7 @@ export function Header() {
               </Button>
             </Link>
 
-            <Link href="/dashboard/ads/new">
+            <Link href="/sell/new">
               <Button 
                 className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
               >

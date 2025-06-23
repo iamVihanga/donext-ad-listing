@@ -177,7 +177,7 @@ export default function QuickAdCreatePage() {
         <Card className="p-5 shadow-sm bg-white">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-center mb-1">Post Your Vehicle</h1>
-            <p className="text-center text-slate-500">Quick and easy, no registration required</p>
+            <p className="text-center text-slate-500">Quick and easy</p>
           </div>
           
           {/* Progress steps */}
