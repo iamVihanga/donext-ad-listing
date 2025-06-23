@@ -72,6 +72,12 @@ export function Header() {
             >
               Contact
             </Link>
+            <Link
+              href="/profile"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Profile
+            </Link>
           </nav>
 
           {/* Desktop Auth Buttons */}
@@ -144,6 +150,12 @@ export function Header() {
                     className="text-lg hover:text-teal-200 transition-colors"
                   >
                     Contact
+                  </a>
+                  <a
+                    href="#"
+                    className="text-lg hover:text-teal-200 transition-colors"
+                  >
+                    Profile
                   </a>
                   <div className="pt-5 space-y-3">
                     <Button
