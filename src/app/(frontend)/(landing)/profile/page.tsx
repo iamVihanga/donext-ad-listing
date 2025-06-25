@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, ChevronRight, CheckCircle, Car, LogOut, Edit, Trash2, Shield, UserIcon, LockIcon, CreditCardIcon } from "lucide-react";
+import { Loader2, ChevronRight, CheckCircle, Car, Edit, Trash2, Shield, CreditCard, Users, Lock } from "lucide-react";
 
 // Default user profile type
 interface UserProfile {
@@ -43,7 +43,7 @@ export default function ProfilePage() {
     confirmPassword: ""
   });
   
-  // Simulate fetching user profile (same as before)
+  // Simulate fetching user profile
   useEffect(() => {
     const fetchUserProfile = () => {
       setIsLoading(true);
@@ -160,11 +160,16 @@ export default function ProfilePage() {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
+  const handleDeleteAd = (id: string) => {
+    // In a real app, you would call an API to delete the ad
+    setUserAds(userAds.filter(ad => ad.id !== id));
+  };
+  
   // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -174,12 +179,8 @@ export default function ProfilePage() {
   // First letter for avatar
   const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
   
-  function handleDeleteAd(id: string): void {
-    throw new Error("Function not implemented.");
-  }
-
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4">
+    <div className="max-w-6xl mx-auto py-20 px-4">
       {/* Success indicator */}
       {showSuccess && (
         <div className="fixed top-4 right-4 bg-green-50 text-green-700 px-4 py-2 rounded-md flex items-center shadow-md border border-green-100 z-50">
@@ -188,12 +189,11 @@ export default function ProfilePage() {
         </div>
       )}
       
-      {/* Header - Similar to Apple's */}
-      <div className="flex justify-between items-center mb-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5">
         <h1 className="text-2xl font-semibold text-slate-800">Profile</h1>
         <Button 
-          variant="outline" 
-          className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+          className="bg-white text-red-600 hover:bg-red-50 border border-black/10 shadow-sm"
           onClick={() => {
             localStorage.removeItem('userData');
             window.location.href = "/login";
@@ -203,29 +203,29 @@ export default function ProfilePage() {
         </Button>
       </div>
       
-      {/* Profile Summary with Avatar - Just like Apple */}
-      <div className="flex flex-col md:flex-row items-center md:items-start mb-10">
-        <Avatar className="h-24 w-24 md:mr-6 mb-4 md:mb-0">
-          <AvatarImage src={user.avatar || ""} alt={user.name} />
-          <AvatarFallback className="bg-slate-100 text-slate-600 text-xl font-medium">
-            {firstLetter}
-          </AvatarFallback>
-        </Avatar>
-        <div className="text-center md:text-left">
-          <h2 className="text-xl font-medium text-slate-800">{user.name}</h2>
-          <p className="text-slate-500">{user.email}</p>
-        </div>
-      </div>
-      
-      {/* Two-column layout like Apple */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left sidebar navigation */}
+      <div className="flex flex-col md:flex-row gap-8 mt-6">
+        {/* Left sidebar navigation - Apple style */}
         <div className="md:w-1/4">
-          <div className="space-y-1">
+          {/* User info at the top of sidebar */}
+          <div className="mb-6">
+            <Avatar className="h-16 w-16 mx-auto mb-2">
+              <AvatarImage src={user.avatar || ""} alt={user.name} />
+              <AvatarFallback className="bg-slate-200 text-slate-600">
+                {firstLetter}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-center">
+              <h2 className="font-medium">{user.name}</h2>
+              <p className="text-sm text-slate-500">{user.email}</p>
+            </div>
+          </div>
+
+          {/* Navigation options */}
+          <div className="space-y-0.5">
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "personal" 
-                  ? "bg-blue-50 text-blue-600 font-medium" 
+                  ? "text-blue-600 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("personal")}
@@ -236,18 +236,18 @@ export default function ProfilePage() {
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "security" 
-                  ? "bg-blue-50 text-blue-600 font-medium" 
+                  ? "text-blue-600 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("security")}
             >
               Sign-In and Security
             </button>
-            
+
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "ads" 
-                  ? "bg-blue-50 text-blue-600 font-medium" 
+                  ? "text-blue-600 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("ads")}
@@ -262,16 +262,16 @@ export default function ProfilePage() {
           {/* Personal Information */}
           {sidebarActive === "personal" && (
             <div>
-              <h2 className="text-2xl font-medium mb-6">Personal Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Name & Email card */}
+              <h2 className="text-2xl font-medium mb-5">Personal Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="p-5 border-b border-slate-200">
+                  <div className="p-4 border-b border-slate-200">
                     <h3 className="font-medium">Name & Email</h3>
                   </div>
                   
                   {activeSection === "name" ? (
-                    <div className="p-5 space-y-4">
+                    <div className="p-4 space-y-3">
                       <Input
                         name="name"
                         value={formData.name}
@@ -301,23 +301,26 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-5 flex justify-between items-center" onClick={() => setActiveSection("name")}>
+                    <div className="p-4 flex justify-between items-center cursor-pointer" onClick={() => setActiveSection("name")}>
                       <div>
                         <div className="text-sm text-slate-500">Name</div>
                         <div className="font-medium mt-1">{user.name}</div>
                       </div>
-                      <Button size="sm" variant="ghost">
-                        <ChevronRight className="h-5 w-5 text-slate-400" />
+                      <Button size="sm" variant="ghost" className="text-blue-600">
+                        <ChevronRight className="h-5 w-5" />
                       </Button>
                     </div>
                   )}
                   
-                  <div className="px-5 py-4 border-t border-slate-200">
+                  <div className="px-4 py-3 border-t border-slate-200">
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-sm text-slate-500">Email</div>
                         <div className="font-medium mt-1">{user.email}</div>
                       </div>
+                      <Button size="sm" variant="ghost" className="text-blue-600">
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -328,21 +331,34 @@ export default function ProfilePage() {
           {/* Security Settings */}
           {sidebarActive === "security" && (
             <div>
-              <h2 className="text-2xl font-medium mb-6">Sign-In and Security</h2>
-              <p className="text-slate-600 mb-6">
+              <h2 className="text-2xl font-medium mb-3">Sign-In and Security</h2>
+              <p className="text-slate-600 mb-5">
                 Manage settings related to signing in to your account, account security and how to recover your data
                 when you are having trouble signing in.
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
                 {/* Password card */}
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="p-5 border-b border-slate-200">
-                    <h3 className="font-medium">Password</h3>
+                  <div className="p-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">Password</h3>
+                      <p className="text-sm text-slate-500 mt-1">Last updated: Not available</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="text-blue-600" onClick={() => setActiveSection("password")}>
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
                   </div>
-                  
-                  {activeSection === "password" ? (
-                    <div className="p-5 space-y-4">
+                </div>
+              </div>
+
+              {/* Password change form */}
+              {activeSection === "password" && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-xl p-6 max-w-md w-full">
+                    <h3 className="text-xl font-medium mb-4">Change Password</h3>
+                    <div className="space-y-4">
                       <div>
                         <label className="block text-sm text-slate-600 mb-1">Current Password</label>
                         <Input
@@ -398,31 +414,19 @@ export default function ProfilePage() {
                         </Button>
                       </div>
                     </div>
-                  ) : (
-                    <div className="p-5 flex justify-between items-center" onClick={() => setActiveSection("password")}>
-                      <div>
-                        <div className="text-sm text-slate-500">Last updated</div>
-                        <div className="font-medium mt-1">Not available</div>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <ChevronRight className="h-5 w-5 text-slate-400" />
-                      </Button>
-                    </div>
-                  )}
+                  </div>
                 </div>
-                
-                
-              </div>
+              )}
             </div>
           )}
           
           {/* My Ads */}
           {sidebarActive === "ads" && (
             <div>
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-5">
                 <h2 className="text-2xl font-medium">My Ads</h2>
                 <Button 
-                  className="bg-teal-700 hover:bg-teal-800"
+                  className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => window.location.href = "/sell/new"}
                 >
                   Post New Ad
@@ -435,7 +439,7 @@ export default function ProfilePage() {
                     <Car className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                     <p className="text-slate-500 mb-4">You haven't posted any ads yet</p>
                     <Button 
-                      className="bg-teal-700 hover:bg-teal-800"
+                      className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => window.location.href = "/sell/new"}
                     >
                       Post Your First Ad
@@ -460,12 +464,12 @@ export default function ProfilePage() {
                       
                       <div className="flex-1">
                         <div 
-                          className="font-medium text-slate-800 hover:text-teal-700 cursor-pointer"
+                          className="font-medium text-slate-800 hover:text-blue-600 cursor-pointer"
                           onClick={() => window.location.href = `/ad/${ad.id}`}
                         >
                           {ad.title}
                         </div>
-                        <div className="text-sm text-teal-700">Rs {formatPrice(ad.price)}</div>
+                        <div className="text-sm text-blue-600">Rs {formatPrice(ad.price)}</div>
                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                           <span>{ad.location}</span>
                           <span>•</span>
@@ -479,7 +483,7 @@ export default function ProfilePage() {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-slate-500 hover:text-teal-700"
+                          className="text-slate-500 hover:text-blue-600"
                           onClick={() => window.location.href = `/ad/${ad.id}/edit`}
                         >
                           <Edit className="h-4 w-4" />
