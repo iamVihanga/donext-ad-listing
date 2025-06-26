@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { CarIcon, Menu, XIcon } from "lucide-react";
+import { ArrowRight, CarIcon, Menu, XIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -39,12 +39,12 @@ export function Header() {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
             <CarIcon className="h-6 w-6" />
             <div className="text-xl md:text-2xl font-bold text-white font-heading">
               Rathagala<span className="text-teal-600">.lk</span>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -72,16 +72,32 @@ export function Header() {
             >
               Contact
             </Link>
+            <Link
+              href="/profile"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Profile
+            </Link>
           </nav>
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" className="text-white hover:bg-teal-700">
-              Login
-            </Button>
-            <Button className="bg-white text-teal-900 hover:bg-teal-50 font-medium">
-              Post Free Ad
-            </Button>
+            <Link href="/signin">
+              <Button 
+                variant="ghost" 
+                className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
+              >
+                Login
+              </Button>
+            </Link>
+
+            <Link href="/sell/new">
+              <Button 
+                className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
+              >
+                Post Free Ad <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -134,6 +150,12 @@ export function Header() {
                     className="text-lg hover:text-teal-200 transition-colors"
                   >
                     Contact
+                  </a>
+                  <a
+                    href="#"
+                    className="text-lg hover:text-teal-200 transition-colors"
+                  >
+                    Profile
                   </a>
                   <div className="pt-5 space-y-3">
                     <Button

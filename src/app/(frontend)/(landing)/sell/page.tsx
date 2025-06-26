@@ -32,6 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // Form validation schema
 const formSchema = z.object({
@@ -50,6 +51,7 @@ const formSchema = z.object({
 
 export default function SellPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -99,17 +101,25 @@ export default function SellPage() {
               Reach thousands of potential buyers with our easy listing process
             </p>
 
-            <div className="flex justify-center space-x-3 mb-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
               <Button
-                className="bg-white text-teal-800 hover:bg-teal-50"
+                onClick={() => router.push('/sell/new')}
                 size="lg"
+                className="relative w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-teal-900 font-bold text-lg px-8 py-6 shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 border-b-4 border-yellow-500 hover:border-yellow-400 rounded-xl animate-pulse"
               >
-                Post Free Ad
+                <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full rotate-6 animate-bounce shadow-md">
+                  FREE
+                </div>
+                <span className="flex items-center justify-center">
+                  Post Free Ad
+                  <CarIcon className="ml-2 h-5 w-5" />
+                </span>
               </Button>
+              
               <Button
                 variant="outline"
-                className="text-white border-white hover:bg-teal-800 bg-transparent"
                 size="lg"
+                className="w-full sm:w-auto text-white border-white hover:bg-teal-800/20 bg-transparent transition-all duration-200"
               >
                 Learn More
                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -241,8 +251,24 @@ export default function SellPage() {
         </div>
       </section>
 
+      <div className="flex justify-center w-full my-8">
+        <Button
+          onClick={() => router.push('/sell/new')}
+          size="lg"
+          className="relative w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-teal-900 font-bold text-lg px-8 py-6 shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 border-b-4 border-yellow-500 hover:border-yellow-400 rounded-xl animate-pulse"
+        >
+          <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full rotate-6 animate-bounce shadow-md">
+            FREE
+          </div>
+          <span className="flex items-center justify-center">
+            Post Free Ad
+            <CarIcon className="ml-2 h-5 w-5" />
+          </span>
+        </Button>
+      </div>
+
       {/* Listing Form Section */}
-      <section className="py-16 bg-white">
+      {/* <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <Card className="p-6 md:p-8 border-slate-100 shadow-lg">
@@ -262,7 +288,7 @@ export default function SellPage() {
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Contact Information */}
-                    <div className="space-y-4 md:col-span-2">
+                    {/* <div className="space-y-4 md:col-span-2">
                       <h3 className="text-lg font-semibold text-slate-800 border-b pb-2">
                         Contact Information
                       </h3>
@@ -313,10 +339,10 @@ export default function SellPage() {
                           )}
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Vehicle Information */}
-                    <div className="space-y-4 md:col-span-2">
+                    {/* <div className="space-y-4 md:col-span-2">
                       <h3 className="text-lg font-semibold text-slate-800 border-b pb-2">
                         Vehicle Information
                       </h3>
@@ -457,10 +483,10 @@ export default function SellPage() {
                           </FormItem>
                         )}
                       />
-                    </div>
+                    </div> */}
 
                     {/* Photo Upload (Dummy) */}
-                    <div className="md:col-span-2">
+                    {/* <div className="md:col-span-2">
                       <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
                         <ImageIcon className="h-10 w-10 mx-auto mb-4 text-slate-400" />
                         <p className="text-slate-600 mb-2">
@@ -499,7 +525,7 @@ export default function SellPage() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Testimonials Section */}
       <section className="py-16 bg-slate-50">

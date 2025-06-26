@@ -10,11 +10,17 @@ export default function CreateAdFormPage() {
   const { mutate: createAd, isPending } = useSetupAd();
 
   const handleSubmit = (adData: CreateAdSchema) => {
+    // Ensure we have a valid title
+    const finalAdData = {
+      ...adData,
+      // If somehow the title is still empty after form submission
+      title: adData.title || "Vehicle Ad",
+    };
+
     createAd(
-      { values: adData },
+      { values: finalAdData },
       {
         onSuccess: () => {
-          // Redirect back to the ads listing page
           router.push('/dashboard/ads');
         },
         onError: (error) => {
