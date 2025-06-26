@@ -5,13 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ChevronRight, CheckCircle, Car, Edit, Trash2, Shield, CreditCard, Users, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { betterFetch } from "@better-fetch/fetch";
+import { toast } from "sonner";
 
-// Default user profile type
-interface UserProfile {
+// User type from auth
+interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+}
+
+interface Session {
+  user: User;
 }
 
 // Ad type
@@ -26,7 +33,8 @@ interface UserAd {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [userAds, setUserAds] = useState<UserAd[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,41 +51,56 @@ export default function ProfilePage() {
     confirmPassword: ""
   });
   
-  // Simulate fetching user profile
+  // Fetch actual user data from session
   useEffect(() => {
-    const fetchUserProfile = () => {
+    const fetchUserData = async () => {
       setIsLoading(true);
       
-      const userData = localStorage.getItem('userData');
-      
-      setTimeout(() => {
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          setFormData({
-            name: parsedUser.name || "",
-            email: parsedUser.email || "",
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-          });
-        } else {
-          const mockUser: UserProfile = {
-            id: "user-123",
-            name: "John Doe",
-            email: "john.doe@example.com",
-          };
-          setUser(mockUser);
-          setFormData({
-            name: mockUser.name || "",
-            email: mockUser.email || "",
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-          });
-          localStorage.setItem('userData', JSON.stringify(mockUser));
+      try {
+        // Get user session from API
+        const { data: session, error } = await betterFetch<Session>("/api/auth/get-session");
+        
+        if (error || !session) {
+          // If error or no session, redirect to signin
+          // Note: Middleware should handle this, but this is a fallback
+          router.push("/signin?callbackUrl=/profile");
+          return;
         }
         
+        // Set user from session
+        setUser(session.user);
+        
+        // Initialize form data with user info
+        setFormData({
+          name: session.user.name || "",
+          email: session.user.email || "",
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+        
+        // Fetch user ads
+        fetchUserAds();
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("Failed to load profile data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, [router]);
+  
+  // Fetch user ads
+  const fetchUserAds = async () => {
+    try {
+      // In a real implementation, you would fetch from your API
+      const { data, error } = await betterFetch<UserAd[]>("/api/ads/user");
+      
+      if (error) {
+        console.error("Error fetching user ads:", error);
+        // Keep using mock data if API fails
         setUserAds([
           {
             id: "ad1",
@@ -98,13 +121,18 @@ export default function ProfilePage() {
             image: "https://images.unsplash.com/photo-1590362891991-f776e747a588?q=80&w=200&auto=format&fit=crop"
           }
         ]);
-        
-        setIsLoading(false);
-      }, 600);
-    };
-    
-    fetchUserProfile();
-  }, []);
+        return;
+      }
+      
+      // Use actual data from API if available
+      if (data && Array.isArray(data)) {
+        setUserAds(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user ads:", error);
+      toast.error("Failed to load your ads");
+    }
+  };
   
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,33 +141,61 @@ export default function ProfilePage() {
   };
   
   // Handle profile update
-  const handleUpdateProfile = () => {
+  const handleUpdateProfile = async () => {
     setIsSaving(true);
     
-    setTimeout(() => {
-      if (user) {
-        const updatedUser = {
-          ...user,
-          name: formData.name
-        };
-        
-        setUser(updatedUser);
-        localStorage.setItem('userData', JSON.stringify(updatedUser));
-        
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 2000);
+    try {
+      // Update user profile via API
+      const { data, error } = await betterFetch("/api/user/profile", {
+        method: "PATCH",
+        body: { name: formData.name }
+      });
+      
+      if (error) {
+        throw new Error(error.message || "Failed to update profile");
       }
       
+      // Update local state
+      if (user) {
+        setUser({
+          ...user,
+          name: formData.name
+        });
+      }
+      
+      // Show success message
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      toast.success("Profile updated successfully");
+      
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
       setActiveSection(null);
       setIsSaving(false);
-    }, 800);
+    }
   };
   
   // Handle password change
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     setIsSaving(true);
     
-    setTimeout(() => {
+    try {
+      // Update password via API
+      const { data, error } = await betterFetch("/api/user/change-password", {
+        method: "POST",
+        body: {
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message || "Failed to change password");
+      }
+      
+      // Reset password fields
       setFormData(prev => ({
         ...prev,
         currentPassword: "",
@@ -147,12 +203,31 @@ export default function ProfilePage() {
         confirmPassword: ""
       }));
       
+      // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
+      toast.success("Password changed successfully");
       
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast.error("Failed to change password");
+    } finally {
       setActiveSection(null);
       setIsSaving(false);
-    }, 800);
+    }
+  };
+  
+  // Handle sign out
+  const handleSignOut = async () => {
+    try {
+      // Call sign out API
+      await betterFetch("/api/auth/signout", { method: "POST" });
+      router.push("/signin");
+      toast.success("Signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
   };
   
   // Format price to display with commas
@@ -160,9 +235,26 @@ export default function ProfilePage() {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
-  const handleDeleteAd = (id: string) => {
-    // In a real app, you would call an API to delete the ad
-    setUserAds(userAds.filter(ad => ad.id !== id));
+  // Handle delete ad
+  const handleDeleteAd = async (id: string) => {
+    try {
+      // Delete ad via API
+      const { error } = await betterFetch(`/api/ads/${id}`, { 
+        method: "DELETE" 
+      });
+      
+      if (error) {
+        throw new Error(error.message || "Failed to delete ad");
+      }
+      
+      // Update local state
+      setUserAds(userAds.filter(ad => ad.id !== id));
+      toast.success("Ad deleted successfully");
+      
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      toast.error("Failed to delete ad");
+    }
   };
   
   // Loading state
@@ -194,10 +286,7 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-semibold text-slate-800">Profile</h1>
         <Button 
           className="bg-white text-red-600 hover:bg-red-50 border border-black/10 shadow-sm"
-          onClick={() => {
-            localStorage.removeItem('userData');
-            window.location.href = "/login";
-          }}
+          onClick={handleSignOut}
         >
           Sign Out
         </Button>
@@ -427,7 +516,7 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-medium">My Ads</h2>
                 <Button 
                   className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => window.location.href = "/sell/new"}
+                  onClick={() => router.push("/sell/new")}
                 >
                   Post New Ad
                 </Button>
@@ -440,7 +529,7 @@ export default function ProfilePage() {
                     <p className="text-slate-500 mb-4">You haven't posted any ads yet</p>
                     <Button 
                       className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => window.location.href = "/sell/new"}
+                      onClick={() => router.push("/sell/new")}
                     >
                       Post Your First Ad
                     </Button>
@@ -465,7 +554,7 @@ export default function ProfilePage() {
                       <div className="flex-1">
                         <div 
                           className="font-medium text-slate-800 hover:text-blue-600 cursor-pointer"
-                          onClick={() => window.location.href = `/ad/${ad.id}`}
+                          onClick={() => router.push(`/ad/${ad.id}`)}
                         >
                           {ad.title}
                         </div>
@@ -484,7 +573,7 @@ export default function ProfilePage() {
                           variant="ghost" 
                           size="sm" 
                           className="text-slate-500 hover:text-blue-600"
-                          onClick={() => window.location.href = `/ad/${ad.id}/edit`}
+                          onClick={() => router.push(`/ad/${ad.id}/edit`)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>

@@ -9,22 +9,28 @@ const authRoutes = [
   "/signup",
   "/reset-password",
   "/forgot-password",
-  "/email-verified"
+  "/email-verified",
 ];
+
+// Add profile to protected routes
+const protectedRoutes = ["/dashboard", "/profile"];
 
 export default async function authMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  if (pathname.startsWith("/dashboard") || authRoutes.includes(pathname)) {
+  // Check if route needs auth handling
+  if (
+    protectedRoutes.some((route) => pathname.startsWith(route)) ||
+    authRoutes.includes(pathname)
+  ) {
     // Fetch session
     const { data: session } = await betterFetch<Session>(
       "/api/auth/get-session",
       {
         baseURL: request.nextUrl.origin,
         headers: {
-          //get the cookie from the request
-          cookie: request.headers.get("cookie") || ""
-        }
+          cookie: request.headers.get("cookie") || "",
+        },
       }
     );
 
@@ -34,10 +40,18 @@ export default async function authMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // If Dashboard route and Not authenticated,
-    // Redirect back to signin
-    if (pathname.startsWith("/dashboard") && !session) {
-      return NextResponse.redirect(new URL("/signin", request.url));
+    // If Protected route and Not authenticated,
+    // Redirect to signin with callback URL
+    if (
+      protectedRoutes.some((route) => pathname.startsWith(route)) &&
+      !session
+    ) {
+      return NextResponse.redirect(
+        new URL(
+          `/signin?callbackUrl=${encodeURIComponent(pathname)}`,
+          request.url
+        )
+      );
     }
   }
 
@@ -49,6 +63,6 @@ export const config = {
     // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
-    "/(api|trpc)(.*)"
-  ]
+    "/(api|trpc)(.*)",
+  ],
 };
