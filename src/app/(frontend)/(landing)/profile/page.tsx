@@ -8,6 +8,8 @@ import { Loader2, ChevronRight, CheckCircle, Car, Edit, Trash2, Shield, CreditCa
 import { useRouter } from "next/navigation";
 import { betterFetch } from "@better-fetch/fetch";
 import { toast } from "sonner";
+import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
+import { format } from "date-fns";
 
 // User type from auth
 interface User {
@@ -25,22 +27,28 @@ interface Session {
 interface UserAd {
   id: string;
   title: string;
-  price: number;
-  location: string;
+  price: number | null;
+  location: string | null;
   createdAt: string;
-  image?: string;
-  views: number;
+  media?: Array<{
+    media: {
+      url: string;
+    }
+  }>;
+  views?: number;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [userAds, setUserAds] = useState<UserAd[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
+  
+  // Fetch user ads with the new hook
+  const userAdsQuery = useGetUserAds();
   
   // Form data for profile edit
   const [formData, setFormData] = useState({
@@ -78,9 +86,6 @@ export default function ProfilePage() {
           newPassword: "",
           confirmPassword: ""
         });
-        
-        // Fetch user ads
-        fetchUserAds();
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast.error("Failed to load profile data");
@@ -91,48 +96,6 @@ export default function ProfilePage() {
     
     fetchUserData();
   }, [router]);
-  
-  // Fetch user ads
-  const fetchUserAds = async () => {
-    try {
-      // In a real implementation, you would fetch from your API
-      const { data, error } = await betterFetch<UserAd[]>("/api/ads/user");
-      
-      if (error) {
-        console.error("Error fetching user ads:", error);
-        // Keep using mock data if API fails
-        setUserAds([
-          {
-            id: "ad1",
-            title: "Toyota Corolla 2018",
-            price: 4500000,
-            location: "Colombo",
-            createdAt: "2023-06-15",
-            views: 324,
-            image: "https://images.unsplash.com/photo-1616455579100-2ceaa4eb2d37?q=80&w=200&auto=format&fit=crop"
-          },
-          {
-            id: "ad2",
-            title: "Honda Civic 2019 Unregistered",
-            price: 5600000,
-            location: "Kandy",
-            createdAt: "2023-05-20",
-            views: 189,
-            image: "https://images.unsplash.com/photo-1590362891991-f776e747a588?q=80&w=200&auto=format&fit=crop"
-          }
-        ]);
-        return;
-      }
-      
-      // Use actual data from API if available
-      if (data && Array.isArray(data)) {
-        setUserAds(data);
-      }
-    } catch (error) {
-      console.error("Error fetching user ads:", error);
-      toast.error("Failed to load your ads");
-    }
-  };
   
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,21 +180,31 @@ export default function ProfilePage() {
     }
   };
   
-  // Handle sign out
+  // Handle sign out with loading state
   const handleSignOut = async () => {
+    setIsSaving(true);
     try {
       // Call sign out API
-      await betterFetch("/api/auth/signout", { method: "POST" });
-      router.push("/signin");
+      const { error } = await betterFetch("/api/auth/signout", { method: "POST" });
+      
+      if (error) {
+        throw new Error(error.message || "Failed to sign out");
+      }
+      
       toast.success("Signed out successfully");
+      setTimeout(() => {
+        router.push("/signin");
+      }, 500);
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Failed to sign out");
+      setIsSaving(false);
     }
   };
   
   // Format price to display with commas
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "Price on request";
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
@@ -239,7 +212,7 @@ export default function ProfilePage() {
   const handleDeleteAd = async (id: string) => {
     try {
       // Delete ad via API
-      const { error } = await betterFetch(`/api/ads/${id}`, { 
+      const { error } = await betterFetch(`/api/ad/${id}`, { 
         method: "DELETE" 
       });
       
@@ -247,17 +220,34 @@ export default function ProfilePage() {
         throw new Error(error.message || "Failed to delete ad");
       }
       
-      // Update local state
-      setUserAds(userAds.filter(ad => ad.id !== id));
-      toast.success("Ad deleted successfully");
+      // Refetch user ads after deletion
+      userAdsQuery.refetch();
       
+      toast.success("Ad deleted successfully");
     } catch (error) {
       console.error("Error deleting ad:", error);
       toast.error("Failed to delete ad");
     }
   };
   
-  // Loading state
+  // Format date helper
+  const formatDate = (dateStr: string) => {
+    try {
+      return format(new Date(dateStr), "MMM d, yyyy");
+    } catch (e) {
+      return dateStr;
+    }
+  };
+  
+  // Get ad image
+  const getAdImage = (ad: UserAd) => {
+    if (ad.media && ad.media.length > 0 && ad.media[0].media) {
+      return ad.media[0].media.url;
+    }
+    return "";
+  };
+  
+  // Loading state for the entire page
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -270,6 +260,9 @@ export default function ProfilePage() {
   
   // First letter for avatar
   const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
+  
+  const userAds = userAdsQuery.data || [];
+  const isAdsLoading = userAdsQuery.isLoading;
   
   return (
     <div className="max-w-6xl mx-auto py-20 px-4">
@@ -287,8 +280,14 @@ export default function ProfilePage() {
         <Button 
           className="bg-white text-red-600 hover:bg-red-50 border border-black/10 shadow-sm"
           onClick={handleSignOut}
+          disabled={isSaving}
         >
-          Sign Out
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing out...
+            </>
+          ) : "Sign Out"}
         </Button>
       </div>
       
@@ -427,7 +426,6 @@ export default function ProfilePage() {
               </p>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
                 {/* Password card */}
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   <div className="p-4 flex justify-between items-center">
@@ -509,7 +507,7 @@ export default function ProfilePage() {
             </div>
           )}
           
-          {/* My Ads */}
+          {/* My Ads - Updated to use the real data from API */}
           {sidebarActive === "ads" && (
             <div>
               <div className="flex justify-between items-center mb-5">
@@ -523,7 +521,11 @@ export default function ProfilePage() {
               </div>
               
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-200">
-                {userAds.length === 0 ? (
+                {isAdsLoading ? (
+                  <div className="p-8 flex justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  </div>
+                ) : userAds.length === 0 ? (
                   <div className="p-8 text-center">
                     <Car className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                     <p className="text-slate-500 mb-4">You haven't posted any ads yet</p>
@@ -535,12 +537,12 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 ) : (
-                  userAds.map((ad) => (
+                  userAds.map((ad: UserAd) => (
                     <div key={ad.id} className="p-4 flex items-center">
                       <div className="h-16 w-16 flex-shrink-0 mr-4 bg-slate-100 rounded overflow-hidden">
-                        {ad.image ? (
+                        {getAdImage(ad) ? (
                           <img 
-                            src={ad.image} 
+                            src={getAdImage(ad)} 
                             alt={ad.title} 
                             className="h-full w-full object-cover"
                           />
@@ -560,11 +562,11 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-sm text-blue-600">Rs {formatPrice(ad.price)}</div>
                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
-                          <span>{ad.location}</span>
+                          <span>{ad.location || "No location"}</span>
                           <span>•</span>
-                          <span>{ad.createdAt}</span>
+                          <span>{formatDate(ad.createdAt)}</span>
                           <span>•</span>
-                          <span>{ad.views} views</span>
+                          <span>{ad.views || 0} views</span>
                         </div>
                       </div>
                       

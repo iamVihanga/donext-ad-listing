@@ -10,6 +10,7 @@ import {
   GetOneRoute,
   UpdateRoute,
   RemoveRoute,
+  // GetUserAdsRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -477,3 +478,54 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     );
   }
 };
+
+// ---- Get User's Ads Handler ----
+// export const getUserAds: AppRouteHandler<GetUserAdsRoute> = async (c) => {
+//   try {
+//     // Get the authenticated user from the context
+//     const session = c.get("session");
+//     const user = c.get("user");
+
+//     if (!user || !user.id) {
+//       return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+//     }
+
+//     // Query ads by the current user ID
+//     const ads = await prisma.ad.findMany({
+//       where: {
+//         createdBy: user.id, // Use user.id directly
+//       },
+//       orderBy: {
+//         createdAt: "desc",
+//       },
+//       include: {
+//         media: {
+//           include: {
+//             media: true,
+//           },
+//         },
+//         category: true,
+//       },
+//     });
+
+//     // Format dates and return
+//     const formattedAds = ads.map((ad) => ({
+//       ...ad,
+//       createdAt: ad.createdAt.toISOString(),
+//       updatedAt: ad.updatedAt.toISOString(),
+//       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+//       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+//       expiryDate: ad.expiryDate?.toISOString() ?? null,
+//       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+//     }));
+
+//     return c.json(formattedAds, HttpStatusCodes.OK);
+//   } catch (error: any) {
+//     console.error("[GET USER ADS] Error:", error);
+
+//     return c.json(
+//       { message: error.message || "Internal server error" },
+//       HttpStatusCodes.INTERNAL_SERVER_ERROR
+//     );
+//   }
+// };

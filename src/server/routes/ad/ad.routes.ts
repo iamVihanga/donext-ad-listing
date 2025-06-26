@@ -2,13 +2,13 @@ import { createRoute, z } from "@hono/zod-openapi";
 import {
   jsonContent,
   jsonContentOneOf,
-  jsonContentRequired
+  jsonContentRequired,
 } from "stoker/openapi/helpers";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import {
   createErrorSchema,
-  createMessageObjectSchema
+  createMessageObjectSchema,
 } from "stoker/openapi/schemas";
 import { notFoundSchema } from "@/server/helpers/constants";
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
@@ -25,7 +25,7 @@ export const list = createRoute({
   path: "/",
   method: "get",
   request: {
-    query: schemas.querySchema
+    query: schemas.querySchema,
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
@@ -35,8 +35,8 @@ export const list = createRoute({
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       z.object({ message: z.string() }),
       "Something went wrong while fetching ads"
-    )
-  }
+    ),
+  },
 });
 
 export type ListRoute = typeof list;
@@ -53,7 +53,7 @@ export const create = createRoute({
     body: jsonContentRequired(
       schemas.createAdSchema,
       "The ad details to create"
-    )
+    ),
   },
   responses: {
     [HttpStatusCodes.CREATED]: jsonContent(
@@ -67,8 +67,8 @@ export const create = createRoute({
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       z.object({ message: z.string() }),
       "The validation error(s)"
-    )
-  }
+    ),
+  },
 });
 
 export type CreateRoute = typeof create;
@@ -81,7 +81,7 @@ export const getOne = createRoute({
   path: "/{id}",
   method: "get",
   request: {
-    params: schemas.IdParamsSchema
+    params: schemas.IdParamsSchema,
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
@@ -95,8 +95,8 @@ export const getOne = createRoute({
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       z.object({ message: z.string() }),
       "Invalid id error"
-    )
-  }
+    ),
+  },
 });
 
 export type GetOneRoute = typeof getOne;
@@ -114,7 +114,7 @@ export const update = createRoute({
     body: jsonContentRequired(
       schemas.updateAdSchema,
       "New ad details to update"
-    )
+    ),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(schemas.selectAdSchema, "The updated ad"),
@@ -125,11 +125,11 @@ export const update = createRoute({
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContentOneOf(
       [
         createErrorSchema(schemas.updateAdSchema),
-        createErrorSchema(schemas.IdParamsSchema)
+        createErrorSchema(schemas.IdParamsSchema),
       ],
       "The validation error(s)"
-    )
-  }
+    ),
+  },
 });
 
 export type UpdateRoute = typeof update;
@@ -143,11 +143,11 @@ export const remove = createRoute({
   method: "delete",
   middleware: [serverAuthMiddleware],
   request: {
-    params: schemas.IdParamsSchema
+    params: schemas.IdParamsSchema,
   },
   responses: {
     [HttpStatusCodes.NO_CONTENT]: {
-      description: "Ad deleted successfully"
+      description: "Ad deleted successfully",
     },
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
@@ -157,8 +157,34 @@ export const remove = createRoute({
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(schemas.IdParamsSchema),
       "Invalid Id param"
-    )
-  }
+    ),
+  },
 });
 
 export type RemoveRoute = typeof remove;
+
+// --------- Get User's Ads ----------
+// export const getUserAds = createRoute({
+//   tags,
+//   summary: "Get current user's ads",
+//   description: "Retrieve all ads created by the currently authenticated user",
+//   path: "/by-user", // <-- Changed from "/user" to "/by-user" to be more specific
+//   method: "get",
+//   middleware: [serverAuthMiddleware],
+//   responses: {
+//     [HttpStatusCodes.OK]: jsonContent(
+//       z.array(schemas.selectAdSchema),
+//       "User's ads"
+//     ),
+//     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+//       z.object({ message: z.string() }),
+//       "Unauthorized"
+//     ),
+//     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+//       z.object({ message: z.string() }),
+//       "Something went wrong while fetching user ads"
+//     ),
+//   },
+// });
+
+// export type GetUserAdsRoute = typeof getUserAds;
