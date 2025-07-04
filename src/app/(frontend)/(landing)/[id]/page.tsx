@@ -130,19 +130,19 @@ export default function AdDetailPage() {
       {/* Header */}
       <header className="bg-[#024950] text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-4">
             <Button
               variant="ghost"
-              className="text-white hover:bg-white/10"
+              className="text-white hover:bg-white/10 px-0 sm:px-3"
               onClick={() => window.history.back()}
             >
               <ChevronLeft className="w-5 h-5 mr-2" />
               Back to Search
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-semibold">{ad.title}</h1>
+              <h1 className="text-lg sm:text-xl font-semibold">{ad.title}</h1>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -433,9 +433,9 @@ export default function AdDetailPage() {
                         : "Private Seller"}
                     </div>
                     <div className="flex items-center space-x-1 mb-2">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">4.8</span>
-                      <span className="text-sm text-gray-500">(5 ads)</span>
+                      {/* <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> */}
+                      {/* <span className="text-sm font-medium">4.8</span>
+                      <span className="text-sm text-gray-500">(5 ads)</span> */}
                     </div>
                     <Button variant="outline" size="sm" className="w-full">
                       View All Ads

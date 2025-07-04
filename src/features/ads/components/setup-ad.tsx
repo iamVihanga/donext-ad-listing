@@ -80,8 +80,14 @@ export function SetupAdDialog() {
   });
 
   const handleSubmit = (values: CreateAdSchema) => {
+    // Ensure we have a title - even a basic one
+    const adValues = {
+      ...values,
+      title: values.title || `${values.type} Ad`, // Use type as fallback
+    };
+
     mutate(
-      { values },
+      { values: adValues },
       {
         onSuccess(data) {
           form.reset();
@@ -146,36 +152,54 @@ export function SetupAdDialog() {
               )}
             />
             <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vehicle Type</FormLabel>
-                  <Select
-                    defaultValue={field.value}
-                    onValueChange={(type) => {
-                      field.onChange(type);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a vehicle type">
-                          {field.value ? vehicleTypeLabels[field.value] : "Select a vehicle type"}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="w-full">
-                      {vehicleTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {vehicleTypeLabels[type]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Vehicle Type</FormLabel>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={(type) => {
+                    // Update the type field (enum value)
+                    field.onChange(type);
+                    
+                    // Also update the vehicleType field with display name
+                    const displayNameMap: Record<string, string> = {
+                      "CAR": "Car",
+                      "VAN": "Van",
+                      "SUV_JEEP": "SUV / Jeep",
+                      "MOTORCYCLE": "Motorcycle",
+                      "BUS": "Bus",
+                      "LORRY": "Truck",
+                      "THREE_WHEEL": "Three Wheeler",
+                      "HEAVY_DUTY": "Heavy Vehicle",
+                      "OTHER": "Other"
+                    };
+                    
+                    // Set the vehicleType field if it exists
+                    // This ensures both type and vehicleType are consistently set
+                    form.setValue("vehicleType", displayNameMap[type] || "");
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a vehicle type">
+                        {field.value ? vehicleTypeLabels[field.value] : "Select a vehicle type"}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="w-full">
+                    {vehicleTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {vehicleTypeLabels[type]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
             <DialogFooter className="mt-6">
               <DialogClose asChild>

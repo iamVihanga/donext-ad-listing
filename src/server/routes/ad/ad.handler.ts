@@ -10,6 +10,7 @@ import {
   GetOneRoute,
   UpdateRoute,
   RemoveRoute,
+  // GetUserAdsRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -119,10 +120,31 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     }
 
     // Prepare Seo slug based on title
-    let seoSlug = adDetails
-      .title!.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    let seoSlug = "";
+    if (adDetails.title) {
+      seoSlug = adDetails.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+    } else {
+      // Generate a slug from brand, model, and year if available
+      const slugParts = [
+        adDetails.brand,
+        adDetails.model,
+        adDetails.manufacturedYear,
+      ].filter(Boolean);
+
+      if (slugParts.length > 0) {
+        seoSlug = slugParts
+          .join(" ")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      } else {
+        // If no title or vehicle info, use a placeholder with timestamp
+        seoSlug = `vehicle-${Date.now()}`;
+      }
+    }
 
     // Bind random suffix to seoSlug for ensure uniqueness
     seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
@@ -456,3 +478,54 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     );
   }
 };
+
+// ---- Get User's Ads Handler ----
+// export const getUserAds: AppRouteHandler<GetUserAdsRoute> = async (c) => {
+//   try {
+//     // Get the authenticated user from the context
+//     const session = c.get("session");
+//     const user = c.get("user");
+
+//     if (!user || !user.id) {
+//       return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+//     }
+
+//     // Query ads by the current user ID
+//     const ads = await prisma.ad.findMany({
+//       where: {
+//         createdBy: user.id, // Use user.id directly
+//       },
+//       orderBy: {
+//         createdAt: "desc",
+//       },
+//       include: {
+//         media: {
+//           include: {
+//             media: true,
+//           },
+//         },
+//         category: true,
+//       },
+//     });
+
+//     // Format dates and return
+//     const formattedAds = ads.map((ad) => ({
+//       ...ad,
+//       createdAt: ad.createdAt.toISOString(),
+//       updatedAt: ad.updatedAt.toISOString(),
+//       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+//       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+//       expiryDate: ad.expiryDate?.toISOString() ?? null,
+//       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+//     }));
+
+//     return c.json(formattedAds, HttpStatusCodes.OK);
+//   } catch (error: any) {
+//     console.error("[GET USER ADS] Error:", error);
+
+//     return c.json(
+//       { message: error.message || "Internal server error" },
+//       HttpStatusCodes.INTERNAL_SERVER_ERROR
+//     );
+//   }
+// };

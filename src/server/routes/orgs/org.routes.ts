@@ -15,7 +15,7 @@ export const list = createRoute({
   method: "get",
   middleware: [serverAuthMiddleware],
   request: {
-    query: querySchema
+    query: querySchema,
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
@@ -25,8 +25,8 @@ export const list = createRoute({
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
       z.object({ message: z.string() }),
       "Unauthenticated request"
-    )
-  }
+    ),
+  },
 });
 
 export type ListRoute = typeof list;

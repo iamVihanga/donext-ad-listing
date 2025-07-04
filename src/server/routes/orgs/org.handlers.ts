@@ -31,7 +31,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Get the organizations where the user is a member
     const userMemberships = await prisma.member.findMany({
       select: { organizationId: true },
-      where: { userId: user.id }
+      where: { userId: user.id },
     });
 
     userOrganizationIds = userMemberships.map((m) => m.organizationId);
@@ -44,8 +44,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
             total: 0,
             page: pageNum,
             limit: limitNum,
-            totalPages: 0
-          }
+            totalPages: 0,
+          },
         },
         HttpStatusCodes.OK
       );
@@ -58,7 +58,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   // If not admin, add organization filter
   if (!isAdmin && userOrganizationIds.length > 0) {
     whereCondition.id = {
-      in: userOrganizationIds
+      in: userOrganizationIds,
     };
   }
 
@@ -66,13 +66,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   if (search && search.trim() !== "") {
     whereCondition.name = {
       contains: search,
-      mode: "insensitive" // Case insensitive search
+      mode: "insensitive", // Case insensitive search
     };
   }
 
   // First, get the total count
   const totalOrganizations = await prisma.organization.count({
-    where: whereCondition
+    where: whereCondition,
   });
 
   // Then get the paginated items
@@ -81,8 +81,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     skip: offset,
     take: limitNum,
     orderBy: {
-      createdAt: "desc"
-    }
+      createdAt: "desc",
+    },
   });
 
   return c.json(
@@ -92,8 +92,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         total: totalOrganizations,
         page: pageNum,
         limit: limitNum,
-        totalPages: Math.ceil(totalOrganizations / limitNum)
-      }
+        totalPages: Math.ceil(totalOrganizations / limitNum),
+      },
     },
     HttpStatusCodes.OK
   );

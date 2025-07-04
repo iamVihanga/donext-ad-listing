@@ -16,6 +16,14 @@ import { format } from "date-fns";
 
 // Import the existing hook
 import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState as useDialogState } from "react";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -34,15 +42,39 @@ const vehicleTypeLabels: Record<string, string> = {
   BICYCLE: "BICYCLE"
 };
 
-// Define filter state interface
+// List of vehicle makes for dropdown
+const vehicleMakes = [
+  "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
+  "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+  "Cadillac", "CAT", "Changan", "Chery", "Chevrolet", "Chrysler", "Citroen",
+  "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
+  "Honda", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
+  "Land-Rover", "Lexus", "Mahindra", "Mazda", "Mercedes-Benz", "Micro", "Mini",
+  "Mitsubishi", "Nissan", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
+  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Toyota", "TVS", "Volkswagen",
+  "Volvo", "Yamaha"
+];
+
+// Sri Lankan cities for dropdown
+const sriLankanCities = [
+  "Colombo", "Kandy", "Galle", "Jaffna", "Negombo", "Batticaloa", "Trincomalee",
+  "Anuradhapura", "Ratnapura", "Kotte", "Moratuwa", "Nuwara Eliya", "Gampaha",
+  "Matara", "Kurunegala", "Badulla", "Hambantota", "Kalmunai", "Vavuniya"
+];
+
+// Define filter state interface with updated fields
 interface FilterState {
   make: string | null;
   model: string | null;
   vehicleType: string | null;
-  priceRange: string | null;
+  city: string | null;
+  condition: string | null;
+  
   // Advanced filters
-  yearFrom: string | null;
-  yearTo: string | null;
+  minYear: string | null;
+  maxYear: string | null;
+  minPrice: string | null;
+  maxPrice: string | null;
   fuelType: string | null;
   transmission: string | null;
 }
@@ -55,9 +87,12 @@ export default function VehicleMarketplace() {
     make: null,
     model: null,
     vehicleType: null,
-    priceRange: null,
-    yearFrom: null,
-    yearTo: null,
+    city: null,
+    condition: null,
+    minYear: null,
+    maxYear: null,
+    minPrice: null,
+    maxPrice: null,
     fuelType: null,
     transmission: null
   });
@@ -67,9 +102,12 @@ export default function VehicleMarketplace() {
     make: null,
     model: null,
     vehicleType: null,
-    priceRange: null,
-    yearFrom: null,
-    yearTo: null,
+    city: null,
+    condition: null,
+    minYear: null,
+    maxYear: null,
+    minPrice: null,
+    maxPrice: null,
     fuelType: null,
     transmission: null
   });
@@ -84,24 +122,6 @@ export default function VehicleMarketplace() {
     page: 1,
     limit: 8 // Show 8 items initially for better grid layout
   });
-
-  // Parse price range values
-  const parsePriceRange = (range: string | null) => {
-    if (!range) return { min: null, max: null };
-
-    switch (range) {
-      case "0-2m":
-        return { min: 0, max: 2000000 };
-      case "2m-5m":
-        return { min: 2000000, max: 5000000 };
-      case "5m-10m":
-        return { min: 5000000, max: 10000000 };
-      case "10m+":
-        return { min: 10000000, max: null };
-      default:
-        return { min: null, max: null };
-    }
-  };
 
   // Apply filters to the data - modify to use activeFilters instead of filters
   const filteredAds = useMemo(() => {
@@ -131,31 +151,60 @@ export default function VehicleMarketplace() {
       ) {
         return false;
       }
-
-      // Price range filter
-      if (activeFilters.priceRange) {
-        const { min, max } = parsePriceRange(activeFilters.priceRange);
-        if (min !== null && ad.price && ad.price < min) return false;
-        if (max !== null && ad.price && ad.price > max) return false;
-      }
-
-      // Advanced filters
+      
+      // City filter
       if (
-        activeFilters.yearFrom &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) < parseInt(activeFilters.yearFrom)
+        activeFilters.city && 
+        ad.city?.toLowerCase() !== activeFilters.city.toLowerCase()
+      ) {
+        return false;
+      }
+      
+      // Condition filter
+      if (
+        activeFilters.condition && 
+        ad.condition?.toLowerCase() !== activeFilters.condition.toLowerCase()
       ) {
         return false;
       }
 
+      // Min price filter
       if (
-        activeFilters.yearTo &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) > parseInt(activeFilters.yearTo)
+        activeFilters.minPrice &&
+        ad.price &&
+        ad.price < parseInt(activeFilters.minPrice)
+      ) {
+        return false;
+      }
+      
+      // Max price filter
+      if (
+        activeFilters.maxPrice &&
+        ad.price &&
+        ad.price > parseInt(activeFilters.maxPrice)
       ) {
         return false;
       }
 
+      // Min year filter
+      if (
+        activeFilters.minYear &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) < parseInt(activeFilters.minYear)
+      ) {
+        return false;
+      }
+
+      // Max year filter
+      if (
+        activeFilters.maxYear &&
+        ad.manufacturedYear &&
+        parseInt(ad.manufacturedYear) > parseInt(activeFilters.maxYear)
+      ) {
+        return false;
+      }
+
+      // Fuel type filter
       if (
         activeFilters.fuelType &&
         ad.fuelType?.toLowerCase() !== activeFilters.fuelType.toLowerCase()
@@ -163,10 +212,10 @@ export default function VehicleMarketplace() {
         return false;
       }
 
+      // Transmission filter
       if (
         activeFilters.transmission &&
-        ad.transmission?.toLowerCase() !==
-          activeFilters.transmission.toLowerCase()
+        ad.transmission?.toLowerCase() !== activeFilters.transmission.toLowerCase()
       ) {
         return false;
       }
@@ -197,9 +246,12 @@ export default function VehicleMarketplace() {
       make: null,
       model: null,
       vehicleType: null,
-      priceRange: null,
-      yearFrom: null,
-      yearTo: null,
+      city: null,
+      condition: null,
+      minYear: null,
+      maxYear: null,
+      minPrice: null,
+      maxPrice: null,
       fuelType: null,
       transmission: null
     };
@@ -213,6 +265,150 @@ export default function VehicleMarketplace() {
     if (price === null) return "Price on request";
     return `Rs. ${price.toLocaleString()}`;
   };
+
+  // Generate year options
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 30 }, (_, i) => currentYear - i);
+  }, []);
+
+  function FeaturedDealers() {
+    const [showAllDealers, setShowAllDealers] = useDialogState(false);
+    const { data, isLoading, error } = useGetOrganizations({
+      limit: 3,
+      // Add filter parameters for featured organizations if your API supports it
+    });
+
+    // For all organizations in the modal
+    const { data: allOrgsData, isLoading: allOrgsLoading } = useGetOrganizations({
+      limit: 50, // Fetch more organizations for the modal view
+    });
+
+    // Define organization type
+    type Organization = {
+      id: string;
+      name?: string;
+      logo?: string | null;
+      verified?: boolean;
+      _count?: {
+        ads: number;
+      };
+    };
+
+    // Organization card component to reuse in both views
+    const OrganizationCard = ({ org }: { org: Organization }) => (
+      <div
+        className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
+        onClick={() => window.location.href = `/organizations/${org.id}`}
+      >
+        <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center overflow-hidden">
+          {org.logo ? (
+            <img 
+              src={org.logo} 
+              alt={org.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-teal-700 font-semibold">
+              {org.name?.charAt(0) || 'D'}
+            </span>
+          )}
+        </div>
+        <div>
+          <div className="font-medium text-slate-800">
+            {org.name || "Unnamed Dealer"}
+          </div>
+          <div className="text-sm text-slate-500">
+            {(org as any).verified ? "Verified Dealer" : "Dealer"} • {(org as any)._count?.ads || 0} listing{(org as any)._count?.ads !== 1 ? "s" : ""}
+          </div>
+        </div>
+      </div>
+    );
+
+    // Loading state
+    if (isLoading) {
+      return (
+        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg animate-pulse">
+                <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      );
+    }
+
+    // Error or empty state
+    if (error || !data?.organizations || data.organizations.length === 0) {
+      return (
+        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+          <div className="p-3 text-center text-slate-500">
+            No dealers available at the moment
+          </div>
+        </Card>
+      );
+    }
+
+    // Success state with real data
+    return (
+      <>
+        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-slate-800">Featured Dealers</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 text-sm"
+              onClick={() => setShowAllDealers(true)}
+            >
+              View All
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {data.organizations.map((org) => (
+              <OrganizationCard key={org.id} org={org} />
+            ))}
+          </div>
+        </Card>
+
+        {/* Modal dialog for all dealers */}
+        <Dialog open={showAllDealers} onOpenChange={setShowAllDealers}>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-slate-800">All Dealers</DialogTitle>
+            </DialogHeader>
+            
+            {allOrgsLoading ? (
+              <div className="p-8 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
+              </div>
+            ) : (
+              <div className="grid gap-3 py-4">
+                {allOrgsData?.organizations?.length ? (
+                  allOrgsData.organizations.map((org) => (
+                    <OrganizationCard key={org.id} org={org} />
+                  ))
+                ) : (
+                  <div className="text-center text-slate-500 p-4">
+                    No more dealers to display
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   return (
     <div>
@@ -230,85 +426,80 @@ export default function VehicleMarketplace() {
               Find Your Perfect Vehicle
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
-              {`Sri Lanka's largest automobile marketplace with thousands of verified listings`}
+              {`Sri Lanka's largest automobile marketplace`}
             </p>
           </div>
 
-          {/* Search Form - Update the search button onClick handler */}
+          {/* Search Form - Simplified and minimal */}
           <div className="max-w-6xl mx-auto">
-            <Card className="p-5 md:p-7 shadow-xl bg-white rounded-xl border-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-5">
+            <Card className="p-5 shadow-lg bg-white rounded-xl border-0">
+              {/* Main filters - clean and minimal */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {/* Make filter */}
                 <Select
                   value={filters.make || "any"}
-                  defaultValue=""
-                  onValueChange={(value) =>
-                    handleFilterChange("make", value || null)
-                  }
+                  onValueChange={(value) => handleFilterChange("make", value)}
                 >
-                  <SelectTrigger className="min-h-14 w-full rounded-md py-3 bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                  <SelectTrigger className="w-full bg-white border-slate-200">
                     <SelectValue placeholder="Any Make" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[280px]">
                     <SelectItem value="any">Any Make</SelectItem>
-                    <SelectItem value="toyota">Toyota</SelectItem>
-                    <SelectItem value="honda">Honda</SelectItem>
-                    <SelectItem value="nissan">Nissan</SelectItem>
-                    <SelectItem value="bmw">BMW</SelectItem>
-                    <SelectItem value="mercedes">Mercedes</SelectItem>
+                    {vehicleMakes.map((make) => (
+                      <SelectItem key={make} value={make.toLowerCase()}>
+                        {make}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* Model filter */}
                 <Input
                   placeholder="Model (e.g., Prius)"
-                  className="min-h-14 w-full rounded-md bg-white border-slate-200 focus-visible:ring-teal-500"
+                  className="bg-white border-slate-200"
                   value={filters.model || ""}
-                  onChange={(e) =>
-                    handleFilterChange("model", e.target.value || null)
-                  }
+                  onChange={(e) => handleFilterChange("model", e.target.value || null)}
                 />
 
+                {/* Vehicle Type filter */}
                 <Select
-                  value={filters.vehicleType || ""}
-                  defaultValue=""
-                  onValueChange={(value) =>
-                    handleFilterChange("vehicleType", value || null)
-                  }
+                  value={filters.vehicleType || "any"}
+                  onValueChange={(value) => handleFilterChange("vehicleType", value)}
                 >
-                  <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                  <SelectTrigger className="w-full bg-white border-slate-200">
                     <SelectValue placeholder="Any Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any Type</SelectItem>
-                    <SelectItem value="CAR">Car</SelectItem>
-                    <SelectItem value="SUV_JEEP">SUV / Jeep</SelectItem>
-                    <SelectItem value="VAN">Van</SelectItem>
-                    <SelectItem value="LORRY">Lorry</SelectItem>
-                    <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
-                    <SelectItem value="THREE_WHEEL">Three Wheel</SelectItem>
+                    {Object.entries(vehicleTypeLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* City filter */}
                 <Select
-                  value={filters.priceRange || ""}
-                  defaultValue=""
-                  onValueChange={(value) =>
-                    handleFilterChange("priceRange", value || null)
-                  }
+                  value={filters.city || "any"}
+                  onValueChange={(value) => handleFilterChange("city", value)}
                 >
-                  <SelectTrigger className="min-h-14 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                    <SelectValue placeholder="Price Range" />
+                  <SelectTrigger className="w-full bg-white border-slate-200">
+                    <SelectValue placeholder="Any City" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Price</SelectItem>
-                    <SelectItem value="0-2m">Under Rs. 2M</SelectItem>
-                    <SelectItem value="2m-5m">Rs. 2M - 5M</SelectItem>
-                    <SelectItem value="5m-10m">Rs. 5M - 10M</SelectItem>
-                    <SelectItem value="10m+">Above Rs. 10M</SelectItem>
+                  <SelectContent className="max-h-[280px]">
+                    <SelectItem value="any">Any City</SelectItem>
+                    {sriLankanCities.map((city) => (
+                      <SelectItem key={city} value={city.toLowerCase()}>
+                        {city}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
+                {/* Search button */}
                 <Button
-                  className="h-14 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-lg"
+                  className="w-full bg-teal-700 hover:bg-teal-600 text-white"
                   onClick={applyFilters}
                   disabled={isLoading}
                 >
@@ -317,112 +508,163 @@ export default function VehicleMarketplace() {
                 </Button>
               </div>
 
-              {/* Clear filters button - only show when filters are active */}
-              {hasActiveFilters && (
-                <div className="flex justify-end mb-4">
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="text-teal-700 border-teal-700 hover:bg-teal-50"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-
-              {/* Advanced Filters Toggle */}
-              <div className="flex justify-center">
+              {/* Advanced filters toggle and clear */}
+              <div className="flex justify-between mt-4">
                 <Button
                   variant="ghost"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 text-sm"
+                  className="text-teal-700 text-sm"
+                  size="sm"
                 >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Advanced Filters
+                  {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
                   <ChevronDown
-                    className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                    className={`ml-1 h-4 w-4 transition-transform ${
                       showAdvancedFilters ? "rotate-180" : ""
                     }`}
                   />
                 </Button>
+
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="text-sm"
+                    size="sm"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
 
-              {/* Advanced Filters */}
+              {/* Simple Advanced Filters - Reorganized for better mobile experience */}
               {showAdvancedFilters && (
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="mt-4 pt-4 border-t">
+                  {/* First row - condition, min year, max year */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     <Select
-                      value={filters.yearFrom || ""}
-                      onValueChange={(value) =>
-                        handleFilterChange("yearFrom", value || null)
-                      }
+                      value={filters.condition || "any"}
+                      onValueChange={(value) => handleFilterChange("condition", value)}
                     >
-                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="Year From" />
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="any">Any Year</SelectItem>
-                        <SelectItem value="2020">2020</SelectItem>
-                        <SelectItem value="2019">2019</SelectItem>
-                        <SelectItem value="2018">2018</SelectItem>
-                        <SelectItem value="2017">2017</SelectItem>
-                        <SelectItem value="2016">2016</SelectItem>
-                        <SelectItem value="2015">2015</SelectItem>
+                        <SelectItem value="any">Any Condition</SelectItem>
+                        <SelectItem value="Brand New">Brand New</SelectItem>
+                        <SelectItem value="Unregistered (Recondition)">Unregistered</SelectItem>
+                        <SelectItem value="Registered (Used)">Registered</SelectItem>
                       </SelectContent>
                     </Select>
 
                     <Select
-                      value={filters.yearTo || ""}
-                      onValueChange={(value) =>
-                        handleFilterChange("yearTo", value || null)
-                      }
+                      value={filters.minYear || "any"}
+                      onValueChange={(value) => handleFilterChange("minYear", value)}
                     >
-                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="Year To" />
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Min Year" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any Year</SelectItem>
-                        <SelectItem value="2024">2024</SelectItem>
-                        <SelectItem value="2023">2023</SelectItem>
-                        <SelectItem value="2022">2022</SelectItem>
-                        <SelectItem value="2021">2021</SelectItem>
+                      <SelectContent className="max-h-[280px]">
+                        <SelectItem value="any">Min Year</SelectItem>
+                        {years.map(year => (
+                          <SelectItem key={`min-${year}`} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 
                     <Select
-                      value={filters.fuelType || ""}
-                      onValueChange={(value) =>
-                        handleFilterChange("fuelType", value || null)
-                      }
+                      value={filters.maxYear || "any"}
+                      onValueChange={(value) => handleFilterChange("maxYear", value)}
                     >
-                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Max Year" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        <SelectItem value="any">Max Year</SelectItem>
+                        {[...years].reverse().map(year => (
+                          <SelectItem key={`max-${year}`} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Second row - price range, fuel type, transmission */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    <Select
+                      value={filters.minPrice || "any"}
+                      onValueChange={(value) => handleFilterChange("minPrice", value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Min Price" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Min Price</SelectItem>
+                        <SelectItem value="500000">500,000</SelectItem>
+                        <SelectItem value="1000000">1,000,000</SelectItem>
+                        <SelectItem value="2000000">2,000,000</SelectItem>
+                        <SelectItem value="5000000">5,000,000</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={filters.maxPrice || "any"}
+                      onValueChange={(value) => handleFilterChange("maxPrice", value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Max Price" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Max Price</SelectItem>
+                        <SelectItem value="2000000">2,000,000</SelectItem>
+                        <SelectItem value="5000000">5,000,000</SelectItem>
+                        <SelectItem value="10000000">10,000,000</SelectItem>
+                        <SelectItem value="20000000">20,000,000</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={filters.fuelType || "any"}
+                      onValueChange={(value) => handleFilterChange("fuelType", value)}
+                    >
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Fuel Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="any">Any Fuel Type</SelectItem>
-                        <SelectItem value="petrol">Petrol</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="electric">Electric</SelectItem>
+                        <SelectItem value="any">Any Fuel</SelectItem>
+                        <SelectItem value="Petrol">Petrol</SelectItem>
+                        <SelectItem value="Diesel">Diesel</SelectItem>
+                        <SelectItem value="Hybrid">Hybrid</SelectItem>
+                        <SelectItem value="Electric">Electric</SelectItem>
                       </SelectContent>
                     </Select>
 
                     <Select
-                      value={filters.transmission || ""}
-                      onValueChange={(value) =>
-                        handleFilterChange("transmission", value || null)
-                      }
+                      value={filters.transmission || "any"}
+                      onValueChange={(value) => handleFilterChange("transmission", value)}
                     >
-                      <SelectTrigger className="min-h-12 w-full rounded-md bg-white border-slate-200 hover:border-teal-500 focus:border-teal-500">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Transmission" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Transmission</SelectItem>
-                        <SelectItem value="auto">Automatic</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
+                        <SelectItem value="Automatic">Automatic</SelectItem>
+                        <SelectItem value="Manual">Manual</SelectItem>
+                        <SelectItem value="CVT">CVT</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Apply button - Full width on mobile, right-aligned on desktop */}
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      onClick={applyFilters} 
+                      className="w-full sm:w-auto bg-teal-700 hover:bg-teal-600 text-white"
+                    >
+                      Apply Filters
+                    </Button>
                   </div>
                 </div>
               )}
@@ -523,51 +765,49 @@ export default function VehicleMarketplace() {
 
               {/* Vehicle Grid - Using Real Data */}
               {filteredAds.length > 0 && !isLoading && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
-                      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
                       onClick={() => (window.location.href = `/${vehicle.id}`)}
                     >
-                      <div className="p-4">
+                      <div className="p-3">
                         {/* Vehicle Title - Centered */}
-                        <h3 className="font-semibold text-base text-slate-800 text-center mb-3 transition-colors group-hover:text-teal-700">
-                          {vehicle.title}
+                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicle.vehicleType]
+                            .filter(Boolean)
+                            .join(' ') || vehicle.title}
                         </h3>
 
                         <div className="flex">
                           {/* Vehicle Image */}
-                          <div className="w-40 h-28 flex-shrink-0">
+                          <div className="w-32 h-20 flex-shrink-0">
                             <img
-                              src="/placeholder.svg"
+                              src="/placeholder-image.jpg"
                               alt={vehicle.title}
-                              className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
 
                           {/* Vehicle Details */}
-                          <div className="flex-1 pl-4 flex flex-col justify-between">
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
                             <div>
-                              <div className="text-sm text-slate-600 mb-2">
+                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
                                 {vehicle.location || ""}
                               </div>
 
-                              <div className="text-sm font-semibold text-teal-700 mb-2">
+                              <div className="text-sm font-semibold text-teal-700 mb-1">
                                 {formatPrice(vehicle.price)}
                               </div>
 
-                              <div className="text-sm text-slate-500 mb-1">
-                                {vehicleTypeLabels[vehicle.type] ||
-                                  vehicle.type}
+                              <div className="text-xs text-slate-500">
+                                {vehicleTypeLabels[vehicle.type] || vehicle.type}
                               </div>
                             </div>
 
-                            <div className="text-xs text-slate-400">
-                              {format(
-                                new Date(vehicle.createdAt),
-                                "MMM d, yyyy"
-                              )}
+                            <div className="text-xs text-slate-400 mt-1">
+                              {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
                             </div>
                           </div>
                         </div>
@@ -612,35 +852,7 @@ export default function VehicleMarketplace() {
               </Card>
 
               {/* Featured Dealers */}
-              <Card className="p-5 bg-white rounded-xl border border-slate-100">
-                <h3 className="font-semibold mb-4 text-slate-800">
-                  Featured Dealers
-                </h3>
-                <div className="space-y-3">
-                  {["Premium Motors", "City Auto", "Elite Cars"].map(
-                    (dealer, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
-                      >
-                        <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
-                          <span className="text-teal-700 font-semibold">
-                            {dealer[0]}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-800">
-                            {dealer}
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            Verified Dealer
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </Card>
+              <FeaturedDealers />
 
               {/* Google Ad Space 2 */}
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">

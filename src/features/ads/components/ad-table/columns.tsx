@@ -12,17 +12,44 @@ export type AdType = Omit<Ad, "createdAt"> & {
   createdAt: string;
 };
 
+// Vehicle type labels mapping
+const vehicleTypeLabels: Record<string, string> = {
+  CAR: "Car",
+  VAN: "Van",
+  SUV_JEEP: "SUV / Jeep",
+  MOTORCYCLE: "Motorcycle",
+  CREW_CAB: "Crew Cab",
+  PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
+  BUS: "Bus",
+  LORRY: "Lorry",
+  THREE_WHEEL: "Three Wheeler",
+  OTHER: "Other",
+  TRACTOR: "Tractor",
+  HEAVY_DUTY: "Heavy-Duty",
+  BICYCLE: "Bicycle"
+};
+
+// Helper function to generate ad title from components
+const generateAdTitle = (ad: AdType): string => {
+  return [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
+    .filter(Boolean)
+    .join(' ') || ad.title || "Untitled Ad";
+};
+
 export const columns: ColumnDef<AdType>[] = [
   {
     accessorKey: "title",
     header: "Ad Title",
     cell: ({ row }) => {
+      const ad = row.original;
+      const displayTitle = generateAdTitle(ad);
+      
       return (
         <Link
-          href={`/dashboard/ads/${row.original.id}`}
+          href={`/dashboard/ads/${ad.id}`}
           className="hover:underline"
         >
-          {row.original.title}
+          {displayTitle}
         </Link>
       );
     }
@@ -31,7 +58,14 @@ export const columns: ColumnDef<AdType>[] = [
     accessorKey: "type",
     header: "Ad Type",
     cell: ({ row }) => {
-      return <Badge>{row.original.type}</Badge>;
+      const type = row.original.type;
+      const displayType = vehicleTypeLabels[type] || type;
+      
+      return (
+        <Badge variant="outline" className="bg-slate-100 text-slate-800 border-slate-200">
+          {displayType}
+        </Badge>
+      );
     }
   },
   {
