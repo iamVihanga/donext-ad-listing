@@ -299,7 +299,7 @@ export default function VehicleMarketplace() {
     const OrganizationCard = ({ org }: { org: Organization }) => (
       <div
         className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
-        onClick={() => window.location.href = `/organization/${org.id}`}
+        onClick={() => window.location.href = `/organizations/${org.id}`}
       >
         <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center overflow-hidden">
           {org.logo ? (
