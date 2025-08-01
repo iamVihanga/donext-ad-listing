@@ -368,13 +368,13 @@ export function AdForm({
       condition: formData.condition || undefined,
       brand: formData.brand || undefined,
       model: formData.model || undefined,
-      mileage: formData.mileage ? parseInt(formData.mileage) : undefined,
+      mileage: formData.mileage ? parseFloat(formData.mileage) : undefined,
       vehicleType: formData.vehicleType || undefined,
       manufacturedYear: formData.manufacturedYear || undefined,
       transmission: formData.transmission || undefined,
       fuelType: formData.fuelType || undefined,
       engineCapacity: formData.engineCapacity
-        ? parseInt(formData.engineCapacity)
+        ? parseFloat(formData.engineCapacity)
         : undefined,
       options: formData.options.length > 0 ? formData.options : undefined,
       isLeased: formData.isLeased,
