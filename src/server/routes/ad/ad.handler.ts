@@ -10,7 +10,7 @@ import {
   GetOneRoute,
   UpdateRoute,
   RemoveRoute,
-  // GetUserAdsRoute,
+  GetUserAdsRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -34,10 +34,32 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 
     if (search && search.trim() !== "") {
       whereCondition = {
-        title: {
-          contains: search,
-          mode: "insensitive",
-        },
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            brand: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            model: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
       };
     }
 
@@ -55,8 +77,21 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         createdAt: "desc",
       },
       include: {
-        media: true,
+        media: {
+          include: {
+            media: true,
+          },
+        },
         category: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        analytics: true,
       },
     });
 
@@ -68,6 +103,91 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       location: ad.location ?? null,
       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
       tags: ad.tags ?? [],
+
+      // Handle all enum types explicitly
+      type: ad.type as
+        | "CAR"
+        | "VAN"
+        | "MOTORCYCLE"
+        | "BICYCLE"
+        | "THREE_WHEEL"
+        | "BUS"
+        | "LORRY"
+        | "HEAVY_DUTY"
+        | "TRACTOR"
+        | "AUTO_SERVICE"
+        | "RENTAL"
+        | "AUTO_PARTS"
+        | "MAINTENANCE"
+        | "BOAT",
+      status: ad.status as
+        | "ACTIVE"
+        | "EXPIRED"
+        | "DRAFT"
+        | "PENDING_REVIEW"
+        | "REJECTED",
+      fuelType: ad.fuelType as
+        | "PETROL"
+        | "DIESEL"
+        | "HYBRID"
+        | "ELECTRIC"
+        | "GAS"
+        | null,
+      transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
+      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+      bikeType: ad.bikeType as
+        | "SCOOTER"
+        | "E_BIKE"
+        | "MOTORBIKES"
+        | "QUADRICYCLES"
+        | null,
+      vehicleType: ad.vehicleType as
+        | "BED_TRAILER"
+        | "BOWSER"
+        | "BULLDOZER"
+        | "CRANE"
+        | "DUMP_TRUCK"
+        | "EXCAVATOR"
+        | "LOADER"
+        | "OTHER"
+        | null,
+
+      // Handle all the new dynamic fields
+      condition: ad.condition ?? null,
+      brand: ad.brand ?? null,
+      model: ad.model ?? null,
+      trimEdition: ad.trimEdition ?? null,
+      manufacturedYear: ad.manufacturedYear ?? null,
+      modelYear: ad.modelYear ?? null,
+      mileage: ad.mileage ?? null,
+      engineCapacity: ad.engineCapacity ?? null,
+      serviceType: ad.serviceType ?? null,
+      partType: ad.partType ?? null,
+      maintenanceType: ad.maintenanceType ?? null,
+
+      // Contact & Location fields
+      name: ad.name ?? null,
+      phoneNumber: ad.phoneNumber ?? null,
+      whatsappNumber: ad.whatsappNumber ?? null,
+      termsAndConditions: ad.termsAndConditions ?? null,
+      address: ad.address ?? null,
+      province: ad.province ?? null,
+      district: ad.district ?? null,
+      city: ad.city ?? null,
+      specialNote: ad.specialNote ?? null,
+
+      // SEO fields
+      seoTitle: ad.seoTitle ?? null,
+      seoDescription: ad.seoDescription ?? null,
+      seoSlug: ad.seoSlug ?? null,
+      categoryId: ad.categoryId ?? null,
+
+      // Status fields
+      published: ad.published ?? false,
+      isDraft: ad.isDraft ?? true,
+      boosted: ad.boosted ?? false,
+      featured: ad.featured ?? false,
+
       // Convert Date objects to ISO strings
       createdAt: ad.createdAt.toISOString(),
       updatedAt: ad.updatedAt.toISOString(),
@@ -131,7 +251,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       const slugParts = [
         adDetails.brand,
         adDetails.model,
-        adDetails.manufacturedYear,
+        adDetails.manufacturedYear || adDetails.modelYear,
       ].filter(Boolean);
 
       if (slugParts.length > 0) {
@@ -161,7 +281,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
         // Basic Info
         published: adDetails.published || false,
-        isDraft: true,
+        isDraft: adDetails.isDraft ?? true,
         boosted: adDetails.boosted || false,
         featured: adDetails.featured || false,
 
@@ -173,20 +293,38 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
         categoryId: adDetails.categoryId || null,
         tags: adDetails.tags || [],
 
-        // Pricing & Vehicle Info
+        // Pricing
         price: adDetails.price || null,
-        discountPrice: adDetails.discountPrice || null,
+
+        // Common Vehicle Fields (used by multiple types)
         condition: adDetails.condition || null,
         brand: adDetails.brand || null,
         model: adDetails.model || null,
-        mileage: adDetails.mileage || null,
-        vehicleType: adDetails.vehicleType || null,
-        manufacturedYear: adDetails.manufacturedYear || null,
-        transmission: adDetails.transmission || null,
-        fuelType: adDetails.fuelType || null,
-        engineCapacity: adDetails.engineCapacity || null,
-        options: adDetails.options || [],
-        isLeased: adDetails.isLeased || null,
+        trimEdition: adDetails.trimEdition || null,
+
+        // Year Fields (different names for different types)
+        manufacturedYear: adDetails.manufacturedYear || null, // Used by: Car, Motor Bike
+        modelYear: adDetails.modelYear || null, // Used by: Van, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
+
+        // Performance Fields
+        mileage: adDetails.mileage || null, // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry
+        engineCapacity: adDetails.engineCapacity || null, // Used by: Car, Van, Motor Bike, Bus, Lorry
+
+        // Car & Van Specific Fields
+        fuelType: adDetails.fuelType || null, // Used by: Car
+        transmission: adDetails.transmission || null, // Used by: Car
+        bodyType: adDetails.bodyType || null, // Used by: Car
+
+        // Motor Bike Specific Fields
+        bikeType: adDetails.bikeType || null, // Used by: Motor Bike
+
+        // Heavy Duty Specific Fields
+        vehicleType: adDetails.vehicleType || null, // Used by: Heavy Duty
+
+        // Service & Parts Specific Fields
+        serviceType: adDetails.serviceType || null, // Used by: Auto Service, Rental
+        partType: adDetails.partType || null, // Used by: Auto Parts
+        maintenanceType: adDetails.maintenanceType || null, // Used by: Maintenance
 
         // Contact Info
         name: adDetails.name || null,
@@ -206,6 +344,25 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
         metadata: adDetails.metadata || {},
       },
     });
+
+    // Handle media relationships if mediaIds are provided
+    if (
+      adDetails.mediaIds &&
+      Array.isArray(adDetails.mediaIds) &&
+      adDetails.mediaIds.length > 0
+    ) {
+      const mediaRelations = adDetails.mediaIds.map(
+        (mediaId: string, index: number) => ({
+          adId: createdAd.id,
+          mediaId: mediaId,
+          order: index,
+        })
+      );
+
+      await prisma.adMedia.createMany({
+        data: mediaRelations,
+      });
+    }
 
     // Format dates for the response and ensure metadata is an object or null
     const formattedAd = {
@@ -255,6 +412,41 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
           },
         },
         category: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        analytics: true,
+        org: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logo: true,
+          },
+        },
+        favorites: {
+          select: {
+            userId: true,
+          },
+        },
+        reports: {
+          select: {
+            id: true,
+            reason: true,
+            status: true,
+          },
+        },
+        shareEvents: {
+          select: {
+            platform: true,
+            sharedAt: true,
+          },
+        },
       },
     });
 
@@ -265,15 +457,105 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       );
     }
 
-    // Format dates for the response and ensure metadata is an object or null
+    // Format dates for the response and ensure all fields have correct types
     const formattedAd = {
       ...ad,
+      // Ensure these fields have the correct types
+      price: ad.price ?? null,
+      location: ad.location ?? null,
+      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+      tags: ad.tags ?? [],
+
+      // Handle all enum types explicitly
+      type: ad.type as
+        | "CAR"
+        | "VAN"
+        | "MOTORCYCLE"
+        | "BICYCLE"
+        | "THREE_WHEEL"
+        | "BUS"
+        | "LORRY"
+        | "HEAVY_DUTY"
+        | "TRACTOR"
+        | "AUTO_SERVICE"
+        | "RENTAL"
+        | "AUTO_PARTS"
+        | "MAINTENANCE"
+        | "BOAT",
+      status: ad.status as
+        | "ACTIVE"
+        | "EXPIRED"
+        | "DRAFT"
+        | "PENDING_REVIEW"
+        | "REJECTED",
+      fuelType: ad.fuelType as
+        | "PETROL"
+        | "DIESEL"
+        | "HYBRID"
+        | "ELECTRIC"
+        | "GAS"
+        | null,
+      transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
+      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+      bikeType: ad.bikeType as
+        | "SCOOTER"
+        | "E_BIKE"
+        | "MOTORBIKES"
+        | "QUADRICYCLES"
+        | null,
+      vehicleType: ad.vehicleType as
+        | "BED_TRAILER"
+        | "BOWSER"
+        | "BULLDOZER"
+        | "CRANE"
+        | "DUMP_TRUCK"
+        | "EXCAVATOR"
+        | "LOADER"
+        | "OTHER"
+        | null,
+
+      // Handle all the new dynamic fields
+      condition: ad.condition ?? null,
+      brand: ad.brand ?? null,
+      model: ad.model ?? null,
+      trimEdition: ad.trimEdition ?? null,
+      manufacturedYear: ad.manufacturedYear ?? null,
+      modelYear: ad.modelYear ?? null,
+      mileage: ad.mileage ?? null,
+      engineCapacity: ad.engineCapacity ?? null,
+      serviceType: ad.serviceType ?? null,
+      partType: ad.partType ?? null,
+      maintenanceType: ad.maintenanceType ?? null,
+
+      // Contact & Location fields
+      name: ad.name ?? null,
+      phoneNumber: ad.phoneNumber ?? null,
+      whatsappNumber: ad.whatsappNumber ?? null,
+      termsAndConditions: ad.termsAndConditions ?? null,
+      address: ad.address ?? null,
+      province: ad.province ?? null,
+      district: ad.district ?? null,
+      city: ad.city ?? null,
+      specialNote: ad.specialNote ?? null,
+
+      // SEO fields
+      seoTitle: ad.seoTitle ?? null,
+      seoDescription: ad.seoDescription ?? null,
+      seoSlug: ad.seoSlug ?? null,
+      categoryId: ad.categoryId ?? null,
+
+      // Status fields
+      published: ad.published ?? false,
+      isDraft: ad.isDraft ?? true,
+      boosted: ad.boosted ?? false,
+      featured: ad.featured ?? false,
+
+      // Convert Date objects to ISO strings
       createdAt: ad.createdAt.toISOString(),
       updatedAt: ad.updatedAt.toISOString(),
       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
       expiryDate: ad.expiryDate?.toISOString() ?? null,
-      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
     };
 
     return c.json(formattedAd, HttpStatusCodes.OK);
@@ -321,13 +603,124 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       ) as any;
     }
 
+    // Prepare update data with all the new dynamic fields
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    // Basic fields
+    if (adUpdates.title !== undefined) updateData.title = adUpdates.title;
+    if (adUpdates.description !== undefined)
+      updateData.description = adUpdates.description;
+    if (adUpdates.type !== undefined) updateData.type = adUpdates.type;
+    if (adUpdates.price !== undefined) updateData.price = adUpdates.price;
+    if (adUpdates.published !== undefined)
+      updateData.published = adUpdates.published;
+    if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
+    if (adUpdates.boosted !== undefined) updateData.boosted = adUpdates.boosted;
+    if (adUpdates.featured !== undefined)
+      updateData.featured = adUpdates.featured;
+
+    // SEO fields
+    if (adUpdates.seoTitle !== undefined)
+      updateData.seoTitle = adUpdates.seoTitle;
+    if (adUpdates.seoDescription !== undefined)
+      updateData.seoDescription = adUpdates.seoDescription;
+
+    // Category & Tags
+    if (adUpdates.categoryId !== undefined)
+      updateData.categoryId = adUpdates.categoryId;
+    if (adUpdates.tags !== undefined) updateData.tags = adUpdates.tags;
+
+    // Common Vehicle Fields
+    if (adUpdates.condition !== undefined)
+      updateData.condition = adUpdates.condition;
+    if (adUpdates.brand !== undefined) updateData.brand = adUpdates.brand;
+    if (adUpdates.model !== undefined) updateData.model = adUpdates.model;
+    if (adUpdates.trimEdition !== undefined)
+      updateData.trimEdition = adUpdates.trimEdition;
+
+    // Year Fields
+    if (adUpdates.manufacturedYear !== undefined)
+      updateData.manufacturedYear = adUpdates.manufacturedYear;
+    if (adUpdates.modelYear !== undefined)
+      updateData.modelYear = adUpdates.modelYear;
+
+    // Performance Fields
+    if (adUpdates.mileage !== undefined) updateData.mileage = adUpdates.mileage;
+    if (adUpdates.engineCapacity !== undefined)
+      updateData.engineCapacity = adUpdates.engineCapacity;
+
+    // Type-specific fields
+    if (adUpdates.fuelType !== undefined)
+      updateData.fuelType = adUpdates.fuelType;
+    if (adUpdates.transmission !== undefined)
+      updateData.transmission = adUpdates.transmission;
+    if (adUpdates.bodyType !== undefined)
+      updateData.bodyType = adUpdates.bodyType;
+    if (adUpdates.bikeType !== undefined)
+      updateData.bikeType = adUpdates.bikeType;
+    if (adUpdates.vehicleType !== undefined)
+      updateData.vehicleType = adUpdates.vehicleType;
+    if (adUpdates.serviceType !== undefined)
+      updateData.serviceType = adUpdates.serviceType;
+    if (adUpdates.partType !== undefined)
+      updateData.partType = adUpdates.partType;
+    if (adUpdates.maintenanceType !== undefined)
+      updateData.maintenanceType = adUpdates.maintenanceType;
+
+    // Contact Info
+    if (adUpdates.name !== undefined) updateData.name = adUpdates.name;
+    if (adUpdates.phoneNumber !== undefined)
+      updateData.phoneNumber = adUpdates.phoneNumber;
+    if (adUpdates.whatsappNumber !== undefined)
+      updateData.whatsappNumber = adUpdates.whatsappNumber;
+    if (adUpdates.termsAndConditions !== undefined)
+      updateData.termsAndConditions = adUpdates.termsAndConditions;
+
+    // Location Info
+    if (adUpdates.location !== undefined)
+      updateData.location = adUpdates.location;
+    if (adUpdates.address !== undefined) updateData.address = adUpdates.address;
+    if (adUpdates.province !== undefined)
+      updateData.province = adUpdates.province;
+    if (adUpdates.district !== undefined)
+      updateData.district = adUpdates.district;
+    if (adUpdates.city !== undefined) updateData.city = adUpdates.city;
+
+    // Miscellaneous
+    if (adUpdates.specialNote !== undefined)
+      updateData.specialNote = adUpdates.specialNote;
+    if (adUpdates.metadata !== undefined)
+      updateData.metadata = adUpdates.metadata;
+
+    // Handle media relationships update
+    if (adUpdates.mediaIds !== undefined && Array.isArray(adUpdates.mediaIds)) {
+      // Delete existing media relationships
+      await prisma.adMedia.deleteMany({
+        where: { adId },
+      });
+
+      // Create new media relationships if any
+      if (adUpdates.mediaIds.length > 0) {
+        const mediaRelations = adUpdates.mediaIds.map(
+          (mediaId: string, index: number) => ({
+            adId: adId,
+            mediaId: mediaId,
+            order: index,
+          })
+        );
+
+        await prisma.adMedia.createMany({
+          data: mediaRelations,
+        });
+      }
+    }
+
     // Make the update
     const updatedAd = await prisma.ad.update({
       where: { id: adId },
-      data: {
-        ...adUpdates,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
 
     // Format dates for the response
@@ -338,6 +731,8 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
       featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
       expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
+      metadata:
+        typeof updatedAd.metadata === "object" ? updatedAd.metadata : null,
     };
 
     return c.json(formattedAd, HttpStatusCodes.OK);
@@ -479,53 +874,210 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   }
 };
 
-// ---- Get User's Ads Handler ----
-// export const getUserAds: AppRouteHandler<GetUserAdsRoute> = async (c) => {
-//   try {
-//     // Get the authenticated user from the context
-//     const session = c.get("session");
-//     const user = c.get("user");
+export const getUserAds: AppRouteHandler<GetUserAdsRoute> = async (c) => {
+  try {
+    const user = c.get("user");
+    const session = c.get("session");
 
-//     if (!user || !user.id) {
-//       return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
-//     }
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
 
-//     // Query ads by the current user ID
-//     const ads = await prisma.ad.findMany({
-//       where: {
-//         createdBy: user.id, // Use user.id directly
-//       },
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//       include: {
-//         media: {
-//           include: {
-//             media: true,
-//           },
-//         },
-//         category: true,
-//       },
-//     });
+    const {
+      page = "1",
+      limit = "10",
+      search = "",
+    } = c.req.query() as QueryParams;
 
-//     // Format dates and return
-//     const formattedAds = ads.map((ad) => ({
-//       ...ad,
-//       createdAt: ad.createdAt.toISOString(),
-//       updatedAt: ad.updatedAt.toISOString(),
-//       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
-//       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
-//       expiryDate: ad.expiryDate?.toISOString() ?? null,
-//       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
-//     }));
+    // Convert to numbers and validate
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
+    const offset = (pageNum - 1) * limitNum;
 
-//     return c.json(formattedAds, HttpStatusCodes.OK);
-//   } catch (error: any) {
-//     console.error("[GET USER ADS] Error:", error);
+    // Build the where condition - filter by user and optional search
+    let whereCondition: any = {
+      createdBy: user.id, // Only show ads created by this user
+    };
 
-//     return c.json(
-//       { message: error.message || "Internal server error" },
-//       HttpStatusCodes.INTERNAL_SERVER_ERROR
-//     );
-//   }
-// };
+    // Add search functionality if search term is provided
+    if (search && search.trim() !== "") {
+      whereCondition = {
+        ...whereCondition,
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            brand: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            model: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      };
+    }
+
+    // Count query for total number of user's ads
+    const totalAds = await prisma.ad.count({
+      where: whereCondition,
+    });
+
+    // Main query with pagination
+    const ads = await prisma.ad.findMany({
+      where: whereCondition,
+      skip: offset,
+      take: limitNum,
+      orderBy: {
+        createdAt: "desc", // Show newest ads first
+      },
+      include: {
+        media: {
+          include: {
+            media: true,
+          },
+        },
+        category: true,
+        analytics: true,
+      },
+    });
+
+    // Format the response data (same as list function)
+    const formattedAds = ads.map((ad) => ({
+      ...ad,
+      // Ensure these fields have the correct types
+      price: ad.price ?? null,
+      location: ad.location ?? null,
+      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+      tags: ad.tags ?? [],
+
+      // Handle all enum types explicitly
+      type: ad.type as
+        | "CAR"
+        | "VAN"
+        | "MOTORCYCLE"
+        | "BICYCLE"
+        | "THREE_WHEEL"
+        | "BUS"
+        | "LORRY"
+        | "HEAVY_DUTY"
+        | "TRACTOR"
+        | "AUTO_SERVICE"
+        | "RENTAL"
+        | "AUTO_PARTS"
+        | "MAINTENANCE"
+        | "BOAT",
+      status: ad.status as
+        | "ACTIVE"
+        | "EXPIRED"
+        | "DRAFT"
+        | "PENDING_REVIEW"
+        | "REJECTED",
+      fuelType: ad.fuelType as
+        | "PETROL"
+        | "DIESEL"
+        | "HYBRID"
+        | "ELECTRIC"
+        | "GAS"
+        | null,
+      transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
+      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+      bikeType: ad.bikeType as
+        | "SCOOTER"
+        | "E_BIKE"
+        | "MOTORBIKES"
+        | "QUADRICYCLES"
+        | null,
+      vehicleType: ad.vehicleType as
+        | "BED_TRAILER"
+        | "BOWSER"
+        | "BULLDOZER"
+        | "CRANE"
+        | "DUMP_TRUCK"
+        | "EXCAVATOR"
+        | "LOADER"
+        | "OTHER"
+        | null,
+
+      // Handle all the new dynamic fields
+      condition: ad.condition ?? null,
+      brand: ad.brand ?? null,
+      model: ad.model ?? null,
+      trimEdition: ad.trimEdition ?? null,
+      manufacturedYear: ad.manufacturedYear ?? null,
+      modelYear: ad.modelYear ?? null,
+      mileage: ad.mileage ?? null,
+      engineCapacity: ad.engineCapacity ?? null,
+      serviceType: ad.serviceType ?? null,
+      partType: ad.partType ?? null,
+      maintenanceType: ad.maintenanceType ?? null,
+
+      // Contact & Location fields
+      name: ad.name ?? null,
+      phoneNumber: ad.phoneNumber ?? null,
+      whatsappNumber: ad.whatsappNumber ?? null,
+      termsAndConditions: ad.termsAndConditions ?? null,
+      address: ad.address ?? null,
+      province: ad.province ?? null,
+      district: ad.district ?? null,
+      city: ad.city ?? null,
+      specialNote: ad.specialNote ?? null,
+
+      // SEO fields
+      seoTitle: ad.seoTitle ?? null,
+      seoDescription: ad.seoDescription ?? null,
+      seoSlug: ad.seoSlug ?? null,
+      categoryId: ad.categoryId ?? null,
+
+      // Status fields
+      published: ad.published ?? false,
+      isDraft: ad.isDraft ?? true,
+      boosted: ad.boosted ?? false,
+      featured: ad.featured ?? false,
+
+      // Convert Date objects to ISO strings
+      createdAt: ad.createdAt.toISOString(),
+      updatedAt: ad.updatedAt.toISOString(),
+      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+      expiryDate: ad.expiryDate?.toISOString() ?? null,
+    }));
+
+    return c.json(
+      {
+        ads: formattedAds,
+        pagination: {
+          total: totalAds,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(totalAds / limitNum),
+        },
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[GET USER ADS] Error:", error);
+
+    return c.json(
+      { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};

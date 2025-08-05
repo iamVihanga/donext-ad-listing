@@ -15,13 +15,13 @@ export const authClient = createAuthClient({
       roles: {
         owner,
         admin,
-        member
-      }
-    })
+        member,
+      },
+    }),
   ],
   fetchOptions: {
     onError: (ctx) => {
       toast.error(ctx.error.message);
-    }
-  }
+    },
+  },
 });
