@@ -525,7 +525,7 @@ export default function ProfilePage() {
                   <div className="p-8 flex justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                   </div>
-                ) : userAds.length === 0 ? (
+                ) : (Array.isArray(userAds) && userAds.length === 0) || (!Array.isArray(userAds) && userAds.ads && userAds.ads.length === 0) ? (
                   <div className="p-8 text-center">
                     <Car className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                     <p className="text-slate-500 mb-4">You haven't posted any ads yet</p>
@@ -537,7 +537,7 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 ) : (
-                  userAds.map((ad: UserAd) => (
+                  (Array.isArray(userAds) ? userAds : userAds.ads).map((ad: UserAd) => (
                     <div key={ad.id} className="p-4 flex items-center">
                       <div className="h-16 w-16 flex-shrink-0 mr-4 bg-slate-100 rounded overflow-hidden">
                         {getAdImage(ad) ? (

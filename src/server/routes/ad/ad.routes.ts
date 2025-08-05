@@ -25,7 +25,9 @@ export const list = createRoute({
   path: "/",
   method: "get",
   request: {
-    query: schemas.querySchema,
+    query: schemas.querySchema.extend({
+      filterByUser: z.boolean().default(false).optional(),
+    }),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
@@ -35,6 +37,10 @@ export const list = createRoute({
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       z.object({ message: z.string() }),
       "Something went wrong while fetching ads"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthorized"
     ),
   },
 });
@@ -188,32 +194,3 @@ export type RemoveRoute = typeof remove;
 // });
 
 // export type GetUserAdsRoute = typeof getUserAds;
-
-export const getUserAds = createRoute({
-  tags,
-  summary: "Get current user's ads",
-  description:
-    "Retrieve all ads created by the currently authenticated user with pagination",
-  path: "/by-user",
-  method: "get",
-  middleware: [serverAuthMiddleware],
-  request: {
-    query: schemas.querySchema, // Use the same query schema for pagination
-  },
-  responses: {
-    [HttpStatusCodes.OK]: jsonContent(
-      schemas.withPaginationSchema, // Use same pagination schema as list
-      "User's ads with pagination"
-    ),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
-      z.object({ message: z.string() }),
-      "Unauthorized"
-    ),
-    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-      z.object({ message: z.string() }),
-      "Something went wrong while fetching user ads"
-    ),
-  },
-});
-
-export type GetUserAdsRoute = typeof getUserAds;

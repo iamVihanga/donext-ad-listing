@@ -16,10 +16,11 @@ export const useGetUserAds = (params: UserAdsParams = {}) => {
       const queryParams = {
         page: page.toString(),
         limit: limit.toString(),
+        filterByUser: true,
         ...(search && { search }),
       };
 
-      const response = await client.api.ad["by-user"].$get({
+      const response = await client.api.ad.$get({
         query: queryParams,
       });
 

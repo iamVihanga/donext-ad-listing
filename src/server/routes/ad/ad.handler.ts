@@ -10,7 +10,6 @@ import {
   GetOneRoute,
   UpdateRoute,
   RemoveRoute,
-  GetUserAdsRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -22,7 +21,11 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       page = "1",
       limit = "10",
       search = "",
-    } = c.req.query() as QueryParams;
+      filterByUser = false,
+    } = c.req.query() as any;
+
+    const session = c.get("session");
+    const user = c.get("user");
 
     // Convert to numbers and validate
     const pageNum = Math.max(1, parseInt(page));
@@ -32,8 +35,20 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Build the where condition for efficient searching
     let whereCondition: any = {};
 
+    // Filter by current user if filterByUser is true
+    if (filterByUser === "true" || filterByUser === true) {
+      if (!user) {
+        return c.json(
+          { message: "Authentication required to filter by user" },
+          HttpStatusCodes.UNAUTHORIZED
+        );
+      }
+      whereCondition.createdBy = user.id;
+    }
+
+    // Add search functionality if search term is provided
     if (search && search.trim() !== "") {
-      whereCondition = {
+      const searchCondition = {
         OR: [
           {
             title: {
@@ -61,6 +76,15 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           },
         ],
       };
+
+      // If we already have user filter, combine with AND
+      if (whereCondition.createdBy) {
+        whereCondition = {
+          AND: [{ createdBy: whereCondition.createdBy }, searchCondition],
+        };
+      } else {
+        whereCondition = searchCondition;
+      }
     }
 
     // Count query for total number of records
@@ -869,214 +893,6 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
 
     return c.json(
       { message: error.message || "Failed to delete ad" },
-      HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
-  }
-};
-
-export const getUserAds: AppRouteHandler<GetUserAdsRoute> = async (c) => {
-  try {
-    const user = c.get("user");
-    const session = c.get("session");
-
-    if (!user) {
-      return c.json(
-        { message: HttpStatusPhrases.UNAUTHORIZED },
-        HttpStatusCodes.UNAUTHORIZED
-      );
-    }
-
-    const {
-      page = "1",
-      limit = "10",
-      search = "",
-    } = c.req.query() as QueryParams;
-
-    // Convert to numbers and validate
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
-    const offset = (pageNum - 1) * limitNum;
-
-    // Build the where condition - filter by user and optional search
-    let whereCondition: any = {
-      createdBy: user.id, // Only show ads created by this user
-    };
-
-    // Add search functionality if search term is provided
-    if (search && search.trim() !== "") {
-      whereCondition = {
-        ...whereCondition,
-        OR: [
-          {
-            title: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            description: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            brand: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            model: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        ],
-      };
-    }
-
-    // Count query for total number of user's ads
-    const totalAds = await prisma.ad.count({
-      where: whereCondition,
-    });
-
-    // Main query with pagination
-    const ads = await prisma.ad.findMany({
-      where: whereCondition,
-      skip: offset,
-      take: limitNum,
-      orderBy: {
-        createdAt: "desc", // Show newest ads first
-      },
-      include: {
-        media: {
-          include: {
-            media: true,
-          },
-        },
-        category: true,
-        analytics: true,
-      },
-    });
-
-    // Format the response data (same as list function)
-    const formattedAds = ads.map((ad) => ({
-      ...ad,
-      // Ensure these fields have the correct types
-      price: ad.price ?? null,
-      location: ad.location ?? null,
-      metadata: typeof ad.metadata === "object" ? ad.metadata : null,
-      tags: ad.tags ?? [],
-
-      // Handle all enum types explicitly
-      type: ad.type as
-        | "CAR"
-        | "VAN"
-        | "MOTORCYCLE"
-        | "BICYCLE"
-        | "THREE_WHEEL"
-        | "BUS"
-        | "LORRY"
-        | "HEAVY_DUTY"
-        | "TRACTOR"
-        | "AUTO_SERVICE"
-        | "RENTAL"
-        | "AUTO_PARTS"
-        | "MAINTENANCE"
-        | "BOAT",
-      status: ad.status as
-        | "ACTIVE"
-        | "EXPIRED"
-        | "DRAFT"
-        | "PENDING_REVIEW"
-        | "REJECTED",
-      fuelType: ad.fuelType as
-        | "PETROL"
-        | "DIESEL"
-        | "HYBRID"
-        | "ELECTRIC"
-        | "GAS"
-        | null,
-      transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
-      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
-      bikeType: ad.bikeType as
-        | "SCOOTER"
-        | "E_BIKE"
-        | "MOTORBIKES"
-        | "QUADRICYCLES"
-        | null,
-      vehicleType: ad.vehicleType as
-        | "BED_TRAILER"
-        | "BOWSER"
-        | "BULLDOZER"
-        | "CRANE"
-        | "DUMP_TRUCK"
-        | "EXCAVATOR"
-        | "LOADER"
-        | "OTHER"
-        | null,
-
-      // Handle all the new dynamic fields
-      condition: ad.condition ?? null,
-      brand: ad.brand ?? null,
-      model: ad.model ?? null,
-      trimEdition: ad.trimEdition ?? null,
-      manufacturedYear: ad.manufacturedYear ?? null,
-      modelYear: ad.modelYear ?? null,
-      mileage: ad.mileage ?? null,
-      engineCapacity: ad.engineCapacity ?? null,
-      serviceType: ad.serviceType ?? null,
-      partType: ad.partType ?? null,
-      maintenanceType: ad.maintenanceType ?? null,
-
-      // Contact & Location fields
-      name: ad.name ?? null,
-      phoneNumber: ad.phoneNumber ?? null,
-      whatsappNumber: ad.whatsappNumber ?? null,
-      termsAndConditions: ad.termsAndConditions ?? null,
-      address: ad.address ?? null,
-      province: ad.province ?? null,
-      district: ad.district ?? null,
-      city: ad.city ?? null,
-      specialNote: ad.specialNote ?? null,
-
-      // SEO fields
-      seoTitle: ad.seoTitle ?? null,
-      seoDescription: ad.seoDescription ?? null,
-      seoSlug: ad.seoSlug ?? null,
-      categoryId: ad.categoryId ?? null,
-
-      // Status fields
-      published: ad.published ?? false,
-      isDraft: ad.isDraft ?? true,
-      boosted: ad.boosted ?? false,
-      featured: ad.featured ?? false,
-
-      // Convert Date objects to ISO strings
-      createdAt: ad.createdAt.toISOString(),
-      updatedAt: ad.updatedAt.toISOString(),
-      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
-      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
-      expiryDate: ad.expiryDate?.toISOString() ?? null,
-    }));
-
-    return c.json(
-      {
-        ads: formattedAds,
-        pagination: {
-          total: totalAds,
-          page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil(totalAds / limitNum),
-        },
-      },
-      HttpStatusCodes.OK
-    );
-  } catch (error: any) {
-    console.error("[GET USER ADS] Error:", error);
-
-    return c.json(
-      { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }
