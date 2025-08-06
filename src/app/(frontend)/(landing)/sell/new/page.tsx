@@ -377,7 +377,7 @@ export default function QuickAdCreatePage() {
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="New">New</SelectItem>
+                    <SelectItem value="New">Brand New</SelectItem>
                     <SelectItem value="Reconditioned">Reconditioned</SelectItem>
                     <SelectItem value="Used">Used</SelectItem>
                   </SelectContent>

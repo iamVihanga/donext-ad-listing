@@ -32,37 +32,38 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useSetupAd } from "../api/use-setup-ad";
 
 import {
-  AdTypes,
   createAdSchema,
   type CreateAdSchema
 } from "@/server/routes/ad/ad.schemas";
 
-// Vehicle type labels - same as in page.tsx
+// Vehicle type labels - updated to match schema exactly
 const vehicleTypeLabels: Record<string, string> = {
-  "CAR": "CAR",
-  "VAN": "VAN",
-  "SUV_JEEP": "SUV / JEEP",
-  "MOTORCYCLE": "MOTORCYCLE",
-  "CREW_CAB": "CREW CAB",
-  "PICKUP_DOUBLE_CAB": "PICKUP / DOUBLE CAB",
-  "BUS": "BUS",
-  "LORRY": "LORRY",
-  "THREE_WHEEL": "THREE WHEEL",
-  "OTHER": "OTHER",
-  "TRACTOR": "TRACTOR",
-  "HEAVY_DUTY": "HEAVY-DUTY",
-  "BICYCLE": "BICYCLE"
+  "CAR": "Car",
+  "VAN": "Van", 
+  "MOTORCYCLE": "Motor Bike",
+  "BICYCLE": "Bicycle",
+  "THREE_WHEEL": "Three Wheelers",
+  "BUS": "Bus",
+  "LORRY": "Lorries & Trucks",
+  "HEAVY_DUTY": "Heavy Duty",
+  "TRACTOR": "Tractor",
+  "AUTO_SERVICE": "Auto Service",
+  "RENTAL": "Rental",
+  "AUTO_PARTS": "Auto Parts and Accessories",
+  "MAINTENANCE": "Maintenance and Repair",
+  "BOAT": "Boats & Water Transports"
 };
 
-// Vehicle types array
+// Vehicle types array - matches exact schema values
 const vehicleTypes = [
-  "CAR", "VAN", "SUV_JEEP", "MOTORCYCLE", "CREW_CAB",
-  "PICKUP_DOUBLE_CAB", "BUS", "LORRY", "THREE_WHEEL", 
-  "OTHER", "TRACTOR", "HEAVY_DUTY", "BICYCLE"
+  "CAR", "VAN", "MOTORCYCLE", "BICYCLE", "THREE_WHEEL", 
+  "BUS", "LORRY", "HEAVY_DUTY", "TRACTOR", "AUTO_SERVICE",
+  "RENTAL", "AUTO_PARTS", "MAINTENANCE", "BOAT"
 ];
 
 export function SetupAdDialog() {
@@ -71,19 +72,26 @@ export function SetupAdDialog() {
   const [open, setOpen] = React.useState(false);
 
   const form = useForm<CreateAdSchema>({
-    resolver: zodResolver(createAdSchema),
+    resolver: zodResolver(createAdSchema) as any,
     defaultValues: {
       title: "",
       description: "",
-      type: "CAR" // Updated default type
+      type: "CAR",
+      published: false,
+      isDraft: true
     }
   });
 
   const handleSubmit = (values: CreateAdSchema) => {
-    // Ensure we have a title - even a basic one
+    // Generate a basic title if none provided based on type
+    const autoTitle = values.title || `${vehicleTypeLabels[values.type] || values.type} Advertisement`;
+    
     const adValues = {
       ...values,
-      title: values.title || `${values.type} Ad`, // Use type as fallback
+      title: autoTitle,
+      // Ensure required defaults
+      published: false,
+      isDraft: true
     };
 
     mutate(
@@ -92,7 +100,11 @@ export function SetupAdDialog() {
         onSuccess(data) {
           form.reset();
           setOpen(false);
-          router.push(`/dashboard/ads/${data.id}`);
+          // Navigate to edit page to complete the ad details
+          router.push(`/dashboard/ads/${data.id}/edit`);
+        },
+        onError(error) {
+          console.error("Error creating ad:", error);
         }
       }
     );
@@ -104,11 +116,11 @@ export function SetupAdDialog() {
         <Button icon={<PlusIcon />}>Setup Advertisement</Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Setup new Advertisement</DialogTitle>
+          <DialogTitle>Setup New Advertisement</DialogTitle>
           <DialogDescription>
-            Create a new advertisement for your property or service.
+            Create a new advertisement. You can add detailed information after creation.
           </DialogDescription>
         </DialogHeader>
 
@@ -117,98 +129,101 @@ export function SetupAdDialog() {
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
+            {/* Vehicle Type - First field for better UX */}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vehicle Type *</FormLabel>
+                  <Select
+                    disabled={isPending}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a vehicle type">
+                          {field.value ? vehicleTypeLabels[field.value] : "Select a vehicle type"}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="w-full max-h-[200px] overflow-y-auto">
+                      {vehicleTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {vehicleTypeLabels[type]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Ad Title - Optional */}
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ad Title</FormLabel>
+                  <FormLabel>Ad Title (Optional)</FormLabel>
                   <FormControl>
                     <Input
                       disabled={isPending}
-                      placeholder="Your property name"
+                      placeholder="e.g., 2020 Toyota Camry"
                       {...field}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to auto-generate based on vehicle details
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Ad Description - Optional */}
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ad Description</FormLabel>
+                  <FormLabel>Brief Description (Optional)</FormLabel>
                   <FormControl>
-                    <Input
+                    <Textarea
                       disabled={isPending}
-                      placeholder="Your property description"
+                      placeholder="Brief description of your vehicle..."
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    You can add detailed information later
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vehicle Type</FormLabel>
-                <Select
-                  defaultValue={field.value}
-                  onValueChange={(type) => {
-                    // Update the type field (enum value)
-                    field.onChange(type);
-                    
-                    // Also update the vehicleType field with display name
-                    const displayNameMap: Record<string, string> = {
-                      "CAR": "Car",
-                      "VAN": "Van",
-                      "SUV_JEEP": "SUV / Jeep",
-                      "MOTORCYCLE": "Motorcycle",
-                      "BUS": "Bus",
-                      "LORRY": "Truck",
-                      "THREE_WHEEL": "Three Wheeler",
-                      "HEAVY_DUTY": "Heavy Vehicle",
-                      "OTHER": "Other"
-                    };
-                    
-                    // Set the vehicleType field if it exists
-                    // This ensures both type and vehicleType are consistently set
-                    form.setValue("vehicleType", displayNameMap[type] || "");
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a vehicle type">
-                        {field.value ? vehicleTypeLabels[field.value] : "Select a vehicle type"}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="w-full">
-                    {vehicleTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {vehicleTypeLabels[type]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-            <DialogFooter className="mt-6">
+            <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
               <DialogClose asChild>
-                <Button className="w-full" variant="outline" type="button">
+                <Button 
+                  className="w-full" 
+                  variant="outline" 
+                  type="button"
+                  disabled={isPending}
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <Button className="w-full" loading={isPending} type="submit">
-                Setup Advertisement
+              <Button 
+                className="w-full" 
+                loading={isPending} 
+                type="submit"
+                disabled={isPending}
+              >
+                {isPending ? "Creating..." : "Setup Advertisement"}
               </Button>
             </DialogFooter>
           </form>
