@@ -65,6 +65,27 @@ export type AdFormProps = {
   submitButtonText: string;
 };
 
+const FormField = ({ 
+    label, 
+    children, 
+    required = false 
+  }: { 
+    label: string, 
+    children: React.ReactNode, 
+    required?: boolean 
+  }) => {
+    return (
+      <div className="flex items-center mb-4">
+        <div className="w-48 text-right pr-4 text-gray-600">
+          {label}{required && <span className="text-red-500">*</span>}
+        </div>
+        <div className="flex-1">
+          {children}
+        </div>
+      </div>
+    );
+  };
+
 export function AdForm({
   initialData,
   onSubmit,
@@ -102,26 +123,7 @@ export function AdForm({
   const [imageTitle, setImageTitle] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
-  const FormField = ({ 
-    label, 
-    children, 
-    required = false 
-  }: { 
-    label: string, 
-    children: React.ReactNode, 
-    required?: boolean 
-  }) => {
-    return (
-      <div className="flex items-center mb-4">
-        <div className="w-48 text-right pr-4 text-gray-600">
-          {label}{required && <span className="text-red-500">*</span>}
-        </div>
-        <div className="flex-1">
-          {children}
-        </div>
-      </div>
-    );
-  };
+  
 
 const [formData, setFormData] = useState({
   title: "",
@@ -621,8 +623,7 @@ const [formData, setFormData] = useState({
                             </FormField>
                             
                             <FormField label="Model" required>
-                              <Input 
-                                key="model-input"
+                              <Input
                                 placeholder="e.g., Camry" 
                                 value={formData.model || ""} 
                                 onChange={(e) => handleInputChange("model", e.target.value)}
