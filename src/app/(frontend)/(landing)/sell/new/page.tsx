@@ -129,8 +129,8 @@ export default function QuickAdCreatePage() {
       trimEdition: formData.trimEdition || undefined,
 
       // Year fields (use appropriate field based on type)
-      manufacturedYear: (formData.type === "CAR" || formData.type === "MOTORCYCLE") ? formData.manufacturedYear || undefined : undefined,
-      modelYear: (formData.type === "VAN" || formData.type === "THREE_WHEEL" || formData.type === "BUS" || formData.type === "LORRY" || formData.type === "HEAVY_DUTY" || formData.type === "TRACTOR") ? formData.modelYear || undefined : undefined,
+      manufacturedYear: (formData.type === "CAR" || formData.type === "MOTORCYCLE" || formData.type === "THREE_WHEEL" || formData.type === "BUS" || formData.type === "LORRY" || formData.type === "HEAVY_DUTY" || formData.type === "TRACTOR") ? formData.manufacturedYear || undefined : undefined,
+      modelYear: (formData.type === "VAN") ? formData.modelYear || undefined : undefined,
 
       // Performance fields
       mileage,
@@ -179,14 +179,23 @@ export default function QuickAdCreatePage() {
   const canProceed = () => {
     switch(currentStep) {
       case 1:
-        // Basic vehicle info required
-        const basicRequired = formData.type && formData.brand && formData.model;
+        // Basic vehicle info required - depends on vehicle type
+        if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(formData.type)) {
+          return formData.type;
+        }
         
-        // Year field required (different field names for different types)
-        const yearRequired = (formData.type === "CAR" || formData.type === "MOTORCYCLE") 
-          ? formData.manufacturedYear
-          : formData.modelYear;
-          
+        if (formData.type === "BICYCLE") {
+          return formData.type && formData.brand;
+        }
+        
+        if (formData.type === "AUTO_PARTS") {
+          return formData.type && formData.brand && formData.model;
+        }
+        
+        // For all vehicle types that need year
+        const basicRequired = formData.type && formData.brand && formData.model;
+        const yearRequired = (formData.type === "VAN") ? formData.modelYear : formData.manufacturedYear;
+        
         return basicRequired && yearRequired;
         
       case 2:
@@ -206,6 +215,8 @@ export default function QuickAdCreatePage() {
           detailsRequired = detailsRequired && formData.maintenanceType;
         } else if (formData.type === "HEAVY_DUTY") {
           detailsRequired = detailsRequired && formData.vehicleType;
+        } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(formData.type)) {
+          detailsRequired = detailsRequired && formData.fuelType;
         }
         
         return detailsRequired;
@@ -216,6 +227,931 @@ export default function QuickAdCreatePage() {
         
       default:
         return false;
+    }
+  };
+
+  // Render dynamic vehicle fields based on type
+  const renderVehicleFields = () => {
+    switch (formData.type) {
+      case "CAR":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {vehicleMakes.map(make => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Camry" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Trim/Edition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Trim / Edition</label>
+              <Input 
+                placeholder="e.g., Sport" 
+                value={formData.trimEdition}
+                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
+              />
+            </div>
+
+            {/* Year of Manufacture */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
+              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "VAN":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {vehicleMakes.map(make => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Hiace" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Trim/Edition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Trim / Edition</label>
+              <Input 
+                placeholder="e.g., GL" 
+                value={formData.trimEdition}
+                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
+              />
+            </div>
+
+            {/* Model Year */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model Year<span className="text-red-500">*</span></label>
+              <Select value={formData.modelYear} onValueChange={(value) => handleInputChange("modelYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "MOTORCYCLE":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Bike Type */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Bike Type<span className="text-red-500">*</span></label>
+              <Select value={formData.bikeType} onValueChange={(value) => handleInputChange("bikeType", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select bike type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SCOOTER">Scooter</SelectItem>
+                  <SelectItem value="E_BIKE">E-Bike</SelectItem>
+                  <SelectItem value="MOTORBIKES">Motorbikes</SelectItem>
+                  <SelectItem value="QUADRICYCLES">Quadricycles</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Honda" 
+                value={formData.brand}
+                onChange={(e) => handleInputChange("brand", e.target.value)}
+              />
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., CBR 250R" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Year of Manufacture */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
+              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "BICYCLE":
+        return (
+          <>
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Giant" 
+                value={formData.brand}
+                onChange={(e) => handleInputChange("brand", e.target.value)}
+              />
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "THREE_WHEEL":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {vehicleMakes.map(make => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Bajaj RE" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Year of Manufacture */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
+              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "BUS":
+      case "LORRY":
+      case "TRACTOR":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {vehicleMakes.map(make => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder={formData.type === "BUS" ? "e.g., Rosa" : formData.type === "LORRY" ? "e.g., Canter" : "e.g., MF240"}
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Year of Manufacture */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
+              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "HEAVY_DUTY":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Vehicle Type */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
+              <Select value={formData.vehicleType} onValueChange={(value) => handleInputChange("vehicleType", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select vehicle type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BED_TRAILER">Bed Trailer</SelectItem>
+                  <SelectItem value="BOWSER">Bowser</SelectItem>
+                  <SelectItem value="BULLDOZER">Bulldozer</SelectItem>
+                  <SelectItem value="CRANE">Crane</SelectItem>
+                  <SelectItem value="DUMP_TRUCK">Dump Truck</SelectItem>
+                  <SelectItem value="EXCAVATOR">Excavator</SelectItem>
+                  <SelectItem value="LOADER">Loader</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {vehicleMakes.map(make => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., PC200" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+
+            {/* Year of Manufacture */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
+              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "AUTO_SERVICE":
+      case "RENTAL":
+        return (
+          <>
+            {/* Service Type */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Service Type<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder={formData.type === "AUTO_SERVICE" ? "e.g., Car Wash, Repair" : "e.g., Car Rental, Van Rental"}
+                value={formData.serviceType}
+                onChange={(e) => handleInputChange("serviceType", e.target.value)}
+              />
+            </div>
+          </>
+        );
+
+      case "AUTO_PARTS":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Part Type */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Part or Accessory Type<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Engine Parts, Tires" 
+                value={formData.partType}
+                onChange={(e) => handleInputChange("partType", e.target.value)}
+              />
+            </div>
+
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Bosch" 
+                value={formData.brand}
+                onChange={(e) => handleInputChange("brand", e.target.value)}
+              />
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Compatible model" 
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+          </>
+        );
+
+      case "MAINTENANCE":
+        return (
+          <>
+            {/* Maintenance Type */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Maintenance and Repair Type<span className="text-red-500">*</span></label>
+              <Input 
+                placeholder="e.g., Engine Repair, Body Work" 
+                value={formData.maintenanceType}
+                onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
+              />
+            </div>
+          </>
+        );
+
+      case "BOAT":
+        return (
+          <>
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Render step 2 dynamic fields based on vehicle type
+  const renderStep2Fields = () => {
+    switch (formData.type) {
+      case "CAR":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Transmission<span className="text-red-500">*</span></label>
+                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                    <SelectItem value="MANUAL">Manual</SelectItem>
+                    <SelectItem value="CVT">CVT</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
+                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PETROL">Petrol</SelectItem>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="HYBRID">Hybrid</SelectItem>
+                    <SelectItem value="ELECTRIC">Electric</SelectItem>
+                    <SelectItem value="GAS">Gas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 45000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 1500" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Body Type</label>
+              <Select value={formData.bodyType} onValueChange={(value) => handleInputChange("bodyType", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select body type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SALOON">Saloon</SelectItem>
+                  <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                  <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "VAN":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 50000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 2000" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        );
+
+      case "MOTORCYCLE":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 15000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)<span className="text-red-500">*</span></label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 150" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        );
+
+      case "THREE_WHEEL":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 25000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 200" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
+              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select fuel type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PETROL">Petrol</SelectItem>
+                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                  <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
+                  <SelectItem value="ELECTRIC">Electric</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      case "BUS":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 150000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 4000" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
+                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="PETROL">Petrol</SelectItem>
+                    <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Transmission</label>
+                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MANUAL">Manual</SelectItem>
+                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        );
+
+      case "LORRY":
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 200000" 
+                  value={formData.mileage}
+                  onChange={(e) => handleInputChange("mileage", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 3000" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
+                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="PETROL">Petrol</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Transmission</label>
+                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MANUAL">Manual</SelectItem>
+                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        );
+
+      case "HEAVY_DUTY":
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">Operating Hours</label>
+              <Input 
+                type="number" 
+                placeholder="e.g., 5000" 
+                value={formData.mileage}
+                onChange={(e) => handleInputChange("mileage", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Total operating hours for the machinery
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 6000" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Fuel Type</label>
+                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="ELECTRIC">Electric</SelectItem>
+                    <SelectItem value="HYBRID">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        );
+
+      case "TRACTOR":
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">Operating Hours</label>
+              <Input 
+                type="number" 
+                placeholder="e.g., 2000" 
+                value={formData.mileage}
+                onChange={(e) => handleInputChange("mileage", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Total operating hours for the tractor
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
+                <Input 
+                  type="number" 
+                  placeholder="e.g., 2500" 
+                  value={formData.engineCapacity}
+                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
+                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="PETROL">Petrol</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Transmission</label>
+              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select transmission" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MANUAL">Manual</SelectItem>
+                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+
+      default:
+        return null;
     }
   };
   
@@ -276,66 +1212,8 @@ export default function QuickAdCreatePage() {
                 </Select>
               </div>
               
-              {/* Conditional Brand field - not needed for services */}
-              {!["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(formData.type) && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-                  <Select 
-                    value={formData.brand}
-                    onValueChange={(value) => handleInputChange("brand", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select brand" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[280px]">
-                      {vehicleMakes.map(make => (
-                        <SelectItem key={make} value={make}>{make}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              {/* Conditional Model field */}
-              {!["AUTO_SERVICE", "RENTAL", "MAINTENANCE", "BICYCLE"].includes(formData.type) && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-                  <Input 
-                    placeholder="e.g., Corolla, Sunny, X5" 
-                    value={formData.model}
-                    onChange={(e) => handleInputChange("model", e.target.value)}
-                  />
-                </div>
-              )}
-              
-              {/* Year field - conditional based on vehicle type */}
-              {!["AUTO_SERVICE", "RENTAL", "MAINTENANCE", "AUTO_PARTS", "BICYCLE", "BOAT"].includes(formData.type) && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    {(formData.type === "CAR" || formData.type === "MOTORCYCLE") ? "Year of Manufacture" : "Model Year"}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <Select 
-                    value={(formData.type === "CAR" || formData.type === "MOTORCYCLE") ? formData.manufacturedYear : formData.modelYear}
-                    onValueChange={(value) => {
-                      if (formData.type === "CAR" || formData.type === "MOTORCYCLE") {
-                        handleInputChange("manufacturedYear", value);
-                      } else {
-                        handleInputChange("modelYear", value);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[280px]">
-                      {years.map(year => (
-                        <SelectItem key={year} value={year}>{year}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {/* Dynamic vehicle fields based on type */}
+              {renderVehicleFields()}
               
               <div className="pt-2">
                 <div className="flex items-center bg-blue-50 p-2 rounded-md text-xs text-blue-700">
@@ -385,167 +1263,7 @@ export default function QuickAdCreatePage() {
               </div>
 
               {/* Dynamic fields based on vehicle type */}
-              {formData.type === "CAR" && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Transmission<span className="text-red-500">*</span></label>
-                      <Select 
-                        value={formData.transmission} 
-                        onValueChange={(value) => handleInputChange("transmission", value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                          <SelectItem value="MANUAL">Manual</SelectItem>
-                          <SelectItem value="CVT">CVT</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-                      <Select 
-                        value={formData.fuelType} 
-                        onValueChange={(value) => handleInputChange("fuelType", value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PETROL">Petrol</SelectItem>
-                          <SelectItem value="DIESEL">Diesel</SelectItem>
-                          <SelectItem value="HYBRID">Hybrid</SelectItem>
-                          <SelectItem value="ELECTRIC">Electric</SelectItem>
-                          <SelectItem value="GAS">Gas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g., 45000" 
-                        value={formData.mileage}
-                        onChange={(e) => handleInputChange("mileage", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g., 1500" 
-                        value={formData.engineCapacity}
-                        onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {formData.type === "MOTORCYCLE" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Bike Type<span className="text-red-500">*</span></label>
-                    <Select 
-                      value={formData.bikeType} 
-                      onValueChange={(value) => handleInputChange("bikeType", value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select bike type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SCOOTER">Scooter</SelectItem>
-                        <SelectItem value="E_BIKE">E-Bike</SelectItem>
-                        <SelectItem value="MOTORBIKES">Motorbikes</SelectItem>
-                        <SelectItem value="QUADRICYCLES">Quadricycles</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g., 15000" 
-                        value={formData.mileage}
-                        onChange={(e) => handleInputChange("mileage", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Engine (cc)<span className="text-red-500">*</span></label>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g., 150" 
-                        value={formData.engineCapacity}
-                        onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {(formData.type === "AUTO_SERVICE" || formData.type === "RENTAL") && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Service Type<span className="text-red-500">*</span></label>
-                  <Input 
-                    placeholder="e.g., Car Wash, Vehicle Rental" 
-                    value={formData.serviceType}
-                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                  />
-                </div>
-              )}
-
-              {formData.type === "AUTO_PARTS" && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Part Type<span className="text-red-500">*</span></label>
-                  <Input 
-                    placeholder="e.g., Engine Parts, Tires" 
-                    value={formData.partType}
-                    onChange={(e) => handleInputChange("partType", e.target.value)}
-                  />
-                </div>
-              )}
-
-              {formData.type === "MAINTENANCE" && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Service Type<span className="text-red-500">*</span></label>
-                  <Input 
-                    placeholder="e.g., Engine Repair, Body Work" 
-                    value={formData.maintenanceType}
-                    onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
-                  />
-                </div>
-              )}
-
-              {formData.type === "HEAVY_DUTY" && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
-                  <Select 
-                    value={formData.vehicleType} 
-                    onValueChange={(value) => handleInputChange("vehicleType", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select vehicle type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BED_TRAILER">Bed Trailer</SelectItem>
-                      <SelectItem value="BOWSER">Bowser</SelectItem>
-                      <SelectItem value="BULLDOZER">Bulldozer</SelectItem>
-                      <SelectItem value="CRANE">Crane</SelectItem>
-                      <SelectItem value="DUMP_TRUCK">Dump Truck</SelectItem>
-                      <SelectItem value="EXCAVATOR">Excavator</SelectItem>
-                      <SelectItem value="LOADER">Loader</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {renderStep2Fields()}
               
               <div>
                 <label className="block text-sm font-medium mb-1">Description<span className="text-red-500">*</span></label>
