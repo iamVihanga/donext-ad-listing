@@ -25,7 +25,9 @@ export const list = createRoute({
   path: "/",
   method: "get",
   request: {
-    query: schemas.querySchema,
+    query: schemas.querySchema.extend({
+      filterByUser: z.boolean().default(false).optional(),
+    }),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
@@ -35,6 +37,10 @@ export const list = createRoute({
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       z.object({ message: z.string() }),
       "Something went wrong while fetching ads"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthorized"
     ),
   },
 });

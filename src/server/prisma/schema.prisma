@@ -23,17 +23,18 @@ generator zod {
 enum AdType {
   CAR
   VAN
-  SUV_JEEP
   MOTORCYCLE
-  CREW_CAB
-  PICKUP_DOUBLE_CAB
+  BICYCLE
+  THREE_WHEEL
   BUS
   LORRY
-  THREE_WHEEL
-  OTHER
-  TRACTOR
   HEAVY_DUTY
-  BICYCLE
+  TRACTOR
+  AUTO_SERVICE
+  RENTAL
+  AUTO_PARTS
+  MAINTENANCE
+  BOAT
 }
 
 enum MediaType {
@@ -77,6 +78,44 @@ enum SharePlatform {
   WHATSAPP
   LINKEDIN
   COPY_LINK
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+  GAS
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  CVT
+}
+
+enum BodyType {
+  SALOON
+  HATCHBACK
+  STATION_WAGON
+}
+
+enum BikeType {
+  SCOOTER
+  E_BIKE
+  MOTORBIKES
+  QUADRICYCLES
+}
+
+enum HeavyDutyVehicleType {
+  BED_TRAILER
+  BOWSER
+  BULLDOZER
+  CRANE
+  DUMP_TRUCK
+  EXCAVATOR
+  LOADER
+  OTHER
 }
 
 model User {
@@ -230,10 +269,11 @@ model Ad {
   createdBy      String
   creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
 
-  // Basic Info
+  // Basic Info - Common to all types
   title          String
   description    String
   type           AdType
+  price          Float?
   published      Boolean      @default(false)
   isDraft        Boolean      @default(false)
   boosted        Boolean      @default(false)
@@ -251,45 +291,60 @@ model Ad {
   // Category & Tags
   categoryId     String?
   category       Category?    @relation(fields: [categoryId], references: [id])
-  tags           String[]     // Store tag names directly for MongoDB
+  tags           String[]
 
-  // Pricing & Vehicle Info
-  price             Float?
-  discountPrice     Float?      // e.g., discounted price if applicable
-  condition         String?     // e.g., "Antique", "Brand New", "Registered (Used)", "Unregistered (Recondition)"
-  brand             String?     // e.g., "Toyota", "Honda"
-  model             String?     // e.g., "Corolla", "Civic"
-  mileage           Float?      // e.g., in kilometers
-  vehicleType       String?     // e.g., "Car", "Van", "SUV / Jeep", "Motorcycle"
-  manufacturedYear  String?     // e.g., "2025", "2024", ..., "Before 1948"
-  transmission      String?     // e.g., "Automatic", "Manual"
-  fuelType          String?     // e.g., "Diesel", "Petrol", "Electric", "Hybrid", "Gas"
-  engineCapacity    Float?      // e.g., engine capacity in cc
-  options           String[]    // e.g., ["AIR CONDITION", "POWER STEERING"]
-  isLeased          Boolean?    // Indicates if the vehicle has an ongoing lease
+  // Common Vehicle Fields (used by multiple types)
+  condition         String?     // New/Reconditioned/Used - Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts, Boat
+  brand             String?     // Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
+  model             String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
+  trimEdition       String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
+
+  // Year Fields (different names for different types)
+  manufacturedYear  String?     // Used by: Car, Motor Bike
+  modelYear         String?     // Used by: Van, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
+
+  // Performance Fields
+  mileage           Float?      // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry
+  engineCapacity    Float?      // Used by: Car, Van, Motor Bike, Bus, Lorry
+
+  // Car & Van Specific Fields
+  fuelType          FuelType?   // Used by: Car
+  transmission      Transmission? // Used by: Car
+  bodyType          BodyType?   // Used by: Car
+
+  // Motor Bike Specific Fields
+  bikeType          BikeType?   // Used by: Motor Bike
+
+  // Heavy Duty Specific Fields
+  vehicleType       HeavyDutyVehicleType? // Used by: Heavy Duty
+
+  // Service & Parts Specific Fields
+  serviceType       String?     // Used by: Auto Service, Rental
+  partType          String?     // Used by: Auto Parts
+  maintenanceType   String?     // Used by: Maintenance
 
   // Contact Info
   name              String?     
   phoneNumber       String?     
   whatsappNumber    String?     
-  termsAndConditions Boolean?   // Checkbox agreement
+  termsAndConditions Boolean?
 
   // Location Info
-  location          String?     // General location
-  address           String?     // Specific address
-  province          String?     // e.g., "Southern Province"
-  district          String?     // e.g., "Galle District"
-  city              String?     // e.g., "Galle"
+  location          String?
+  address           String?
+  province          String?
+  district          String?
+  city              String?
 
   // Miscellaneous
-  specialNote       String?     // Additional info from textarea
+  specialNote       String?
   metadata          Json?
 
   // Timestamps
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  // Relations
+  // Relations (keep existing)
   analytics         AdAnalytics?
   payments          Payment[]
   favorites         Favorite[]

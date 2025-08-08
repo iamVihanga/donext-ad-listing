@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -65,6 +65,27 @@ export type AdFormProps = {
   submitButtonText: string;
 };
 
+const FormField = ({ 
+    label, 
+    children, 
+    required = false 
+  }: { 
+    label: string, 
+    children: React.ReactNode, 
+    required?: boolean 
+  }) => {
+    return (
+      <div className="flex items-center mb-4">
+        <div className="w-48 text-right pr-4 text-gray-600">
+          {label}{required && <span className="text-red-500">*</span>}
+        </div>
+        <div className="flex-1">
+          {children}
+        </div>
+      </div>
+    );
+  };
+
 export function AdForm({
   initialData,
   onSubmit,
@@ -102,107 +123,141 @@ export function AdForm({
   const [imageTitle, setImageTitle] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    type: "CAR",
-    published: false,
-    isDraft: true,
-    boosted: false,
-    featured: false,
-    seoTitle: "",
-    seoDescription: "",
-    categoryId: "",
-    tags: [] as string[],
-    price: "",
-    discountPrice: "",
-    condition: "",
-    brand: "",
-    model: "",
-    mileage: "",
-    vehicleType: "",
-    manufacturedYear: "",
-    transmission: "",
-    fuelType: "",
-    engineCapacity: "",
-    options: [] as string[],
-    isLeased: false,
-    name: "",
-    phoneNumber: "",
-    whatsappNumber: "",
-    termsAndConditions: false,
-    location: "",
-    address: "",
-    province: "",
-    district: "",
-    city: "",
-    specialNote: "",
-    metadata: {}
-  });
+  
+
+const [formData, setFormData] = useState({
+  title: "",
+  description: "",
+  type: "",
+  published: false,
+  isDraft: true,
+  boosted: false,
+  featured: false,
+  seoTitle: "",
+  seoDescription: "",
+  categoryId: "",
+  tags: [] as string[],
+  options: [] as string[],
+  price: "",
+  discountPrice: "",
+  
+  // Common vehicle fields
+  condition: "",
+  brand: "",
+  model: "",
+  trimEdition: "",
+  
+  // Year fields
+  manufacturedYear: "",
+  modelYear: "",
+  
+  // Performance fields
+  mileage: "",
+  engineCapacity: "",
+  
+  // Type-specific fields
+  fuelType: "",
+  transmission: "",
+  bodyType: "",
+  bikeType: "",
+  vehicleType: "",
+  serviceType: "",
+  partType: "",
+  maintenanceType: "",
+  
+  // Contact & location fields (keep existing)
+  name: "",
+  phoneNumber: "",
+  whatsappNumber: "",
+  termsAndConditions: false,
+  location: "",
+  address: "",
+  province: "",
+  district: "",
+  city: "",
+  specialNote: "",
+  metadata: {}
+});
 
   // Update form data if initialData changes (for edit form)
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title || "",
-        description: initialData.description || "",
-        type: initialData.type || "CAR",
-        published: initialData.published || false,
-        isDraft: initialData.isDraft ?? true,
-        boosted: initialData.boosted || false,
-        featured: initialData.featured || false,
-        seoTitle: initialData.seoTitle || "",
-        seoDescription: initialData.seoDescription || "",
-        categoryId: initialData.categoryId || "",
-        tags: initialData.tags || [],
-        price: initialData.price ? String(initialData.price) : "",
-        discountPrice: initialData.discountPrice
-          ? String(initialData.discountPrice)
-          : "",
-        condition: initialData.condition || "",
-        brand: initialData.brand || "",
-        model: initialData.model || "",
-        mileage: initialData.mileage || "",
-        vehicleType: initialData.vehicleType || "",
-        manufacturedYear: initialData.manufacturedYear || "",
-        transmission: initialData.transmission || "",
-        fuelType: initialData.fuelType || "",
-        engineCapacity: initialData.engineCapacity
-          ? String(initialData.engineCapacity)
-          : "",
-        options: initialData.options || [],
-        isLeased: initialData.isLeased || false,
-        name: initialData.name || "",
-        phoneNumber: initialData.phoneNumber || "",
-        whatsappNumber: initialData.whatsappNumber || "",
-        termsAndConditions: initialData.termsAndConditions || false,
-        location: initialData.location || "",
-        address: initialData.address || "",
-        province: initialData.province || "",
-        district: initialData.district || "",
-        city: initialData.city || "",
-        specialNote: initialData.specialNote || "",
-        metadata: initialData.metadata || {}
-      });
+  if (initialData) {
+    setFormData({
+      title: initialData.title || "",
+      description: initialData.description || "",
+      type: initialData.type || "CAR",
+      published: initialData.published || false,
+      isDraft: initialData.isDraft ?? true,
+      boosted: initialData.boosted || false,
+      featured: initialData.featured || false,
+      seoTitle: initialData.seoTitle || "",
+      seoDescription: initialData.seoDescription || "",
+      categoryId: initialData.categoryId || "",
+      tags: initialData.tags || [],
+      options: initialData.options || [],
+      price: initialData.price ? String(initialData.price) : "",
+      discountPrice: initialData.discountPrice
+        ? String(initialData.discountPrice)
+        : "",
+      
+      // Common vehicle fields
+      condition: initialData.condition || "",
+      brand: initialData.brand || "",
+      model: initialData.model || "",
+      trimEdition: initialData.trimEdition || "",
+      
+      // Year fields
+      manufacturedYear: initialData.manufacturedYear || "",
+      modelYear: initialData.modelYear || "",
+      
+      // Performance fields
+      mileage: initialData.mileage ? String(initialData.mileage) : "",
+      engineCapacity: initialData.engineCapacity
+        ? String(initialData.engineCapacity)
+        : "",
+      
+      // Type-specific fields - ADD THESE NEW FIELDS
+      fuelType: initialData.fuelType || "",
+      transmission: initialData.transmission || "",
+      bodyType: initialData.bodyType || "",
+      bikeType: initialData.bikeType || "",
+      vehicleType: initialData.vehicleType || "",
+      serviceType: initialData.serviceType || "",
+      partType: initialData.partType || "",
+      maintenanceType: initialData.maintenanceType || "",
+      
+      // Contact & location fields
+      name: initialData.name || "",
+      phoneNumber: initialData.phoneNumber || "",
+      whatsappNumber: initialData.whatsappNumber || "",
+      termsAndConditions: initialData.termsAndConditions || false,
+      location: initialData.location || "",
+      address: initialData.address || "",
+      province: initialData.province || "",
+      district: initialData.district || "",
+      city: initialData.city || "",
+      specialNote: initialData.specialNote || "",
+      metadata: initialData.metadata || {}
+    });
 
-      // Load images from initialData if available
-      if (initialData.media && Array.isArray(initialData.media)) {
-        // Convert to MediaFile format
-        setSelectedMedia(
-          initialData.media.map((media: any) => ({
-            id: media.id,
-            url: media.url,
-            type: "IMAGE", // Default to image type
-            filename: media.title || "image",
-            size: 0, // Size may not be available from initialData
-            createdAt: new Date(),
-            title: media.title || "",
-            alt: media.alt || ""
-          }))
-        );
-      }
+    // Load images from initialData if available
+    if (initialData.media && Array.isArray(initialData.media)) {
+      // Convert to MediaFile format
+      setSelectedMedia(
+        initialData.media.map((media: any) => ({
+          id: media.id,
+          url: media.url,
+          type: "IMAGE", // Default to image type
+          filename: media.title || "image",
+          size: 0, // Size may not be available from initialData
+          createdAt: new Date(),
+          title: media.title || "",
+          alt: media.alt || ""
+        }))
+      );
     }
-  }, [initialData]);
+  }
+}, [initialData]);
 
   const [newTag, setNewTag] = useState("");
   const [newOption, setNewOption] = useState("");
@@ -224,9 +279,9 @@ export function AdForm({
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const handleInputChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
@@ -334,71 +389,107 @@ export function AdForm({
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Always generate title from vehicle details (don't rely on formData.title which may be empty)
-    const titleParts = [
-      formData.brand,
-      formData.model, 
-      formData.manufacturedYear,
-      formData.vehicleType
-    ].filter(Boolean);
+  // Generate title based on ad type and available data
+  let autoTitle = "";
+  
+  switch(formData.type) {
+    case "CAR":
+      const carTitleParts = [
+        formData.condition,
+        formData.brand,
+        formData.model, 
+        formData.manufacturedYear,
+        formData.trimEdition
+      ].filter(Boolean);
+      autoTitle = carTitleParts.length > 0 ? carTitleParts.join(" ") : "Car Ad";
+      break;
+      
+    case "VAN":
+      const vanTitleParts = [
+        formData.condition,
+        formData.brand,
+        formData.model,
+        formData.modelYear,
+        formData.trimEdition
+      ].filter(Boolean);
+      autoTitle = vanTitleParts.length > 0 ? vanTitleParts.join(" ") : "Van Ad";
+      break;
+
+    case "MOTORCYCLE":
+      const bikeTitleParts = [
+        formData.condition,
+        formData.brand,
+        formData.model,
+        formData.manufacturedYear,
+        formData.bikeType
+      ].filter(Boolean);
+      autoTitle = bikeTitleParts.length > 0 ? bikeTitleParts.join(" ") : "Motorcycle Ad";
+      break;
+      
+    case "AUTO_SERVICE":
+      autoTitle = formData.serviceType ? `${formData.serviceType} Service` : "Auto Service";
+      break;
+      
+    case "AUTO_PARTS":
+      const partTitleParts = [
+        formData.condition,
+        formData.brand,
+        formData.partType
+      ].filter(Boolean);
+      autoTitle = partTitleParts.length > 0 ? partTitleParts.join(" ") : "Auto Parts";
+      break;
+      
+    default:
+      autoTitle = formData.title || "Vehicle Ad";
+  }
+
+  // Build the ad data object
+  const adData: CreateAdSchema = {
+    title: autoTitle,
+    description: formData.description,
+    type: formData.type as any,
+    price: formData.price ? parseFloat(formData.price) : undefined,
     
-    const autoTitle = titleParts.length > 0 
-      ? titleParts.join(" ")
-      : "Vehicle Ad"; // Fallback title if no details provided
-
-    // Map formData to CreateAdSchema
-    const adData: CreateAdSchema = {
-      title: autoTitle,
-      description: formData.description || undefined,
-      type: formData.type as any, // Ensure type matches AdType enum
-      published: formData.published,
-      isDraft: formData.isDraft,
-      boosted: formData.boosted,
-      featured: formData.featured,
-      seoTitle: formData.seoTitle || undefined,
-      seoDescription: formData.seoDescription || undefined,
-      categoryId: formData.categoryId || undefined,
-      tags: formData.tags.length > 0 ? formData.tags : undefined,
-      price: formData.price ? parseFloat(formData.price) : undefined,
-      discountPrice: formData.discountPrice
-        ? parseFloat(formData.discountPrice)
-        : undefined,
-      condition: formData.condition || undefined,
-      brand: formData.brand || undefined,
-      model: formData.model || undefined,
-      mileage: formData.mileage ? parseInt(formData.mileage) : undefined,
-      vehicleType: formData.vehicleType || undefined,
-      manufacturedYear: formData.manufacturedYear || undefined,
-      transmission: formData.transmission || undefined,
-      fuelType: formData.fuelType || undefined,
-      engineCapacity: formData.engineCapacity
-        ? parseInt(formData.engineCapacity)
-        : undefined,
-      options: formData.options.length > 0 ? formData.options : undefined,
-      isLeased: formData.isLeased,
-      name: formData.name || undefined,
-      phoneNumber: formData.phoneNumber || undefined,
-      whatsappNumber: formData.whatsappNumber || undefined,
-      termsAndConditions: formData.termsAndConditions || null,
-      location: formData.location || undefined,
-      address: formData.address || undefined,
-      province: formData.province || undefined,
-      district: formData.district || undefined,
-      city: formData.city || undefined,
-      specialNote: formData.specialNote || undefined,
-      metadata: formData.metadata,
-
-      // Fixed media handling - only include valid media IDs, not the full media objects
-      mediaIds:
-        selectedMedia.length > 0
-          ? selectedMedia.map((media) => media.id)
-          : undefined
-    };
-
-    onSubmit(adData);
+    // Include all the dynamic fields
+    condition: formData.condition || undefined,
+    brand: formData.brand || undefined,
+    model: formData.model || undefined,
+    trimEdition: formData.trimEdition || undefined,
+    manufacturedYear: formData.manufacturedYear || undefined,
+    modelYear: formData.modelYear || undefined,
+    mileage: formData.mileage ? parseFloat(formData.mileage) : undefined,
+    engineCapacity: formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined,
+    fuelType: (formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS") || undefined,
+    transmission: (formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT") || undefined,
+    bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON") || undefined,
+    bikeType: (formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES") || undefined,
+    vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
+    serviceType: formData.serviceType || undefined,
+    partType: formData.partType || undefined,
+    maintenanceType: formData.maintenanceType || undefined,
+    
+    // Keep all your existing fields
+    published: formData.published,
+    isDraft: formData.isDraft,
+    boosted: formData.boosted,
+    featured: formData.featured,
+    name: formData.name || undefined,
+    phoneNumber: formData.phoneNumber || undefined,
+    whatsappNumber: formData.whatsappNumber || undefined,
+    termsAndConditions: formData.termsAndConditions || undefined,
+    location: formData.location || undefined,
+    address: formData.address || undefined,
+    province: formData.province || undefined,
+    district: formData.district || undefined,
+    city: formData.city || undefined,
+    specialNote: formData.specialNote || undefined,
+    mediaIds: selectedMedia.length > 0 ? selectedMedia.map((media) => media.id) : undefined
   };
+
+  onSubmit(adData);
+};
 
   const vehicleMakes = [
     "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
@@ -467,279 +558,985 @@ export function AdForm({
             <Card>
               <CardHeader>
                 <CardTitle>Vehicle Details</CardTitle>
-                <CardDescription>Specific information about the vehicle</CardDescription>
+                <CardDescription>Specific information about your vehicle/service</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Title */}
-                  {/* <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Title<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="title"
-                        placeholder="e.g., 2020 Toyota Camry - Excellent Condition"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
-                        required
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div> */}
+                  {/* Ad Type Selection */}
+                  <FormField label="Ad Type" required>
+                    <Select
+                      value={formData.type}
+                      onValueChange={(value) => handleInputChange("type", value)}
+                    >
+                      <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CAR">Car</SelectItem>
+                        <SelectItem value="VAN">Van</SelectItem>
+                        <SelectItem value="MOTORCYCLE">Motor Bike</SelectItem>
+                        <SelectItem value="BICYCLE">Bicycle</SelectItem>
+                        <SelectItem value="THREE_WHEEL">Three Wheelers</SelectItem>
+                        <SelectItem value="BUS">Bus</SelectItem>
+                        <SelectItem value="LORRY">Lorries & Trucks</SelectItem>
+                        <SelectItem value="HEAVY_DUTY">Heavy Duty</SelectItem>
+                        <SelectItem value="TRACTOR">Tractor</SelectItem>
+                        <SelectItem value="AUTO_SERVICE">Auto Service</SelectItem>
+                        <SelectItem value="RENTAL">Rental</SelectItem>
+                        <SelectItem value="AUTO_PARTS">Auto Parts and Accessories</SelectItem>
+                        <SelectItem value="MAINTENANCE">Maintenance and Repair</SelectItem>
+                        <SelectItem value="BOAT">Boats & Water Transports</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
 
-                  {/* Type */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Vehicle Type<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.vehicleType}
-                        onValueChange={(value) => {
-                          // Update vehicleType with the display name
-                          handleInputChange("vehicleType", value);
-                          
-                          // Map to the API enum value for type
-                          const typeMap: Record<string, string> = {
-                            "Car": "CAR",
-                            "Van": "VAN",
-                            "SUV / Jeep": "SUV_JEEP",
-                            "Motorcycle": "MOTORCYCLE",
-                            "Bus": "BUS",
-                            "Truck": "LORRY",
-                            "Three Wheeler": "THREE_WHEEL",
-                            "Heavy Vehicle": "HEAVY_DUTY",
-                            "Other": "OTHER"
-                          };
-                          
-                          // Set the correct enum value for type
-                          handleInputChange("type", typeMap[value] || "OTHER");
-                        }}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Car">Car</SelectItem>
-                          <SelectItem value="Van">Van</SelectItem>
-                          <SelectItem value="SUV / Jeep">SUV / Jeep</SelectItem>
-                          <SelectItem value="Motorcycle">Motorcycle</SelectItem>
-                          <SelectItem value="Bus">Bus</SelectItem>
-                          <SelectItem value="Truck">Truck</SelectItem>
-                          <SelectItem value="Three Wheeler">Three Wheeler</SelectItem>
-                          <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  {/* Dynamic Fields Based on Selected Type */}
+                  {(() => {
+                    switch (formData.type) {
+                      case "CAR":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Make" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input
+                                placeholder="e.g., Camry" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Brand/Make */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Vehicle Make<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.brand}
-                        onValueChange={(value) => handleInputChange("brand", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Make" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px] overflow-y-auto">
-                          {vehicleMakes.map((make) => (
-                            <SelectItem key={make} value={make}>
-                              {make}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                            <FormField label="Trim / Edition">
+                              <Input 
+                                placeholder="e.g., Sport" 
+                                value={formData.trimEdition || ""} 
+                                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="50000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Model */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Model<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="model"
-                        placeholder="e.g., Camry"
-                        value={formData.model}
-                        onChange={(e) => handleInputChange("model", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="2000" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="PETROL">Petrol</SelectItem>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="HYBRID">Hybrid</SelectItem>
+                                  <SelectItem value="ELECTRIC">Electric</SelectItem>
+                                  <SelectItem value="GAS">Gas</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Transmission" required>
+                              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Transmission" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MANUAL">Manual</SelectItem>
+                                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                                  <SelectItem value="CVT">CVT</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Body Type">
+                              <Select value={formData.bodyType} onValueChange={(value) => handleInputChange("bodyType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Body Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="SALOON">Saloon</SelectItem>
+                                  <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                                  <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
 
-                  {/* Manufactured Year */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Manufactured Year<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.manufacturedYear}
-                        onValueChange={(value) => handleInputChange("manufacturedYear", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Manufactured Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* Generate years dynamically */}
-                          {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                      case "VAN":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., Hiace" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Condition */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Vehicle Condition<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.condition}
-                        onValueChange={(value) => handleInputChange("condition", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Condition" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Brand New">Brand New</SelectItem>
-                          <SelectItem value="Unregistered (Recondition)">Unregistered (Recondition)</SelectItem>
-                          <SelectItem value="Registered (Used)">Registered (Used)</SelectItem>
-                          <SelectItem value="Antique">Antique</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                            <FormField label="Trim / Edition">
+                              <Input 
+                                placeholder="e.g., GL" 
+                                value={formData.trimEdition || ""} 
+                                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Model Year" required>
+                              <Select value={formData.modelYear} onValueChange={(value) => handleInputChange("modelYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="50000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="2000" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
 
-                  {/* Price */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Price (Rs.)
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="price"
-                        type="number"
-                        placeholder="25000"
-                        value={formData.price}
-                        onChange={(e) => handleInputChange("price", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
+                      case "MOTORCYCLE":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Bike Type" required>
+                              <Select value={formData.bikeType} onValueChange={(value) => handleInputChange("bikeType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Bike Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="SCOOTER">Scooter</SelectItem>
+                                  <SelectItem value="E_BIKE">E-Bike</SelectItem>
+                                  <SelectItem value="MOTORBIKES">Motorbikes</SelectItem>
+                                  <SelectItem value="QUADRICYCLES">Quadricycles</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Input 
+                                placeholder="e.g., Honda" 
+                                value={formData.brand || ""} 
+                                onChange={(e) => handleInputChange("brand", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Transmission */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Transmission<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.transmission}
-                        onValueChange={(value) => handleInputChange("transmission", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Transmission" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MANUAL">Manual</SelectItem>
-                          <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                          <SelectItem value="CVT">CVT</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., CBR 250R" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Apply the same pattern to remaining fields */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Fuel Type<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Select
-                        value={formData.fuelType}
-                        onValueChange={(value) => handleInputChange("fuelType", value)}
-                      >
-                        <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                          <SelectValue placeholder="Select Fuel Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PETROL">Petrol</SelectItem>
-                          <SelectItem value="DIESEL">Diesel</SelectItem>
-                          <SelectItem value="HYBRID">Hybrid</SelectItem>
-                          <SelectItem value="ELECTRIC">Electric</SelectItem>
-                          <SelectItem value="ELECTRIC">Gas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                            <FormField label="Trim / Edition">
+                              <Input 
+                                placeholder="e.g., Special Edition" 
+                                value={formData.trimEdition || ""} 
+                                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="50000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
 
-                  {/* Mileage */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Mileage (km)
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="mileage"
-                        type="number"
-                        placeholder="50000"
-                        value={formData.mileage}
-                        onChange={(e) => handleInputChange("mileage", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="150"
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
 
-                  {/* Engine Capacity */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Engine Capacity (cc)
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="engineCapacity"
-                        type="number"
-                        placeholder="2000"
-                        value={formData.engineCapacity}
-                        onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
+                      case "BICYCLE":
+                        return (
+                          <>
+                            <FormField label="Brand" required>
+                              <Input 
+                                placeholder="e.g., Giant" 
+                                value={formData.brand || ""} 
+                                onChange={(e) => handleInputChange("brand", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
 
-                  <div className="flex items-start">
-                    <div className="w-48 text-right pr-4 pt-2 text-gray-600">
-                      Description<span className="text-red-500">*</span>
-                    </div>
-                    <div className="flex-1">
-                      <Textarea
-                        id="description"
-                        placeholder="Provide detailed information about your vehicle..."
-                        value={formData.description}
-                        onChange={(e) => handleInputChange("description", e.target.value)}
-                        rows={5}
-                        className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Include important details about the vehicle's history, special features, and reason for selling.
-                      </p>
-                    </div>
-                  </div>
+                      case "AUTO_SERVICE":
+                        return (
+                          <>
+                            <FormField label="Service Type" required>
+                              <Input 
+                                placeholder="e.g., Car Wash, Repair" 
+                                value={formData.serviceType || ""} 
+                                onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
+
+                      case "RENTAL":
+                        return (
+                          <>
+                            <FormField label="Service Type" required>
+                              <Input 
+                                placeholder="e.g., Car Rental, Van Rental" 
+                                value={formData.serviceType || ""} 
+                                onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
+
+                      case "AUTO_PARTS":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Part or Accessory Type" required>
+                              <Input 
+                                placeholder="e.g., Engine Parts, Tires" 
+                                value={formData.partType || ""} 
+                                onChange={(e) => handleInputChange("partType", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Brand" required>
+                              <Input 
+                                placeholder="e.g., Bosch" 
+                                value={formData.brand || ""} 
+                                onChange={(e) => handleInputChange("brand", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., Compatible model" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
+
+                      case "MAINTENANCE":
+                        return (
+                          <>
+                            <FormField label="Maintenance and Repair Type" required>
+                              <Input 
+                                placeholder="e.g., Engine Repair, Body Work" 
+                                value={formData.maintenanceType || ""} 
+                                onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                          </>
+                        );
+
+                      case "BOAT":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      case "THREE_WHEEL":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., Bajaj RE" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="25000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="200" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="PETROL">Petrol</SelectItem>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
+                                  <SelectItem value="ELECTRIC">Electric</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      case "BUS":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., Rosa" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="150000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="4000" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="PETROL">Petrol</SelectItem>
+                                  <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Transmission" required>
+                              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Transmission" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MANUAL">Manual</SelectItem>
+                                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      case "LORRY":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., Canter" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Mileage (km)">
+                              <Input 
+                                type="number" 
+                                placeholder="200000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="3000" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="PETROL">Petrol</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Transmission" required>
+                              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Transmission" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MANUAL">Manual</SelectItem>
+                                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      case "HEAVY_DUTY":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Vehicle Type" required>
+                              <Select value={formData.vehicleType} onValueChange={(value) => handleInputChange("vehicleType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Vehicle Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="BED_TRAILER">Bed Trailer</SelectItem>
+                                  <SelectItem value="BOWSER">Bowser</SelectItem>
+                                  <SelectItem value="BULLDOZER">Bulldozer</SelectItem>
+                                  <SelectItem value="CRANE">Crane</SelectItem>
+                                  <SelectItem value="DUMP_TRUCK">Dump Truck</SelectItem>
+                                  <SelectItem value="EXCAVATOR">Excavator</SelectItem>
+                                  <SelectItem value="LOADER">Loader</SelectItem>
+                                  <SelectItem value="OTHER">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., PC200" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Operating Hours">
+                              <Input 
+                                type="number" 
+                                placeholder="5000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Total operating hours for the machinery
+                              </p>
+                            </FormField>
+
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="6000" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="ELECTRIC">Electric</SelectItem>
+                                  <SelectItem value="HYBRID">Hybrid</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      case "TRACTOR":
+                        return (
+                          <>
+                            <FormField label="Condition" required>
+                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Condition" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="New">Brand New</SelectItem>
+                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                  <SelectItem value="Used">Used</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Brand" required>
+                              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {vehicleMakes.map((make) => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Model" required>
+                              <Input 
+                                placeholder="e.g., MF240" 
+                                value={formData.model || ""} 
+                                onChange={(e) => handleInputChange("model", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+
+                            <FormField label="Year of Manufacture" required>
+                              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px] overflow-y-auto">
+                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Operating Hours">
+                              <Input 
+                                type="number" 
+                                placeholder="2000" 
+                                value={formData.mileage || ""} 
+                                onChange={(e) => handleInputChange("mileage", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Total operating hours for the tractor
+                              </p>
+                            </FormField>
+
+                            <FormField label="Engine Capacity (cc)">
+                              <Input 
+                                type="number" 
+                                placeholder="2500" 
+                                value={formData.engineCapacity || ""} 
+                                onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                              />
+                            </FormField>
+                            
+                            <FormField label="Fuel Type" required>
+                              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Fuel Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="DIESEL">Diesel</SelectItem>
+                                  <SelectItem value="PETROL">Petrol</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                            
+                            <FormField label="Transmission" required>
+                              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select Transmission" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MANUAL">Manual</SelectItem>
+                                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormField>
+                          </>
+                        );
+
+                      default:
+                        return (
+                          <div className="flex items-center justify-center p-4 mt-4 mb-2">
+                            <p className="text-amber-600">Please select an ad type above to see relevant fields</p>
+                          </div>
+                        );
+                    }
+                  })()}
+
+                  {/* Common Description Field */}
+                  {/* <FormField label="Description" required>
+                    <Textarea 
+                      placeholder="Provide detailed information..." 
+                      value={formData.description || ""} 
+                      onChange={handleDescriptionChange}
+                      rows={5}
+                      className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
+                    />
+                  </FormField> */}
+
+                  {/* Common Price Field */}
+                  {/* <FormField label="Price" required>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={formData.price || ""} 
+                      onChange={handlePriceChange}
+                      className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                    />
+                  </FormField> */}
 
                   {/* Navigation buttons */}
                   <div className="flex justify-end mt-6 pt-4">
@@ -945,6 +1742,22 @@ export function AdForm({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Description<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        id="description"
+                        placeholder="Provide detailed information about your vehicle..."
+                        value={formData.description}
+                        onChange={(e) => handleInputChange("description", e.target.value)}
+                        rows={4}
+                        className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
+                      />
+                    </div>
+                  </div>
+                  
                   {/* Price */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
